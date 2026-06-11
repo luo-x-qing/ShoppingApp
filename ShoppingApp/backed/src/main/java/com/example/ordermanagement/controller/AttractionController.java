@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/attractions")
@@ -103,5 +104,18 @@ public class AttractionController {
         result.put("updated", count);
         result.put("message", "成功更新 " + count + " 个景点的城市信息");
         return ResponseEntity.ok(result);
+    }
+
+    // 导入单个城市的景点（高德API → 内置数据兜底）
+    @PostMapping("/import-city")
+    public ResponseEntity<Map<String, Object>> importCity(
+            @RequestParam String province, @RequestParam String city) {
+        return ResponseEntity.ok(attractionService.importCityAttractions(province, city));
+    }
+
+    // 一键导入全国景点（内置数据，无需高德API）
+    @PostMapping("/import-all")
+    public ResponseEntity<List<Map<String, Object>>> importAll() {
+        return ResponseEntity.ok(attractionService.importAll());
     }
 }

@@ -93,6 +93,23 @@ public class AmapService {
         return result;
     }
 
+    public List<Map<String, String>> searchScenicByCity(String city) {
+        try {
+            String encoded = URLEncoder.encode(city, StandardCharsets.UTF_8.toString());
+            String url = "https://restapi.amap.com/v3/place/text?key=" + amapKey
+                    + "&keywords=" + URLEncoder.encode("景点", StandardCharsets.UTF_8.toString())
+                    + "&city=" + encoded + "&offset=20&page=1&extensions=all";
+            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+            if (response != null && "1".equals(response.get("status"))) {
+                List<Map<String, String>> pois = (List<Map<String, String>>) response.get("pois");
+                return pois != null ? pois : new ArrayList<>();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public Map<String, String> geoDetail(String address) {
         Map<String, String> detail = new HashMap<>();
         try {
