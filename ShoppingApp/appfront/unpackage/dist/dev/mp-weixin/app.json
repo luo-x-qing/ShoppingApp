@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/flight/flight",
+    "pages/category/category",
+    "pages/profile/profile",
+    "pages/detail/detail",
+    "pages/hotelDetail/hotelDetail",
+    "pages/booking/booking",
+    "pages/my-orders/my-orders",
+    "pages/collection/collection",
+    "pages/login-register/login-register",
+    "pages/route-detail/route-detail",
+    "pages/cart/cart"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "旅游预订系统",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#bfbfbf",
+    "selectedColor": "#1296db",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "static/tab/旅游景点.png",
+        "selectedIconPath": "static/tab/旅游景点.png"
+      },
+      {
+        "pagePath": "pages/category/category",
+        "text": "酒店",
+        "iconPath": "static/tab/酒店.png",
+        "selectedIconPath": "static/tab/酒店.png"
+      },
+      {
+        "pagePath": "pages/flight/flight",
+        "text": "购票",
+        "iconPath": "static/tab/机票.png",
+        "selectedIconPath": "static/tab/机票.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "个人",
+        "iconPath": "static/tab/个人.png",
+        "selectedIconPath": "static/tab/个人.png"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "需要设置收货地址"
+    }
+  },
+  "usingComponents": {}
+}

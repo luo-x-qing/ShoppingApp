@@ -1,0 +1,120 @@
+{
+    "pages": [
+        {
+            "path": "pages/home/home",
+            "style": {
+                "navigationBarTitleText": "首页",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/flight/flight",
+            "style": {
+                "navigationBarTitleText": "购票",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/category/category",
+            "style": {
+                "navigationBarTitleText": "酒店",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/profile/profile",
+            "style": {
+                "navigationBarTitleText": "个人中心",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/detail/detail",
+            "style": {
+                "navigationBarTitleText": "景点详情",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/hotelDetail/hotelDetail",
+            "style": {
+                "navigationBarTitleText": "酒店详情",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/booking/booking",
+            "style": {
+                "navigationBarTitleText": "酒店预订",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+          "path": "pages/my-orders/my-orders",
+          "style": {
+            "navigationBarTitleText": "我的订单"
+          }
+        },
+        {
+              "path": "pages/collection/collection",
+              "style": {
+                "navigationBarTitleText": "我的收藏"
+              }
+        },
+        {
+            "path": "pages/login-register/login-register",
+            "style": {
+                "navigationBarTitleText": "登录注册"
+            }
+        },
+        {
+            "path": "pages/route-detail/route-detail",
+            "style": {
+                "navigationBarTitleText": "路线详情"
+            }
+        },
+        {
+            "path": "pages/cart/cart",
+            "style": {
+                "navigationBarTitleText": "购物车"
+            }
+        }
+    ],
+    "globalStyle": {
+        "navigationBarTextStyle": "black",
+        "navigationBarTitleText": "旅游预订系统",
+        "navigationBarBackgroundColor": "#F8F8F8",
+        "backgroundColor": "#F8F8F8"
+    },
+    "tabBar": {
+        "color": "#bfbfbf",
+        "selectedColor": "#1296db",
+        "list": [
+            {
+                "pagePath": "pages/home/home",
+                "text": "首页",
+                "iconPath": "static/tab/旅游景点.png",
+                "selectedIconPath": "static/tab/旅游景点.png"
+            },
+            {
+                "pagePath": "pages/category/category",
+                "text": "酒店",
+                "iconPath": "static/tab/酒店.png",
+                "selectedIconPath": "static/tab/酒店.png"
+            },
+            {
+                "pagePath": "pages/flight/flight",
+                "text": "购票",
+                "iconPath": "static/tab/机票.png",
+                "selectedIconPath": "static/tab/机票.png"
+            },
+            {
+                "pagePath": "pages/profile/profile",
+                "text": "个人",
+                "iconPath": "static/tab/个人.png",
+                "selectedIconPath": "static/tab/个人.png"
+            }
+        ]
+    },
+    "uniIdRouter": {}
+}

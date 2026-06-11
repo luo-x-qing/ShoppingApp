@@ -1,0 +1,65 @@
+
+page.data-v-d331dabb {
+  background: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+.container.data-v-d331dabb {
+  width: 100%;
+  box-sizing: border-box;
+}
+.header.data-v-d331dabb {
+  background: #fff;
+  padding: 25rpx 0;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+.info-card.data-v-d331dabb {
+  background: #fff;
+  margin: 20rpx;
+  padding: 30rpx;
+  border-radius: 12rpx;
+}
+.hotel-name.data-v-d331dabb {
+  font-size: 34rpx;
+  font-weight: bold;
+  display: block;
+}
+.price.data-v-d331dabb {
+  font-size: 28rpx;
+  color: #ff6b35;
+  margin-top: 10rpx;
+}
+.form-box.data-v-d331dabb {
+  background: #fff;
+  margin: 0 20rpx;
+  padding: 30rpx;
+  border-radius: 12rpx;
+}
+.form-item.data-v-d331dabb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+  font-size: 28rpx;
+}
+.date.data-v-d331dabb {
+  color: #1677ff;
+}
+.days.data-v-d331dabb, .total-price.data-v-d331dabb {
+  color: #ff6b35;
+  font-weight: bold;
+}
+.btn-box.data-v-d331dabb {
+  padding: 30rpx 20rpx;
+}
+.submit-btn.data-v-d331dabb {
+  width: 100%;
+  background: #1677ff;
+  color: #fff;
+  border-radius: 12rpx;
+  padding: 15rpx 0;
+  font-size: 30rpx;
+}

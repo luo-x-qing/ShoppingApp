@@ -1,0 +1,41 @@
+:root {
+  --van-tab-line-color: #add8e6; /* 水蓝色背景 */
+  --van-tab-text-color: #333; /* 默认文字颜色 */
+  --van-tab-active-text-color: #007aff; /* 激活态文字颜色 */
+  --van-tab-disabled-text-color: #ccc; /* 禁用态文字颜色 */
+  --van-tab-font-size: 20px; /* 字体大小 */
+  --van-tab-line-height: 20px; /* 行高 */
+  --van-tabs-default-color: #007aff; /* 默认颜色 */
+  --van-tabs-line-height: 44px; /* 行高 */
+  --van-tabs-card-height: 30px; /* 卡片高度 */
+  --van-tabs-nav-background: #dcf4f4; /* 导航栏背景 */
+  --van-tabs-bottom-bar-width: 40px; /* 底部条宽度 */
+  --van-tabs-bottom-bar-height: 3px; /* 底部条高度 */
+  --van-tabs-bottom-bar-color: #007aff; /* 底部条颜色 */
+  --van-tabbar-item-active-color: #ffffff; /* 设置激活态的文字颜色 */
+  --van-tabbar-item-active-background: #67b6ff; /* 设置激活态的背景颜色 */
+  --van-tabbar-item-background-color: #aafffff0;
+  --van-nav-bar-background-color: #67b6ff;
+  --van-tab-content-bottom-margin: 60px;
+    --van-nav-bar-title-color: #ffffff; /* 导航栏标题颜色 */
+    --van-nav-bar-left-text-color: #ffffff; /* 导航栏左侧文字颜色 */
+    --van-nav-bar-text-color: #ffffff; /* 导航栏文字颜色 */
+    --van-white-color: #ffffff;
+    --van-nav-bar-text-color: var(--van-white-color); /* 导航栏文字颜色 */
+    }
+    .van-nav-bar__title {
+      color: var(--van-nav-bar-title-color); /* 使用 CSS 变量设置文字颜色为白色 */
+    }
+    
+    .van-nav-bar__left-text {
+      color: var(--van-nav-bar-left-text-color); /* 使用 CSS 变量设置文字颜色为白色 */
+    }
+    
+    .van-nav-bar__text {
+      color: var(--van-nav-bar-text-color); /* 使用 CSS 变量设置文字颜色为白色 */
+    }
+    .van-nav-bar__arrow {
+      color: var(--van-nav-bar-text-color); /* 设置返回按钮旁边的小箭头颜色为白色 */
+    }
+
+

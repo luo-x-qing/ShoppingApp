@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>酒店管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .star {
+            font-size: 22px;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .star.active {
+            color: #ffc107;
+        }
+        .detail-item{
+            display: flex;
+            gap:8px;
+            align-items: center;
+            margin-bottom:8px;
+        }
+        .current-detail-item{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding: 8px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .current-detail-item img{
+            width: 50px;
+            height: 30px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h3>酒店管理</h3>
+    <a href="/admin" class="btn btn-secondary mb-3">返回</a>
+    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addHotelModal">添加酒店</button>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>酒店名称</th>
+            <th>星级</th>
+            <th>价格</th>
+            <th>酒店分类</th>
+            <th>酒店地址</th>
+            <th>封面图</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="hotelList">
+        </tbody>
+    </table>
+</div>
+
+<!-- 添加弹窗 -->
+<div class="modal fade" id="addHotelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>添加酒店</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-group">
+                        <label>酒店名称</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>酒店分类</label>
+                        <select class="form-control" id="category" required>
+                            <option value="度假型酒店">度假型酒店</option>
+                            <option value="商务型酒店">商务型酒店</option>
+                            <option value="公寓型酒店">公寓型酒店</option>
+                            <option value="连锁酒店">连锁酒店</option>
+                        </select>
+                    </div>
+
+                    <!-- 新增地址 -->
+                    <div class="form-group">
+                        <label>酒店地址</label>
+                        <input type="text" class="form-control" id="address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>星级</label>
+                        <div>
+                            <span class="star" onclick="setStar(1)">★</span>
+                            <span class="star" onclick="setStar(2)">★</span>
+                            <span class="star" onclick="setStar(3)">★</span>
+                            <span class="star" onclick="setStar(4)">★</span>
+                            <span class="star" onclick="setStar(5)">★</span>
+                        </div>
+                        <input type="hidden" id="starLevel" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>价格</label>
+                        <input type="number" class="form-control" id="price" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传封面图</label>
+                        <input type="file" class="form-control-file" id="coverFile" accept="image/*">
+                    </div>
+
+                    <div class="form-group">
+                        <label>详情图（可无限添加）</label>
+                        <div id="detailBox">
+                            <div class="detail-item">
+                                <input type="file" class="form-control-file detail-file" accept="image/*">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="removeDetailItem(this)">删除</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDetailItem()">+ 新增详情图</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveHotel()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改弹窗 -->
+<div class="modal fade" id="editHotelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>修改酒店</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+
+                    <div class="form-group">
+                        <label>酒店名称</label>
+                        <input type="text" class="form-control" id="editName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>酒店分类</label>
+                        <select class="form-control" id="editCategory" required>
+                            <option value="度假型酒店">度假型酒店</option>
+                            <option value="商务型酒店">商务型酒店</option>
+                            <option value="公寓型酒店">公寓型酒店</option>
+                            <option value="连锁酒店">连锁酒店</option>
+                        </select>
+                    </div>
+
+                    <!-- 修改地址 -->
+                    <div class="form-group">
+                        <label>酒店地址</label>
+                        <input type="text" class="form-control" id="editAddress" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>星级</label>
+                        <div>
+                            <span class="star edit-star" onclick="setEditStar(1)">★</span>
+                            <span class="star edit-star" onclick="setEditStar(2)">★</span>
+                            <span class="star edit-star" onclick="setEditStar(3)">★</span>
+                            <span class="star edit-star" onclick="setEditStar(4)">★</span>
+                            <span class="star edit-star" onclick="setEditStar(5)">★</span>
+                        </div>
+                        <input type="hidden" id="editStarLevel" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>价格</label>
+                        <input type="number" class="form-control" id="editPrice" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>更换封面图（可选）</label>
+                        <input type="file" class="form-control-file" id="editCoverFile" accept="image/*">
+                        <small class="form-text text-muted">不选则保留原图片</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>当前详情图</label>
+                        <div id="currentDetailsBox"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>新增详情图</label>
+                        <div id="newDetailUploadBox">
+                            <div class="detail-item">
+                                <input type="file" class="form-control-file edit-detail-file" accept="image/*">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="removeEditDetailItem(this)">删除</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addEditDetailItem()">+ 新增</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateHotel()">保存修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    $(function(){ loadHotels(); });
+
+    function setStar(level){
+        $("#starLevel").val(level);
+        $(".star").removeClass("active");
+        $(".star").each((i,e)=>{ if(i<level) $(e).addClass("active"); });
+    }
+
+    function setEditStar(level){
+        $("#editStarLevel").val(level);
+        $(".edit-star").removeClass("active");
+        $(".edit-star").each((i,e)=>{ if(i<level) $(e).addClass("active"); });
+    }
+
+    function addDetailItem(){
+        $("#detailBox").append(`
+            <div class="detail-item">
+                <input type="file" class="form-control-file detail-file" accept="image/*">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeDetailItem(this)">删除</button>
+            </div>
+        `);
+    }
+
+    function removeDetailItem(btn){
+        if($("#detailBox .detail-item").length>1) $(btn).parent().remove();
+        else alert("至少保留一个");
+    }
+
+    function addEditDetailItem(){
+        $("#newDetailUploadBox").append(`
+            <div class="detail-item">
+                <input type="file" class="form-control-file edit-detail-file" accept="image/*">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeEditDetailItem(this)">删除</button>
+            </div>
+        `);
+    }
+
+    function removeEditDetailItem(btn){
+        if($("#newDetailUploadBox .detail-item").length>1) $(btn).parent().remove();
+        else alert("至少保留一个");
+    }
+
+    function removeCurrentDetailItem(btn){
+        $(btn).parent().remove();
+    }
+
+    function loadHotels(){
+        $.get("/api/hotels", data=>{
+            let html = "";
+            data.forEach(h=>{
+                html += `
+                <tr>
+                    <td>${h.id}</td>
+                    <td>${h.name}</td>
+                    <td>${h.starLevel}星</td>
+                    <td>¥${h.price}</td>
+                    <td>${h.category || '未分类'}</td>
+                    <td>${h.address || ''}</td>
+                    <td><img src="${h.coverImage}" width="50"></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning mr-1" onclick="openEditModal(${h.id})">修改</button>
+                        <button class="btn btn-sm btn-danger" onclick="del(${h.id})">删除</button>
+                    </td>
+                </tr>`;
+            });
+            $("#hotelList").html(html);
+        });
+    }
+
+    function upload(file, callback){
+        let fd = new FormData();
+        fd.append("file", file);
+        $.ajax({
+            url: "/api/upload",
+            type: "POST",
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: url=>callback(null,url),
+            error: err=>callback(err,null)
+        });
+    }
+
+    function saveHotel(){
+        let name = $("#name").val();
+        let category = $("#category").val();
+        let address = $("#address").val();
+        let star = $("#starLevel").val();
+        let price = $("#price").val();
+        let coverFile = $("#coverFile")[0].files[0];
+
+        if(!name||!category||!address||!star||!price||!coverFile){ alert("请填完整"); return; }
+
+        upload(coverFile, (err,coverUrl)=>{
+            if(err){ alert("封面上传失败"); return; }
+
+            let files = [];
+            $(".detail-file").each(function(){
+                let f = this.files[0];
+                if(f) files.push(f);
+            });
+
+            let details = [];
+            let idx = 0;
+
+            function next(){
+                if(idx >= files.length){
+                    $.ajax({
+                        url: "/api/hotels",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            name,category,address,
+                            starLevel:parseInt(star),
+                            price:parseFloat(price),
+                            coverImage:coverUrl,
+                            detailImages: details.map(u=>({imageUrl:u}))
+                        }),
+                        success: ()=>{
+                            alert("添加成功");
+                            $("#addHotelModal").modal("hide");
+                            loadHotels();
+                        }
+                    });
+                    return;
+                }
+                upload(files[idx], (err,u)=>{
+                    details.push(u);
+                    idx++;
+                    next();
+                });
+            }
+            next();
+        });
+    }
+
+    function openEditModal(id){
+        $.get("/api/hotels/"+id, h=>{
+            $("#editId").val(h.id);
+            $("#editName").val(h.name);
+            $("#editCategory").val(h.category||"度假型酒店");
+            $("#editAddress").val(h.address || "");
+            $("#editPrice").val(h.price);
+            setEditStar(h.starLevel);
+
+            let html = "";
+            if(h.detailImages) h.detailImages.forEach(d=>{
+                html += `
+                <div class="current-detail-item">
+                    <img src="${d.imageUrl}">
+                    <button class="btn btn-sm btn-danger" onclick="removeCurrentDetailItem(this)">删除</button>
+                </div>`;
+            });
+            $("#currentDetailsBox").html(html);
+            $("#editHotelModal").modal("show");
+        });
+    }
+
+    function updateHotel(){
+        let id = $("#editId").val();
+        let name = $("#editName").val();
+        let category = $("#editCategory").val();
+        let address = $("#editAddress").val();
+        let star = $("#editStarLevel").val();
+        let price = $("#editPrice").val();
+        let coverFile = $("#editCoverFile")[0].files[0];
+
+        let kept = [];
+        $(".current-detail-item img").each(function(){
+            kept.push({imageUrl: $(this).attr("src")});
+        });
+
+        let newFiles = [];
+        $(".edit-detail-file").each(function(){
+            let f = this.files[0];
+            if(f) newFiles.push(f);
+        });
+
+        let newUrls = [];
+        let idx = 0;
+
+        function uploadNew(){
+            if(idx >= newFiles.length){
+                let all = kept.concat(newUrls.map(u=>({imageUrl:u})));
+                let data = {
+                    name,category,address,
+                    starLevel:parseInt(star),
+                    price:parseFloat(price),
+                    detailImages: all
+                };
+                if(coverFile){
+                    upload(coverFile, (err,u)=>{
+                        data.coverImage = u;
+                        send(data);
+                    });
+                } else {
+                    send(data);
+                }
+                return;
+            }
+            upload(newFiles[idx], (err,u)=>{
+                newUrls.push(u);
+                idx++;
+                uploadNew();
+            });
+        }
+
+        function send(data){
+            $.ajax({
+                url: "/api/hotels/"+id,
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: ()=>{
+                    alert("修改成功");
+                    $("#editHotelModal").modal("hide");
+                    loadHotels();
+                }
+            });
+        }
+
+        uploadNew();
+    }
+
+    function del(id){
+        if(confirm("确定删除？")){
+            $.ajax({url:"/api/hotels/"+id,type:"DELETE",success:loadHotels});
+        }
+    }
+</script>
+</body>
+</html>

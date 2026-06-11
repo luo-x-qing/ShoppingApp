@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>景点管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h3>景点管理</h3>
+    <a href="/admin" class="btn btn-secondary mb-3">返回</a>
+    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addModal">添加景点</button>
+    <button class="btn btn-info mb-3" onclick="autoFillCity()">自动填充城市（高德）</button>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>景点名称</th>
+                <th>省份</th>
+                <th>城市</th>
+                <th>照片</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="attrList">
+        </tbody>
+    </table>
+</div>
+
+<!-- 添加弹窗 -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>添加景点</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-group">
+                        <label>景点名称</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>省份</label>
+                        <select class="form-control" id="province" required>
+                            <option value="">请选择省份</option>
+                            <option value="北京市">北京市</option>
+                            <option value="天津市">天津市</option>
+                            <option value="河北省">河北省</option>
+                            <option value="山西省">山西省</option>
+                            <option value="内蒙古自治区">内蒙古自治区</option>
+                            <option value="辽宁省">辽宁省</option>
+                            <option value="吉林省">吉林省</option>
+                            <option value="黑龙江省">黑龙江省</option>
+                            <option value="上海市">上海市</option>
+                            <option value="江苏省">江苏省</option>
+                            <option value="浙江省">浙江省</option>
+                            <option value="安徽省">安徽省</option>
+                            <option value="福建省">福建省</option>
+                            <option value="江西省">江西省</option>
+                            <option value="山东省">山东省</option>
+                            <option value="河南省">河南省</option>
+                            <option value="湖北省">湖北省</option>
+                            <option value="湖南省">湖南省</option>
+                            <option value="广东省">广东省</option>
+                            <option value="广西壮族自治区">广西壮族自治区</option>
+                            <option value="海南省">海南省</option>
+                            <option value="重庆市">重庆市</option>
+                            <option value="四川省">四川省</option>
+                            <option value="贵州省">贵州省</option>
+                            <option value="云南省">云南省</option>
+                            <option value="西藏自治区">西藏自治区</option>
+                            <option value="陕西省">陕西省</option>
+                            <option value="甘肃省">甘肃省</option>
+                            <option value="青海省">青海省</option>
+                            <option value="宁夏回族自治区">宁夏回族自治区</option>
+                            <option value="新疆维吾尔自治区">新疆维吾尔自治区</option>
+                            <option value="台湾省">台湾省</option>
+                            <option value="香港特别行政区">香港特别行政区</option>
+                            <option value="澳门特别行政区">澳门特别行政区</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>城市</label>
+                        <input type="text" class="form-control" id="city" placeholder="例如：成都市">
+                    </div>
+                    <div class="form-group">
+                        <label>上传景点照片</label>
+                        <input type="file" class="form-control-file" id="photoFile" accept="image/*">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveAttraction()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改弹窗 -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>修改景点</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label>景点名称</label>
+                        <input type="text" class="form-control" id="editName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>省份</label>
+                        <select class="form-control" id="editProvince" required>
+                            <option value="">请选择省份</option>
+                            <option value="北京市">北京市</option>
+                            <option value="天津市">天津市</option>
+                            <option value="河北省">河北省</option>
+                            <option value="山西省">山西省</option>
+                            <option value="内蒙古自治区">内蒙古自治区</option>
+                            <option value="辽宁省">辽宁省</option>
+                            <option value="吉林省">吉林省</option>
+                            <option value="黑龙江省">黑龙江省</option>
+                            <option value="上海市">上海市</option>
+                            <option value="江苏省">江苏省</option>
+                            <option value="浙江省">浙江省</option>
+                            <option value="安徽省">安徽省</option>
+                            <option value="福建省">福建省</option>
+                            <option value="江西省">江西省</option>
+                            <option value="山东省">山东省</option>
+                            <option value="河南省">河南省</option>
+                            <option value="湖北省">湖北省</option>
+                            <option value="湖南省">湖南省</option>
+                            <option value="广东省">广东省</option>
+                            <option value="广西壮族自治区">广西壮族自治区</option>
+                            <option value="海南省">海南省</option>
+                            <option value="重庆市">重庆市</option>
+                            <option value="四川省">四川省</option>
+                            <option value="贵州省">贵州省</option>
+                            <option value="云南省">云南省</option>
+                            <option value="西藏自治区">西藏自治区</option>
+                            <option value="陕西省">陕西省</option>
+                            <option value="甘肃省">甘肃省</option>
+                            <option value="青海省">青海省</option>
+                            <option value="宁夏回族自治区">宁夏回族自治区</option>
+                            <option value="新疆维吾尔自治区">新疆维吾尔自治区</option>
+                            <option value="台湾省">台湾省</option>
+                            <option value="香港特别行政区">香港特别行政区</option>
+                            <option value="澳门特别行政区">澳门特别行政区</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>城市</label>
+                        <input type="text" class="form-control" id="editCity" placeholder="例如：成都市">
+                    </div>
+                    <div class="form-group">
+                        <label>更换照片（不选则保留原图）</label>
+                        <input type="file" class="form-control-file" id="editPhotoFile" accept="image/*">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateAttraction()">保存修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    // 页面加载
+    $(function(){
+        loadAttractions();
+    });
+
+    // 加载列表
+    function loadAttractions(){
+        $.get("/api/attractions", function(data){
+            let html = "";
+            data.forEach(a => {
+                html += `
+                <tr>
+                    <td>${a.id}</td>
+                    <td>${a.name}</td>
+                    <td>${a.province}</td>
+                    <td>${a.city || ''}</td>
+                    <td><img src="${a.photo}" width="50"></td>
+                    <td>
+                        <button class="btn btn-sm btn-warning mr-1" onclick="openEdit(${a.id})">修改</button>
+                        <button class="btn btn-sm btn-danger" onclick="del(${a.id})">删除</button>
+                    </td>
+                </tr>`;
+            });
+            $("#attrList").html(html);
+        });
+    }
+
+    // 上传文件
+    function upload(file, callback){
+        let fd = new FormData();
+        fd.append("file", file);
+        $.ajax({
+            url: "/api/upload",
+            type: "POST",
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: callback
+        });
+    }
+
+    // 保存
+    function saveAttraction(){
+        let name = $("#name").val();
+        let province = $("#province").val();
+        let city = $("#city").val();
+        let file = $("#photoFile")[0].files[0];
+
+        if(!name || !province || !file){
+            alert("请填写完整！");
+            return;
+        }
+
+        upload(file, function(photoUrl){
+            $.ajax({
+                url: "/api/attractions",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ name, province, city, photo: photoUrl }),
+                success: function(){
+                    alert("添加成功！");
+                    $("#addModal").modal("hide");
+                    loadAttractions();
+                }
+            });
+        });
+    }
+
+    // 打开修改
+    function openEdit(id){
+        $.get("/api/attractions/"+id, function(a){
+            $("#editId").val(a.id);
+            $("#editName").val(a.name);
+            $("#editProvince").val(a.province);
+            $("#editCity").val(a.city || '');
+            $("#editModal").modal("show");
+        });
+    }
+
+    // 修改
+    function updateAttraction(){
+        let id = $("#editId").val();
+        let name = $("#editName").val();
+        let province = $("#editProvince").val();
+        let city = $("#editCity").val();
+        let file = $("#editPhotoFile")[0].files[0];
+
+        if(!name || !province){
+            alert("请填写完整！");
+            return;
+        }
+
+        if(file){
+            upload(file, function(photoUrl){
+                sendUpdate(id, name, province, city, photoUrl);
+            });
+        }else{
+            sendUpdate(id, name, province, city, null);
+        }
+    }
+
+    function sendUpdate(id, name, province, city, photo){
+        let data = { name, province, city };
+        if(photo) data.photo = photo;
+
+        $.ajax({
+            url: "/api/attractions/"+id,
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(){
+                alert("修改成功！");
+                $("#editModal").modal("hide");
+                loadAttractions();
+            }
+        });
+    }
+
+    // 自动填充城市
+    function autoFillCity(){
+        if(!confirm("将通过高德API自动填充所有景点的城市信息，确定继续？")) return;
+        $.ajax

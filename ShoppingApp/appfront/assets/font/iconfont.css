@@ -1,0 +1,199 @@
+@font-face {font-family: "iconfont";
+	src: url('./iconfont.ttf')
+ }
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-plus:before {
+  content: "\e98c";
+}
+
+.icon-security:before {
+  content: "\e684";
+}
+
+.icon-voice:before {
+  content: "\e6d0";
+}
+
+.icon-yidiandiantubiao10:before {
+  content: "\e603";
+}
+
+.icon-voiceicon:before {
+  content: "\e648";
+}
+
+.icon-home:before {
+  content: "\e623";
+}
+
+.icon-jiantouarrow487:before {
+  content: "\e6ab";
+}
+
+.icon-about:before {
+  content: "\e640";
+}
+
+.icon-zhibiaozhushibiaozhu2:before {
+  content: "\e7b3";
+}
+
+.icon-zhibiaozhushibiaozhu:before {
+  content: "\e7b4";
+}
+
+.icon-jiantouxiajiang:before {
+  content: "\e7f2";
+}
+
+.icon-logout:before {
+  content: "\e723";
+}
+
+.icon-plussign:before {
+  content: "\e75a";
+}
+
+.icon-voice1:before {
+  content: "\e6b7";
+}
+
+.icon-huo:before {
+  content: "\e664";
+}
+
+.icon-circle:before {
+  content: "\e67d";
+}
+
+.icon-camera:before {
+  content: "\e618";
+}
+
+.icon-bag:before {
+  content: "\e63d";
+}
+
+.icon-heart:before {
+  content: "\e639";
+}
+
+.icon-edit:before {
+  content: "\e61f";
+}
+
+.icon-return:before {
+  content: "\e614";
+}
+
+.icon-07_tongjifenxi:before {
+  content: "\e631";
+}
+
+.icon-smile:before {
+  content: "\e60b";
+}
+
+.icon-tupian:before {
+  content: "\e692";
+}
+
+.icon-voice2:before {
+  content: "\e669";
+}
+
+.icon-note:before {
+  content: "\e6a0";
+}
+
+.icon-me:before {
+  content: "\e72b";
+}
+
+.icon-me-:before {
+  content: "\e72d";
+}
+
+.icon-message:before {
+  content: "\e938";
+}
+
+.icon-plus1:before {
+  content: "\e714";
+}
+
+.icon-Eraser-Tool:before {
+  content: "\e683";
+}
+
+.icon-Home-Bag:before {
+  content: "\e82a";
+}
+
+.icon-message1:before {
+  content: "\e73f";
+}
+
+.icon-fenlei_:before {
+  content: "\e607";
+}
+
+.icon-24gl-bagFull2:before {
+  content: "\e877";
+}
+
+.icon-heart1:before {
+  content: "\e8f4";
+}
+
+.icon-baseline-search-px:before {
+  content: "\e61a";
+}
+
+.icon-guanbi:before {
+  content: "\e625";
+}
+
+.icon-user-plus:before {
+  content: "\e6e2";
+}
+
+.icon-home-smile-line:before {
+  content: "\e63e";
+}
+
+.icon-git-repository-private-line:before {
+  content: "\e6e9";
+}
+
+.icon-bell:before {
+  content: "\e6e3";
+}
+
+.icon-position:before {
+  content: "\e619";
+}
+
+.icon-share:before {
+  content: "\e780";
+}
+
+.icon-setting:before {
+  content: "\e785";
+}
+
+.icon-tick:before {
+  content: "\e608";
+}
+
+.icon-at:before {
+  content: "\e7de";
+}
+

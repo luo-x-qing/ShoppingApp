@@ -1,0 +1,46 @@
+
+page.data-v-aa7f39c0 {
+  background: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+.container.data-v-aa7f39c0 {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 顶部标题 与HOME完全一致 */
+.header.data-v-aa7f39c0 {
+  background: #fff;
+  padding: 25rpx 0;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+.form-item.data-v-aa7f39c0 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 26rpx 30rpx;
+  border-bottom: 1rpx solid #eeeeee;
+  background: #fff;
+  font-size: 32rpx;
+}
+.label.data-v-aa7f39c0 {
+  color: #333333;
+}
+.input-box.data-v-aa7f39c0 {
+  width: 60%;
+  text-align: right;
+  color: #666666;
+}
+.submit-btn.data-v-aa7f39c0 {
+  width: 90%;
+  height: 92rpx;
+  background-color: #1677ff;
+  color: #ffffff;
+  border-radius: 16rpx;
+  margin: 60rpx auto;
+  font-size: 34rpx;
+  display: block;
+}

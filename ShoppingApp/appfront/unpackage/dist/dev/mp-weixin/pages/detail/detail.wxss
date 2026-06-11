@@ -1,0 +1,148 @@
+
+page.data-v-eca06f3c {
+  background: #f5f5f5;
+}
+.swiper.data-v-eca06f3c {
+  width: 100%;
+  height: 400rpx;
+}
+.swiper-img.data-v-eca06f3c {
+  width: 100%;
+  height: 100%;
+}
+.info-card.data-v-eca06f3c {
+  background: #fff;
+  margin: 20rpx;
+  padding: 30rpx;
+  border-radius: 16rpx;
+}
+.name.data-v-eca06f3c {
+  font-size: 40rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+  display: block;
+}
+.score-row.data-v-eca06f3c {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.stars.data-v-eca06f3c {
+  display: flex;
+}
+.star.data-v-eca06f3c {
+  font-size: 28rpx;
+  color: #ff9f00;
+}
+.score.data-v-eca06f3c {
+  margin-left: 10rpx;
+  font-size: 26rpx;
+  color: #ff6b35;
+}
+.attrs.data-v-eca06f3c {
+  line-height: 2;
+  font-size: 26rpx;
+  margin-bottom: 20rpx;
+}
+.attr.data-v-eca06f3c {
+  display: block;
+}
+.desc-title.data-v-eca06f3c {
+  font-size: 30rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+  display: block;
+}
+.desc.data-v-eca06f3c {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+}
+.add-cart-btn.data-v-eca06f3c {
+  width: 100%;
+  background: #ff9800;
+  color: #fff;
+  border-radius: 8rpx;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  margin-top: 20rpx;
+  border: none;
+}
+
+/* 发表评价 */
+.publish-box.data-v-eca06f3c {
+  background: #fff;
+  margin: 20rpx;
+  padding: 30rpx;
+  border-radius: 16rpx;
+}
+.publish-title.data-v-eca06f3c {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 15rpx;
+  display: block;
+}
+.select-star.data-v-eca06f3c {
+  display: flex;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+}
+.star-item.data-v-eca06f3c {
+  font-size: 36rpx;
+}
+textarea.data-v-eca06f3c {
+  width: 100%;
+  height: 140rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 15rpx;
+  box-sizing: border-box;
+  margin-bottom: 15rpx;
+}
+.submit-btn.data-v-eca06f3c {
+  width: 100%;
+  background: #1677ff;
+  color: #fff;
+  border-radius: 8rpx;
+  padding: 12rpx 0;
+}
+
+/* 评论列表 */
+.comment-section.data-v-eca06f3c {
+  background: #fff;
+  margin: 20rpx;
+  padding: 30rpx;
+  border-radius: 16rpx;
+}
+.title.data-v-eca06f3c {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  display: block;
+}
+.empty.data-v-eca06f3c {
+  color: #999;
+  font-size: 26rpx;
+}
+.comment-item.data-v-eca06f3c {
+  border-bottom: 1rpx solid #eee;
+  padding: 20rpx 0;
+}
+.user.data-v-eca06f3c {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+.item-star.data-v-eca06f3c {
+  margin: 6rpx 0;
+}
+.content.data-v-eca06f3c {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.6;
+  display: block;
+}
+.time.data-v-eca06f3c {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
