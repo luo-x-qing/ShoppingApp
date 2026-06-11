@@ -3,6 +3,7 @@ package com.example.ordermanagement.service;
 import com.example.ordermanagement.model.Attraction;
 import com.example.ordermanagement.repository.AttractionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,6 +16,9 @@ public class AttractionService {
 
     @Autowired
     private AmapService amapService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private static final Map<String, Map<String, List<String>>> BUILTIN_SCENIC_SPOTS = new LinkedHashMap<>();
 
@@ -426,5 +430,14 @@ public class AttractionService {
         summary.put("skipped", totalSkipped);
         results.add(summary);
         return results;
+    }
+
+    public Map<String, Object> resetAndImportAll() {
+        attractionRepository.deleteAll();
+        jdbcTemplate.execute("ALTER TABLE attraction AUTO_INCREMENT = 1");
+        List<Map<String, Object>> results = importAll();
+        Map<String, Object> summary = results.get(results.size() - 1);
+        summary.put("message", "已重置数据库，ID从1开始，共导入 " + summary.get("added") + " 个景点");
+        return summary;
     }
 }

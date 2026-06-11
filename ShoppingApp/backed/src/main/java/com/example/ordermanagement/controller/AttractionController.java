@@ -118,4 +118,10 @@ public class AttractionController {
     public ResponseEntity<List<Map<String, Object>>> importAll() {
         return ResponseEntity.ok(attractionService.importAll());
     }
+
+    // 重置并重新导入全国景点（ID从1开始）
+    @PostMapping("/reset-and-import")
+    public ResponseEntity<Map<String, Object>> resetAndImport() {
+        return ResponseEntity.ok(attractionService.resetAndImportAll());
+    }
 }

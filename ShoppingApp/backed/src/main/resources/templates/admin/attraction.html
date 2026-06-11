@@ -12,6 +12,7 @@
     <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addModal">添加景点</button>
     <button class="btn btn-info mb-3" onclick="autoFillCity()">自动填充城市（高德）</button>
     <button class="btn btn-success mb-3" onclick="importAll()">一键导入全国景点</button>
+    <button class="btn btn-danger mb-3" onclick="resetAndImport()">重置并重新导入（ID从1开始）</button>
 
     <table class="table table-bordered">
         <thead>
@@ -308,6 +309,22 @@
             },
             error: function(){
                 alert("导入失败，请查看后端日志");
+            }
+        });
+    }
+
+    // 重置并重新导入
+    function resetAndImport(){
+        if(!confirm("将清空所有景点数据并重新导入，ID从1开始，确定继续？")) return;
+        $.ajax({
+            url: "/api/attractions/reset-and-import",
+            type: "POST",
+            success: function(res){
+                alert(res.message);
+                loadAttractions();
+            },
+            error: function(){
+                alert("操作失败，请查看后端日志");
             }
         });
     }
