@@ -7,12 +7,16 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ScenicService {
 
     @Autowired
     private ScenicRepository scenicRepository;
+
+    @Autowired
+    private AmapService amapService;
 
     public List<Scenic> list() {
         return scenicRepository.findAll();
@@ -31,6 +35,17 @@ public class ScenicService {
             scenic.setCreateTime(LocalDateTime.now());
         }
         scenic.setUpdateTime(LocalDateTime.now());
+        if ((scenic.getCity() == null || scenic.getCity().isEmpty())
+                && scenic.getName() != null && !scenic.getName().isEmpty()) {
+            String address = scenic.getName();
+            if (scenic.getProvince() != null && !scenic.getProvince().isEmpty()) {
+                address = scenic.getName() + "," + scenic.getProvince();
+            }
+            Map<String, String> detail = amapService.geoDetail(address);
+            if (detail.containsKey("city") && !detail.get("city").isEmpty()) {
+                scenic.setCity(detail.get("city"));
+            }
+        }
         return scenicRepository.save(scenic);
     }
 

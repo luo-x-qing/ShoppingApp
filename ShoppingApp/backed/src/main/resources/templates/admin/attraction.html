@@ -297,4 +297,26 @@
     // 自动填充城市
     function autoFillCity(){
         if(!confirm("将通过高德API自动填充所有景点的城市信息，确定继续？")) return;
-        $.ajax
+        $.ajax({
+            url: "/api/attractions/auto-fill-city",
+            type: "POST",
+            success: function(res){
+                alert(res.message);
+                loadAttractions();
+            }
+        });
+    }
+
+    // 删除
+    function del(id){
+        if(confirm("确定删除？")){
+            $.ajax({
+                url: "/api/attractions/"+id,
+                type: "DELETE",
+                success: loadAttractions
+            });
+        }
+    }
+</script>
+</body>
+</html>
