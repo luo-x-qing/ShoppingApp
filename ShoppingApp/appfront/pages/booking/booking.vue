@@ -36,6 +36,7 @@
       <button class="submit-btn" @click="submitOrder">确认预订</button>
     </view>
   </view>
+    <RouteFloat/>
 </template>
 
 <script>

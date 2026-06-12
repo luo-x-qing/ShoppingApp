@@ -8,17 +8,27 @@ const _sfc_main = {
       images: [],
       comments: [],
       userScore: 5,
-      // 默认5星
-      commentContent: ""
+      commentContent: "",
+      routePlanCount: 0
     };
   },
   onLoad(options) {
     this.id = options.id;
     this.getDetail();
     this.getComments();
+    this.getRoutePlanCount();
+  },
+  onShow() {
+    this.getRoutePlanCount();
   },
   methods: {
-    // 获取景区详情（修复图片）
+    getRoutePlanKey() {
+      return "routePlan_" + (common_vendor.index.getStorageSync("loginUsername") || "default");
+    },
+    getRoutePlanCount() {
+      const spots = common_vendor.index.getStorageSync(this.getRoutePlanKey());
+      this.routePlanCount = Array.isArray(spots) ? spots.length : 0;
+    },
     getDetail() {
       common_vendor.index.request({
         url: `http://localhost:8080/api/attractions/${this.id}`,
@@ -32,7 +42,6 @@ const _sfc_main = {
         }
       });
     },
-    // 获取所有评论
     getComments() {
       common_vendor.index.request({
         url: `http://localhost:8080/api/comments/attraction/${this.id}`,
@@ -42,7 +51,6 @@ const _sfc_main = {
         }
       });
     },
-    // 计算平均分
     calcAvgScore() {
       if (this.comments.length === 0) {
         this.detail.score = 0;
@@ -57,30 +65,34 @@ const _sfc_main = {
         data: { score: avg }
       });
     },
-    // 选择星级
     selectStar(num) {
       this.userScore = num;
     },
-    // 加入购物车
-    addToCart() {
+    addToRoutePlan() {
       const username = common_vendor.index.getStorageSync("loginUsername");
       if (!username) {
         common_vendor.index.showToast({ title: "请先登录", icon: "none" });
         return;
       }
-      common_vendor.index.request({
-        url: "http://localhost:8080/api/cart/add-scenic",
-        method: "POST",
-        data: { username, scenicId: this.id, quantity: 1 },
-        success: () => {
-          common_vendor.index.showToast({ title: "已加入购物车" });
-        },
-        fail: () => {
-          common_vendor.index.showToast({ title: "添加失败", icon: "none" });
-        }
+      const key = this.getRoutePlanKey();
+      let spots = common_vendor.index.getStorageSync(key) || [];
+      if (!Array.isArray(spots))
+        spots = [];
+      if (spots.some((s) => s.id == this.id)) {
+        common_vendor.index.showToast({ title: "已在规划列表中", icon: "none" });
+        return;
+      }
+      spots.push({
+        id: this.id,
+        name: this.detail.name,
+        province: this.detail.province,
+        city: this.detail.city,
+        photo: this.detail.photo
       });
+      common_vendor.index.setStorageSync(key, spots);
+      this.routePlanCount = spots.length;
+      common_vendor.index.showToast({ title: "已加入旅游线路规划" });
     },
-    // 提交评论+星级到后端
     submitComment() {
       if (!this.commentContent.trim()) {
         common_vendor.index.showToast({ title: "请输入评价内容", icon: "none" });
@@ -131,7 +143,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     j: common_vendor.t($data.detail.openTime || "09:00-18:00"),
     k: common_vendor.t($data.detail.ticketPrice || 0),
     l: common_vendor.t($data.detail.description),
-    m: common_vendor.o((...args) => $options.addToCart && $options.addToCart(...args)),
+    m: common_vendor.o((...args) => $options.addToRoutePlan && $options.addToRoutePlan(...args)),
     n: common_vendor.f(5, (n, k0, i0) => {
       return {
         a: common_vendor.t(n <= $data.userScore ? "⭐" : "☆"),

@@ -11,7 +11,8 @@
     "pages/collection/collection",
     "pages/login-register/login-register",
     "pages/route-detail/route-detail",
-    "pages/cart/cart"
+    "pages/cart/cart",
+    "pages/ai-plan/ai-plan"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -42,6 +43,12 @@
         "selectedIconPath": "static/tab/机票.png"
       },
       {
+        "pagePath": "pages/ai-plan/ai-plan",
+        "text": "路线",
+        "iconPath": "static/tab/旅游景点.png",
+        "selectedIconPath": "static/tab/旅游景点.png"
+      },
+      {
         "pagePath": "pages/profile/profile",
         "text": "个人",
         "iconPath": "static/tab/个人.png",
@@ -54,5 +61,7 @@
       "desc": "需要设置收货地址"
     }
   },
-  "usingComponents": {}
+  "usingComponents": {
+    "route-float": "/components/RouteFloat"
+  }
 }

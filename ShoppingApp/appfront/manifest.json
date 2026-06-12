@@ -112,7 +112,7 @@
     "vueVersion" : "3",
     "h5" : {
         "devServer" : {
-            "port" : "http://172.26.242.128:8081"
+            "port" : 8081
         }
     }
 }

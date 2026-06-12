@@ -51,6 +51,7 @@
       <view v-if="commentList.length===0" class="empty">暂无评价</view>
     </view>
   </view>
+    <RouteFloat/>
 </template>
 
 <script>

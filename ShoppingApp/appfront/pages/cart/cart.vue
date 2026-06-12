@@ -38,6 +38,7 @@
       <button class="checkout-btn" @click="checkout">去结算</button>
     </view>
   </view>
+    <RouteFloat/>
 </template>
 
 <script>

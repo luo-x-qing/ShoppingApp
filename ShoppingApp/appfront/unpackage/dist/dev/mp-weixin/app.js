@@ -15,15 +15,14 @@ if (!Math) {
   "./pages/login-register/login-register.js";
   "./pages/route-detail/route-detail.js";
   "./pages/cart/cart.js";
+  "./pages/ai-plan/ai-plan.js";
 }
 const _sfc_main = {
-  created() {
-    const token = common_vendor.index.getStorageSync("token");
-    if (!token) {
-      common_vendor.index.redirectTo({
-        url: "/pages/login-register/login-register"
-      });
-    }
+  onLaunch() {
+  },
+  onShow() {
+  },
+  onHide() {
   }
 };
 if (!Array) {
@@ -34,9 +33,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {};
 }
 const App = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
+const RouteFloat = () => "./components/RouteFloat.js";
 function createApp() {
   const app = common_vendor.createSSRApp(App);
   app.config.globalProperties.$http = utils_http.http;
+  app.component("RouteFloat", RouteFloat);
   return {
     app
   };

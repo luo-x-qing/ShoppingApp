@@ -36,6 +36,191 @@ const provinceCityMap = {
   "澳门特别行政区": ["澳门"],
   "台湾省": ["台北市", "高雄市", "台中市", "台南市"]
 };
+const cityPinyinMap = {
+  "北京市": "beijing",
+  "天津市": "tianjin",
+  "上海市": "shanghai",
+  "重庆市": "chongqing",
+  "石家庄市": "shijiazhuang",
+  "唐山市": "tangshan",
+  "秦皇岛市": "qinhuangdao",
+  "邯郸市": "handan",
+  "保定市": "baoding",
+  "张家口市": "zhangjiakou",
+  "承德市": "chengde",
+  "太原市": "taiyuan",
+  "大同市": "datong",
+  "长治市": "changzhi",
+  "晋城市": "jincheng",
+  "晋中市": "jinzhong",
+  "运城市": "yuncheng",
+  "临汾市": "linfen",
+  "呼和浩特市": "huhehaote",
+  "包头市": "baotou",
+  "赤峰市": "chifeng",
+  "鄂尔多斯市": "eerduosi",
+  "呼伦贝尔市": "hulunbeier",
+  "沈阳市": "shenyang",
+  "大连市": "dalian",
+  "鞍山市": "anshan",
+  "抚顺市": "fushun",
+  "本溪市": "benxi",
+  "锦州市": "jinzhou",
+  "长春市": "changchun",
+  "吉林市": "jilin",
+  "四平市": "siping",
+  "延边朝鲜族自治州": "yanbian",
+  "哈尔滨市": "haerbin",
+  "齐齐哈尔市": "qiqihaer",
+  "牡丹江市": "mudanjiang",
+  "佳木斯市": "jiamusi",
+  "大庆市": "daqing",
+  "南京市": "nanjing",
+  "无锡市": "wuxi",
+  "徐州市": "xuzhou",
+  "苏州市": "suzhou",
+  "南通市": "nantong",
+  "扬州市": "yangzhou",
+  "镇江市": "zhenjiang",
+  "常州市": "changzhou",
+  "杭州市": "hangzhou",
+  "宁波市": "ningbo",
+  "温州市": "wenzhou",
+  "嘉兴市": "jiaxing",
+  "湖州市": "huzhou",
+  "绍兴市": "shaoxing",
+  "金华市": "jinhua",
+  "台州市": "taizhou",
+  "合肥市": "hefei",
+  "芜湖市": "wuhu",
+  "蚌埠市": "bengbu",
+  "黄山市": "huangshan",
+  "六安市": "luan",
+  "池州市": "chizhou",
+  "福州市": "fuzhou",
+  "厦门市": "xiamen",
+  "莆田市": "putian",
+  "泉州市": "quanzhou",
+  "漳州市": "zhangzhou",
+  "南平市": "nanping",
+  "龙岩市": "longyan",
+  "南昌市": "nanchang",
+  "景德镇市": "jingdezhen",
+  "九江市": "jiujiang",
+  "赣州市": "ganzhou",
+  "吉安市": "jian",
+  "宜春市": "yichun",
+  "上饶市": "shangrao",
+  "济南市": "jinan",
+  "青岛市": "qingdao",
+  "淄博市": "zibo",
+  "烟台市": "yantai",
+  "潍坊市": "weifang",
+  "济宁市": "jining",
+  "泰安市": "taian",
+  "威海市": "weihai",
+  "郑州市": "zhengzhou",
+  "开封市": "kaifeng",
+  "洛阳市": "luoyang",
+  "安阳市": "anyang",
+  "焦作市": "jiaozuo",
+  "南阳市": "nanyang",
+  "信阳市": "xinyang",
+  "武汉市": "wuhan",
+  "黄石市": "huangshi",
+  "宜昌市": "yichang",
+  "襄阳市": "xiangyang",
+  "荆州市": "jingzhou",
+  "十堰市": "shiyan",
+  "恩施土家族苗族自治州": "enshi",
+  "长沙市": "changsha",
+  "株洲市": "zhuzhou",
+  "湘潭市": "xiangtan",
+  "衡阳市": "hengyang",
+  "张家界市": "zhangjiajie",
+  "岳阳市": "yueyang",
+  "湘西土家族苗族自治州": "xiangxi",
+  "广州市": "guangzhou",
+  "深圳市": "shenzhen",
+  "珠海市": "zhuhai",
+  "汕头市": "shantou",
+  "佛山市": "foshan",
+  "韶关市": "shaoguan",
+  "东莞市": "dongguan",
+  "中山市": "zhongshan",
+  "惠州市": "huizhou",
+  "南宁市": "nanning",
+  "柳州市": "liuzhou",
+  "桂林市": "guilin",
+  "北海市": "beihai",
+  "防城港市": "fangchenggang",
+  "百色市": "baise",
+  "海口市": "haikou",
+  "三亚市": "sanya",
+  "三沙市": "sansha",
+  "成都市": "chengdu",
+  "自贡市": "zigong",
+  "攀枝花市": "panzhihua",
+  "泸州市": "luzhou",
+  "德阳市": "deyang",
+  "绵阳市": "mianyang",
+  "乐山市": "leshan",
+  "南充市": "nanchong",
+  "宜宾市": "yibin",
+  "阿坝藏族羌族自治州": "aba",
+  "甘孜藏族自治州": "ganzi",
+  "贵阳市": "guiyang",
+  "遵义市": "zunyi",
+  "安顺市": "anshun",
+  "黔东南苗族侗族自治州": "qiandongnan",
+  "黔南布依族苗族自治州": "qiannan",
+  "昆明市": "kunming",
+  "曲靖市": "qujing",
+  "保山市": "baoshan",
+  "丽江市": "lijiang",
+  "大理白族自治州": "dali",
+  "迪庆藏族自治州": "diqing",
+  "拉萨市": "lasa",
+  "日喀则市": "rikaze",
+  "林芝市": "linzhi",
+  "西安市": "xian",
+  "宝鸡市": "baoji",
+  "咸阳市": "xianyang",
+  "渭南市": "weinan",
+  "延安市": "yanan",
+  "汉中市": "hanzhong",
+  "兰州市": "lanzhou",
+  "嘉峪关市": "jiayuguan",
+  "天水市": "tianshui",
+  "张掖市": "zhangye",
+  "酒泉市": "jiuquan",
+  "甘南藏族自治州": "gannan",
+  "西宁市": "xining",
+  "海东市": "haidong",
+  "银川市": "yinchuan",
+  "石嘴山市": "shizuishan",
+  "吴忠市": "wuzhong",
+  "乌鲁木齐市": "wulumuqi",
+  "克拉玛依市": "kelamayi",
+  "吐鲁番市": "tulufan",
+  "伊犁哈萨克自治州": "yili",
+  "香港": "hongkong",
+  "澳门": "aomen",
+  "台北市": "taibei",
+  "高雄市": "gaoxiong",
+  "台中市": "taizhong",
+  "台南市": "tainan"
+};
+const citySearchList = [];
+for (const [province, cities] of Object.entries(provinceCityMap)) {
+  for (const city of cities) {
+    citySearchList.push({
+      province,
+      city,
+      pinyin: cityPinyinMap[city] || ""
+    });
+  }
+}
 const _sfc_main = {
   data() {
     return {
@@ -54,7 +239,8 @@ const _sfc_main = {
       ],
       spots: [],
       collectedSpots: [],
-      recommendedRoutes: []
+      recommendedRoutes: [],
+      suggestions: []
     };
   },
   computed: {
@@ -77,18 +263,44 @@ const _sfc_main = {
     this.getRecommendedRoutes();
   },
   methods: {
+    onInput() {
+      const kw = this.keyword.trim().toLowerCase();
+      if (!kw) {
+        this.suggestions = [];
+        return;
+      }
+      this.suggestions = citySearchList.filter(
+        (s) => s.city.includes(kw) || s.city.replace("市", "").includes(kw) || s.pinyin.includes(kw)
+      ).slice(0, 10);
+    },
+    selectCity(s) {
+      this.suggestions = [];
+      this.keyword = "";
+      const provIdx = this.provinceNames.indexOf(s.province);
+      if (provIdx > -1) {
+        this.selectedProvinceIndex = provIdx;
+        this.selectedProvince = s.province;
+        const cities = this.provinceCityMap[s.province] || [];
+        const cityIdx = cities.indexOf(s.city);
+        this.selectedCityIndex = cityIdx + 1;
+      }
+      this.getSpots();
+      this.getRecommendedRoutes();
+    },
     changeProvince(e) {
       const idx = e.detail.value;
       this.selectedProvince = this.provinceNames[idx];
       this.selectedProvinceIndex = idx;
       this.selectedCityIndex = 0;
       this.keyword = "";
+      this.suggestions = [];
       this.getSpots();
       this.getRecommendedRoutes();
     },
     changeCity(e) {
       this.selectedCityIndex = e.detail.value;
       this.keyword = "";
+      this.suggestions = [];
       this.getSpots();
     },
     getSpots() {
@@ -123,9 +335,17 @@ const _sfc_main = {
       });
     },
     searchSpot() {
-      const kw = this.keyword.trim();
+      this.suggestions = [];
+      const kw = this.keyword.trim().toLowerCase();
       if (!kw) {
         this.getSpots();
+        return;
+      }
+      const matched = citySearchList.find(
+        (s) => s.city.includes(kw) || s.pinyin === kw || s.pinyin.includes(kw)
+      );
+      if (matched) {
+        this.selectCity(matched);
         return;
       }
       const province = this.selectedProvince;
@@ -209,25 +429,40 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o((...args) => $options.searchSpot && $options.searchSpot(...args)),
-    b: $data.keyword,
-    c: common_vendor.o(($event) => $data.keyword = $event.detail.value),
+    a: common_vendor.o([($event) => $data.keyword = $event.detail.value, (...args) => $options.onInput && $options.onInput(...args)]),
+    b: common_vendor.o((...args) => $options.searchSpot && $options.searchSpot(...args)),
+    c: $data.keyword,
     d: common_vendor.o((...args) => $options.searchSpot && $options.searchSpot(...args)),
-    e: common_vendor.f($data.banners, (item, index, i0) => {
+    e: $data.suggestions.length > 0
+  }, $data.suggestions.length > 0 ? {
+    f: common_vendor.f($data.suggestions, (s, i, i0) => {
+      return common_vendor.e({
+        a: common_vendor.t(s.province),
+        b: common_vendor.t(s.city),
+        c: s.pinyin
+      }, s.pinyin ? {
+        d: common_vendor.t(s.pinyin)
+      } : {}, {
+        e: i,
+        f: common_vendor.o(($event) => $options.selectCity(s), i)
+      });
+    })
+  } : {}, {
+    g: common_vendor.f($data.banners, (item, index, i0) => {
       return {
         a: item.url,
         b: index
       };
     }),
-    f: common_vendor.t($data.selectedProvince),
-    g: $data.selectedProvinceIndex,
-    h: $data.provinceNames,
-    i: common_vendor.o((...args) => $options.changeProvince && $options.changeProvince(...args)),
-    j: common_vendor.t($options.selectedCity),
-    k: $data.selectedCityIndex,
-    l: $options.cityList,
-    m: common_vendor.o((...args) => $options.changeCity && $options.changeCity(...args)),
-    n: common_vendor.f($data.spots, (item, index, i0) => {
+    h: common_vendor.t($data.selectedProvince),
+    i: $data.selectedProvinceIndex,
+    j: $data.provinceNames,
+    k: common_vendor.o((...args) => $options.changeProvince && $options.changeProvince(...args)),
+    l: common_vendor.t($options.selectedCity),
+    m: $data.selectedCityIndex,
+    n: $options.cityList,
+    o: common_vendor.o((...args) => $options.changeCity && $options.changeCity(...args)),
+    p: common_vendor.f($data.spots, (item, index, i0) => {
       return {
         a: item.image,
         b: common_vendor.t(item.name),
@@ -237,10 +472,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         f: common_vendor.o(($event) => $options.goToDetail(item.id), index)
       };
     }),
-    o: $data.recommendedRoutes.length > 0
+    q: $data.recommendedRoutes.length > 0
   }, $data.recommendedRoutes.length > 0 ? {
-    p: common_vendor.t($options.selectedCity !== "全部城市" ? $options.selectedCity : $data.selectedProvince),
-    q: common_vendor.f($data.recommendedRoutes, (route, index, i0) => {
+    r: common_vendor.t($options.selectedCity !== "全部城市" ? $options.selectedCity : $data.selectedProvince),
+    s: common_vendor.f($data.recommendedRoutes, (route, index, i0) => {
       return common_vendor.e({
         a: common_vendor.t(route.name),
         b: common_vendor.t(route.price),

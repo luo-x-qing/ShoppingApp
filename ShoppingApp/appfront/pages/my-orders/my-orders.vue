@@ -53,6 +53,7 @@
       </view>
     </view>
   </view>
+    <RouteFloat/>
 </template>
 
 <script>

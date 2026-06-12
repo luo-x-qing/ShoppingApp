@@ -78,6 +78,12 @@
             "style": {
                 "navigationBarTitleText": "购物车"
             }
+        },
+        {
+            "path": "pages/ai-plan/ai-plan",
+            "style": {
+                "navigationBarTitleText": "AI路线规划"
+            }
         }
     ],
     "globalStyle": {
@@ -107,6 +113,12 @@
                 "text": "购票",
                 "iconPath": "static/tab/机票.png",
                 "selectedIconPath": "static/tab/机票.png"
+            },
+            {
+                "pagePath": "pages/ai-plan/ai-plan",
+                "text": "路线",
+                "iconPath": "static/tab/旅游景点.png",
+                "selectedIconPath": "static/tab/旅游景点.png"
             },
             {
                 "pagePath": "pages/profile/profile",

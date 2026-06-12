@@ -50,6 +50,7 @@
 
     <button class="submit-btn" @click="submitOrder">提交订单</button>
   </view>
+    <RouteFloat/>
 </template>
 
 <script>

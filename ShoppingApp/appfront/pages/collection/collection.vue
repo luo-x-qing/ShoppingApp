@@ -44,6 +44,7 @@
       </view>
     </scroll-view>
   </view>
+    <RouteFloat/>
 </template>
 
 <script>

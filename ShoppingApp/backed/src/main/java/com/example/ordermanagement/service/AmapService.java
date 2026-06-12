@@ -16,14 +16,15 @@ public class AmapService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @SuppressWarnings("unchecked")
     public String geo(String address) {
         try {
             String addr = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
             String url = "https://restapi.amap.com/v3/geocode/geo?address="
                     + addr + "&key=" + amapKey;
-            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             if (response != null && "1".equals(response.get("status"))) {
-                List<Map> geocodes = (List<Map>) response.get("geocodes");
+                List<Map<String, Object>> geocodes = (List<Map<String, Object>>) response.get("geocodes");
                 if (geocodes != null && !geocodes.isEmpty()) {
                     return (String) geocodes.get(0).get("location");
                 }
@@ -35,6 +36,7 @@ public class AmapService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> drivingRoute(String[] spotNames) {
         Map<String, Object> result = new HashMap<>();
         try {
@@ -61,12 +63,12 @@ public class AmapService {
                 url += "&waypoints=" + waypoints;
             }
 
-            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             if (response != null && "1".equals(response.get("status"))) {
-                Map<?, ?> route = (Map<?, ?>) ((List<?>) response.get("route")).get(0);
-                List<Map> paths = (List<Map>) route.get("paths");
+                Map<String, Object> route = (Map<String, Object>) ((List<?>) response.get("route")).get(0);
+                List<Map<String, Object>> paths = (List<Map<String, Object>>) route.get("paths");
                 if (paths != null && !paths.isEmpty()) {
-                    Map path = paths.get(0);
+                    Map<String, Object> path = paths.get(0);
                     result.put("distance", path.get("distance"));
                     result.put("duration", path.get("duration"));
                     result.put("polyline", path.get("polyline"));
@@ -93,17 +95,18 @@ public class AmapService {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, String> geoDetail(String address) {
         Map<String, String> detail = new HashMap<>();
         try {
             String addr = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
             String url = "https://restapi.amap.com/v3/geocode/geo?address="
                     + addr + "&key=" + amapKey;
-            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             if (response != null && "1".equals(response.get("status"))) {
-                List<Map> geocodes = (List<Map>) response.get("geocodes");
+                List<Map<String, Object>> geocodes = (List<Map<String, Object>>) response.get("geocodes");
                 if (geocodes != null && !geocodes.isEmpty()) {
-                    Map geo = geocodes.get(0);
+                    Map<String, Object> geo = geocodes.get(0);
                     detail.put("province", (String) geo.getOrDefault("province", ""));
                     Object cityObj = geo.get("city");
                     if (cityObj instanceof String && !((String) cityObj).isEmpty()) {

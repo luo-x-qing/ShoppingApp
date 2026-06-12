@@ -33,7 +33,7 @@
 
       <text class="desc-title">景区介绍</text>
       <text class="desc">{{ detail.description }}</text>
-      <button class="add-cart-btn" @click="addToCart">加入购物车</button>
+      <button class="add-route-btn" @click="addToRoutePlan">加入旅游线路</button>
     </view>
 
     <!-- 发布评论：星级选择 + 内容输入 -->
@@ -71,7 +71,9 @@
         <text class="time">{{ item.createTime }}</text>
       </view>
     </view>
+
   </view>
+    <RouteFloat/>
 </template>
 
 <script>
@@ -82,8 +84,9 @@ export default {
       detail: {},
       images: [],
       comments: [],
-      userScore: 5, // 默认5星
-      commentContent: ""
+      userScore: 5,
+      commentContent: "",
+      routePlanCount: 0
     };
   },
 
@@ -91,16 +94,28 @@ export default {
     this.id = options.id;
     this.getDetail();
     this.getComments();
+    this.getRoutePlanCount();
+  },
+
+  onShow() {
+    this.getRoutePlanCount();
   },
 
   methods: {
-    // 获取景区详情（修复图片）
+    getRoutePlanKey() {
+      return "routePlan_" + (uni.getStorageSync("loginUsername") || "default");
+    },
+
+    getRoutePlanCount() {
+      const spots = uni.getStorageSync(this.getRoutePlanKey());
+      this.routePlanCount = Array.isArray(spots) ? spots.length : 0;
+    },
+
     getDetail() {
       uni.request({
         url: `http://localhost:8080/api/attractions/${this.id}`,
         success: (res) => {
           this.detail = res.data;
-          // 兼容单张/多张图片
           if (res.data.images && res.data.images.length > 0) {
             this.images = res.data.images.map(img => "http://localhost:8080" + img.url);
           } else if (res.data.photo) {
@@ -110,19 +125,16 @@ export default {
       });
     },
 
-    // 获取所有评论
     getComments() {
       uni.request({
         url: `http://localhost:8080/api/comments/attraction/${this.id}`,
         success: (res) => {
           this.comments = res.data;
-          // 自动计算平均分并更新景区评分
           this.calcAvgScore();
         }
       });
     },
 
-    // 计算平均分
     calcAvgScore() {
       if (this.comments.length === 0) {
         this.detail.score = 0;
@@ -132,7 +144,6 @@ export default {
       const avg = total / this.comments.length;
       this.detail.score = avg;
 
-      // 同步更新后端景区评分
       uni.request({
         url: `http://localhost:8080/api/attractions/${this.id}/score`,
         method: "PUT",
@@ -140,32 +151,35 @@ export default {
       });
     },
 
-    // 选择星级
     selectStar(num) {
       this.userScore = num;
     },
 
-    // 加入购物车
-    addToCart() {
+    addToRoutePlan() {
       const username = uni.getStorageSync("loginUsername");
       if (!username) {
         uni.showToast({ title: "请先登录", icon: "none" });
         return;
       }
-      uni.request({
-        url: "http://localhost:8080/api/cart/add-scenic",
-        method: "POST",
-        data: { username, scenicId: this.id, quantity: 1 },
-        success: () => {
-          uni.showToast({ title: "已加入购物车" });
-        },
-        fail: () => {
-          uni.showToast({ title: "添加失败", icon: "none" });
-        }
+      const key = this.getRoutePlanKey();
+      let spots = uni.getStorageSync(key) || [];
+      if (!Array.isArray(spots)) spots = [];
+      if (spots.some(s => s.id == this.id)) {
+        uni.showToast({ title: "已在规划列表中", icon: "none" });
+        return;
+      }
+      spots.push({
+        id: this.id,
+        name: this.detail.name,
+        province: this.detail.province,
+        city: this.detail.city,
+        photo: this.detail.photo
       });
+      uni.setStorageSync(key, spots);
+      this.routePlanCount = spots.length;
+      uni.showToast({ title: "已加入旅游线路规划" });
     },
 
-    // 提交评论+星级到后端
     submitComment() {
       if (!this.commentContent.trim()) {
         uni.showToast({ title: "请输入评价内容", icon: "none" });
@@ -185,7 +199,7 @@ export default {
           uni.showToast({ title: "评价提交成功" });
           this.commentContent = "";
           this.userScore = 5;
-          this.getComments(); // 刷新评论&平均分
+          this.getComments();
         }
       });
     }
@@ -253,9 +267,9 @@ page {
   color: #666;
   line-height: 1.6;
 }
-.add-cart-btn {
+.add-route-btn {
   width: 100%;
-  background: #ff9800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   border-radius: 8rpx;
   padding: 16rpx 0;

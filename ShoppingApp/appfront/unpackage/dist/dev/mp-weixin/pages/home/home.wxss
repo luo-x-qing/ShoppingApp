@@ -48,6 +48,46 @@ page.data-v-07e72d3c {
   height: 100%;
 }
 
+/* 城市建议下拉 */
+.suggestions.data-v-07e72d3c {
+  position: absolute;
+  top: 90rpx;
+  left: 20rpx;
+  right: 20rpx;
+  background: #fff;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  max-height: 500rpx;
+  overflow-y: auto;
+  z-index: 999;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.15);
+}
+.suggestion-item.data-v-07e72d3c {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.suggestion-item.data-v-07e72d3c:active {
+  background: #f0f7ff;
+}
+.suggestion-province.data-v-07e72d3c {
+  font-size: 22rpx;
+  color: #999;
+  margin-right: 12rpx;
+  min-width: 80rpx;
+}
+.suggestion-city.data-v-07e72d3c {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+.suggestion-pinyin.data-v-07e72d3c {
+  font-size: 22rpx;
+  color: #aaa;
+  margin-left: 8rpx;
+}
+
 /* 省份+城市选择器行 */
 .select-row.data-v-07e72d3c {
   display: flex;

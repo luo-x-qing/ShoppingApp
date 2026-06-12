@@ -58,9 +58,9 @@ page.data-v-eca06f3c {
   color: #666;
   line-height: 1.6;
 }
-.add-cart-btn.data-v-eca06f3c {
+.add-route-btn.data-v-eca06f3c {
   width: 100%;
-  background: #ff9800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   border-radius: 8rpx;
   padding: 16rpx 0;
