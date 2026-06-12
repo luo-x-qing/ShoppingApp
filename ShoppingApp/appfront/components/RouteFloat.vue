@@ -12,13 +12,12 @@
       </view>
       <scroll-view class="panel-list" scroll-y>
         <view v-if="spots.length === 0" class="panel-empty">暂无景点</view>
-        <view class="panel-item" v-for="(s, i) in spots" :key="s.id">
+        <view class="panel-item" v-for="(s, i) in spots" :key="s.id" @tap="confirmRemove(i)">
           <text class="panel-index">{{ i + 1 }}</text>
           <view class="panel-info">
             <text class="panel-name">{{ s.name }}</text>
             <text class="panel-location">{{ s.province }} {{ s.city }}</text>
           </view>
-          <text class="panel-remove" @click.stop="removeSpot(i)">✕</text>
         </view>
       </scroll-view>
       <view class="panel-footer">
@@ -56,9 +55,18 @@ export default {
       this.showPanel = !this.showPanel;
       if (this.showPanel) this.loadSpots();
     },
-    removeSpot(i) {
-      this.spots.splice(i, 1);
-      uni.setStorageSync(this.getKey(), this.spots);
+    confirmRemove(i) {
+      const spot = this.spots[i];
+      uni.showModal({
+        title: '提示',
+        content: `从路线中移除「${spot.name}」吗？`,
+        success: (res) => {
+          if (res.confirm) {
+            this.spots.splice(i, 1);
+            uni.setStorageSync(this.getKey(), this.spots);
+          }
+        }
+      });
     },
     clearAll() {
       this.spots = [];
@@ -152,10 +160,10 @@ export default {
   padding: 40rpx 0;
 }
 .panel-item {
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
   display: flex;
   align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
 }
 .panel-index {
   width: 36rpx;
@@ -166,29 +174,29 @@ export default {
   text-align: center;
   line-height: 36rpx;
   font-size: 20rpx;
-  margin-right: 14rpx;
   flex-shrink: 0;
+  margin-right: 10rpx;
 }
 .panel-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 .panel-name {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 500;
-  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .panel-location {
   font-size: 22rpx;
   color: #999;
-  margin-top: 4rpx;
-  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.panel-remove {
-  width: 40rpx;
-  text-align: center;
-  color: #ff4d4f;
-  font-size: 28rpx;
-}
+
 .panel-footer {
   padding: 20rpx 30rpx 40rpx;
 }

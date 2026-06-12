@@ -40,6 +40,10 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_RouteFloat = common_vendor.resolveComponent("RouteFloat");
+  _component_RouteFloat();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.n($data.tab === 0 ? "active" : ""),

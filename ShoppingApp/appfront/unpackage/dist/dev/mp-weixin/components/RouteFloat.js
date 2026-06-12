@@ -29,9 +29,18 @@ const _sfc_main = {
       if (this.showPanel)
         this.loadSpots();
     },
-    removeSpot(i) {
-      this.spots.splice(i, 1);
-      common_vendor.index.setStorageSync(this.getKey(), this.spots);
+    confirmRemove(i) {
+      const spot = this.spots[i];
+      common_vendor.index.showModal({
+        title: "提示",
+        content: `从路线中移除「${spot.name}」吗？`,
+        success: (res) => {
+          if (res.confirm) {
+            this.spots.splice(i, 1);
+            common_vendor.index.setStorageSync(this.getKey(), this.spots);
+          }
+        }
+      });
     },
     clearAll() {
       this.spots = [];
@@ -66,8 +75,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t(s.name),
         c: common_vendor.t(s.province),
         d: common_vendor.t(s.city),
-        e: common_vendor.o(($event) => $options.removeSpot(i), s.id),
-        f: s.id
+        e: s.id,
+        f: common_vendor.o(($event) => $options.confirmRemove(i), s.id)
       };
     }),
     k: common_vendor.o((...args) => $options.goToFullPlan && $options.goToFullPlan(...args))

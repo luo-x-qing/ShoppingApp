@@ -62,6 +62,10 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_RouteFloat = common_vendor.resolveComponent("RouteFloat");
+  _component_RouteFloat();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: common_vendor.t($data.form.flightNumber || "请选择航班"),

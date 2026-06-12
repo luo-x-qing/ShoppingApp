@@ -19,10 +19,27 @@ if (!Math) {
 }
 const _sfc_main = {
   onLaunch() {
+    this.checkLogin();
   },
   onShow() {
+    this.checkLogin();
   },
   onHide() {
+  },
+  methods: {
+    checkLogin() {
+      const token = common_vendor.index.getStorageSync("token");
+      if (!token) {
+        const pages = getCurrentPages();
+        if (pages.length > 0) {
+          const route = pages[pages.length - 1].route;
+          if (route === "pages/login-register/login-register") {
+            return;
+          }
+        }
+        common_vendor.index.reLaunch({ url: "/pages/login-register/login-register" });
+      }
+    }
   }
 };
 if (!Array) {

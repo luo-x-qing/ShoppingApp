@@ -78,10 +78,10 @@
   padding: 40rpx 0;
 }
 .panel-item.data-v-6b8d0a73 {
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
   display: flex;
   align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
 }
 .panel-index.data-v-6b8d0a73 {
   width: 36rpx;
@@ -92,28 +92,27 @@
   text-align: center;
   line-height: 36rpx;
   font-size: 20rpx;
-  margin-right: 14rpx;
   flex-shrink: 0;
+  margin-right: 10rpx;
 }
 .panel-info.data-v-6b8d0a73 {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 .panel-name.data-v-6b8d0a73 {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 500;
-  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .panel-location.data-v-6b8d0a73 {
   font-size: 22rpx;
   color: #999;
-  margin-top: 4rpx;
-  display: block;
-}
-.panel-remove.data-v-6b8d0a73 {
-  width: 40rpx;
-  text-align: center;
-  color: #ff4d4f;
-  font-size: 28rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .panel-footer.data-v-6b8d0a73 {
   padding: 20rpx 30rpx 40rpx;

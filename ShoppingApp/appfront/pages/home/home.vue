@@ -115,6 +115,7 @@
       </view>
     </view>
     <RouteFloat/>
+    </view>
   </view>
 </template>
 
