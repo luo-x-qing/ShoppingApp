@@ -45,7 +45,7 @@
             @click="goToScenic(rs.scenic.id)"
           >
             <image
-              :src="'http://localhost:8080' + (rs.scenic.photo || '')"
+              :src="rs.scenic.photo ? (rs.scenic.photo.startsWith('http') ? rs.scenic.photo : 'http://localhost:8080' + rs.scenic.photo) : '/static/home/6.jpg'"
               class="scenic-img"
               mode="aspectFill"
             />

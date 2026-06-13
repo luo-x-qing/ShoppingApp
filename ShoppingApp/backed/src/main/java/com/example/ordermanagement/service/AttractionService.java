@@ -2,9 +2,15 @@ package com.example.ordermanagement.service;
 
 import com.example.ordermanagement.model.Attraction;
 import com.example.ordermanagement.repository.AttractionRepository;
+import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -92,5 +98,120 @@ public class AttractionService {
     // 按城市搜索景点
     public List<Attraction> searchByCityAndName(String city, String name){
         return attractionRepository.findByCityAndNameContaining(city, name);
+    }
+
+    public int importAll() {
+        String[] provinces = {
+            "北京市", "上海市", "天津市", "重庆市",
+            "河北省", "山西省", "辽宁省", "吉林省", "黑龙江省",
+            "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省",
+            "河南省", "湖北省", "湖南省", "广东省", "海南省",
+            "四川省", "贵州省", "云南省", "陕西省", "甘肃省", "青海省",
+            "台湾省", "内蒙古自治区", "广西壮族自治区", "西藏自治区", "宁夏回族自治区",
+            "新疆维吾尔自治区", "香港特别行政区", "澳门特别行政区"
+        };
+
+        int added = 0;
+        for (String province : provinces) {
+            for (int page = 1; page <= 5; page++) {
+                List<Map<String, Object>> pois = amapService.searchPoi("060000", province, page, 50);
+                if (pois.isEmpty()) break;
+                for (Map<String, Object> poi : pois) {
+                    try {
+                        String name = (String) poi.get("name");
+                        String pname = (String) poi.getOrDefault("pname", province);
+                        if (attractionRepository.findByNameAndProvince(name, pname) != null) continue;
+
+                        Attraction a = new Attraction();
+                        a.setName(name);
+                        a.setProvince(pname);
+
+                        Object cityObj = poi.get("cityname");
+                        a.setCity(cityObj instanceof String ? (String) cityObj : "");
+
+                        String typeStr = (String) poi.getOrDefault("type", "");
+                        if (!typeStr.isEmpty()) {
+                            String[] parts = typeStr.split(";");
+                            a.setType(parts.length > 1 ? parts[1] : parts[0]);
+                        }
+
+                        Object ratingObj = poi.get("rating");
+                        if (ratingObj != null) {
+                            try { a.setScore(Double.parseDouble(ratingObj.toString())); }
+                            catch (NumberFormatException e) { a.setScore(4.0); }
+                        } else { a.setScore(4.0); }
+
+                        Object costObj = poi.get("cost");
+                        if (costObj != null) {
+                            try { a.setTicketPrice(Double.parseDouble(costObj.toString())); }
+                            catch (NumberFormatException e) { a.setTicketPrice(0.0); }
+                        } else { a.setTicketPrice(0.0); }
+
+                        a.setOpenTime((String) poi.getOrDefault("opentime", ""));
+
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> photos = (List<Map<String, Object>>) poi.get("photos");
+                        if (photos != null && !photos.isEmpty()) {
+                            String photoUrl = (String) photos.get(0).get("url");
+                            a.setPhoto(photoUrl);
+                        }
+
+                        a.setLevel("");
+
+                        attractionRepository.save(a);
+                        added++;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        }
+        return added;
+    }
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Transactional
+    public void resetAndRenumber() {
+        long count = attractionRepository.count();
+        if (count == 0) return;
+
+        Session session = entityManager.unwrap(Session.class);
+        session.doWork((Connection conn) -> {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("SET FOREIGN_KEY_CHECKS = 0");
+
+                stmt.execute("DROP TEMPORARY TABLE IF EXISTS _id_map");
+                stmt.execute("CREATE TEMPORARY TABLE _id_map (" +
+                        "  old_id BIGINT NOT NULL, new_id BIGINT NOT NULL, PRIMARY KEY (old_id))");
+
+                stmt.execute("INSERT INTO _id_map (old_id, new_id) " +
+                        "SELECT t.id, @rownum := @rownum + 1 " +
+                        "FROM attraction t, (SELECT @rownum := 0) r " +
+                        "ORDER BY IFNULL(t.province,''), IFNULL(t.city,''), t.name");
+
+                stmt.execute("UPDATE comment c " +
+                        "INNER JOIN _id_map m ON c.attraction_id = m.old_id " +
+                        "SET c.attraction_id = m.new_id");
+
+                stmt.execute("UPDATE score s " +
+                        "INNER JOIN _id_map m ON s.attraction_id = m.old_id " +
+                        "SET s.attraction_id = m.new_id");
+
+                stmt.execute("CREATE TABLE _attraction_new LIKE attraction");
+                stmt.execute("INSERT INTO _attraction_new (id, name, province, city, photo, score, ticket_price, `type`, `level`, open_time, description) " +
+                        "SELECT m.new_id, a.name, a.province, a.city, a.photo, a.score, a.ticket_price, a.type, a.level, a.open_time, a.description " +
+                        "FROM attraction a INNER JOIN _id_map m ON a.id = m.old_id");
+                stmt.execute("DROP TABLE attraction");
+                stmt.execute("RENAME TABLE _attraction_new TO attraction");
+
+                stmt.execute("DROP TEMPORARY TABLE IF EXISTS _id_map");
+                stmt.execute("ALTER TABLE attraction AUTO_INCREMENT = 1");
+
+                stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
+            }
+        });
     }
 }

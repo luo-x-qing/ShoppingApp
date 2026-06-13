@@ -96,6 +96,25 @@ public class AttractionController {
         return ResponseEntity.ok(attractionService.saveAttraction(exist));
     }
 
+    // 一键导入全国景点（从高德API实时拉取）
+    @PostMapping("/import-all")
+    public ResponseEntity<Map<String, Object>> importAll() {
+        int added = attractionService.importAll();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("added", added);
+        result.put("message", "成功从高德API导入 " + added + " 个新景点");
+        return ResponseEntity.ok(result);
+    }
+
+    // 清空所有景点并重置ID编号（从1开始）
+    @PostMapping("/reset-and-renumber")
+    public ResponseEntity<Map<String, Object>> resetAndRenumber() {
+        attractionService.resetAndRenumber();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("message", "重新编号成功，同省同市景点已连续编号");
+        return ResponseEntity.ok(result);
+    }
+
     // 自动补全所有景点的城市信息（通过高德API）
     @PostMapping("/auto-fill-city")
     public ResponseEntity<Map<String, Object>> autoFillCity() {

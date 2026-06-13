@@ -323,7 +323,8 @@ const _sfc_main = {
           this.spots = res.data.map((item) => ({
             id: item.id,
             name: item.name,
-            image: "http://localhost:8080" + item.photo,
+            image: item.photo ? item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo : "/static/home/6.jpg",
+            ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
             isCollected: this.collectedSpots.some((i) => i.id === item.id)
@@ -366,7 +367,8 @@ const _sfc_main = {
           this.spots = res.data.map((item) => ({
             id: item.id,
             name: item.name,
-            image: "http://localhost:8080" + item.photo,
+            image: item.photo ? item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo : "/static/home/6.jpg",
+            ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
             isCollected: this.collectedSpots.some((i) => i.id === item.id)
@@ -467,14 +469,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     n: $options.cityList,
     o: common_vendor.o((...args) => $options.changeCity && $options.changeCity(...args)),
     p: common_vendor.f($data.spots, (item, index, i0) => {
-      return {
+      return common_vendor.e({
         a: item.image,
         b: common_vendor.t(item.name),
-        c: common_vendor.t(item.isCollected ? "★ 已收藏" : "☆ 收藏"),
-        d: common_vendor.o(($event) => $options.toggleCollect(item), index),
-        e: index,
-        f: common_vendor.o(($event) => $options.goToDetail(item.id), index)
-      };
+        c: item.ticketPrice != null
+      }, item.ticketPrice != null ? {
+        d: common_vendor.t(item.ticketPrice)
+      } : {}, {
+        e: common_vendor.t(item.isCollected ? "★ 已收藏" : "☆ 收藏"),
+        f: common_vendor.o(($event) => $options.toggleCollect(item), index),
+        g: index,
+        h: common_vendor.o(($event) => $options.goToDetail(item.id), index)
+      });
     }),
     q: $data.recommendedRoutes.length > 0
   }, $data.recommendedRoutes.length > 0 ? {

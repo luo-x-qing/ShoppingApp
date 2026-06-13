@@ -123,4 +123,28 @@ public class AmapService {
         }
         return detail;
     }
+
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> searchPoi(String types, String city, int page, int offset) {
+        try {
+            String url = "https://restapi.amap.com/v3/place/text?key=" + amapKey
+                    + "&types=" + types
+                    + "&offset=" + offset
+                    + "&page=" + page
+                    + "&extensions=all";
+            if (city != null && !city.isEmpty()) {
+                url += "&city=" + URLEncoder.encode(city, StandardCharsets.UTF_8.toString());
+            }
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            if (response != null && "1".equals(response.get("status"))) {
+                Object pois = response.get("pois");
+                if (pois instanceof List) {
+                    return (List<Map<String, Object>>) pois;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
+    }
 }

@@ -15,7 +15,11 @@ public class Attraction {
     private String province;
     private String city;
     private String photo;
-    private Double score; // 总评分
+    private Double score;
+    private Double ticketPrice;
+    private String type;
+    private String level;
+    private String openTime;
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -39,4 +43,12 @@ public class Attraction {
     public void setPhoto(String photo) { this.photo = photo; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public Double getTicketPrice() { return ticketPrice; }
+    public void setTicketPrice(Double ticketPrice) { this.ticketPrice = ticketPrice; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    public String getLevel() { return level; }
+    public void setLevel(String level) { this.level = level; }
+    public String getOpenTime() { return openTime; }
+    public void setOpenTime(String openTime) { this.openTime = openTime; }
 }

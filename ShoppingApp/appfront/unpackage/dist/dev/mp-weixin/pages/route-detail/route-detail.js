@@ -116,7 +116,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         a: common_vendor.t(day.dayNumber),
         b: common_vendor.f(day.scenics, (rs, k1, i1) => {
           return {
-            a: "http://localhost:8080" + (rs.scenic.photo || ""),
+            a: rs.scenic.photo ? rs.scenic.photo.startsWith("http") ? rs.scenic.photo : "http://localhost:8080" + rs.scenic.photo : "/static/home/6.jpg",
             b: common_vendor.t(rs.scenic.name),
             c: common_vendor.t(rs.scenic.description),
             d: common_vendor.t(rs.scenic.ticketPrice || 0),

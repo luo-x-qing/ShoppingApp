@@ -35,6 +35,48 @@ public class ScenicService {
             scenic.setCreateTime(LocalDateTime.now());
         }
         scenic.setUpdateTime(LocalDateTime.now());
+        autoFillCity(scenic);
+        return scenicRepository.save(scenic);
+    }
+
+    public Scenic getById(Long id) {
+        return scenicRepository.findById(id).orElse(null);
+    }
+
+    public Scenic update(Long id, Scenic scenic) {
+        Scenic existing = getById(id);
+        if (existing == null) return null;
+        scenic.setId(id);
+        scenic.setCreateTime(existing.getCreateTime());
+        scenic.setUpdateTime(LocalDateTime.now());
+        autoFillCity(scenic);
+        return scenicRepository.save(scenic);
+    }
+
+    public void delete(Long id) {
+        scenicRepository.deleteById(id);
+    }
+
+    public List<Scenic> search(String province, String city, String name) {
+        if (name != null && !name.isEmpty()) {
+            if (city != null && !city.isEmpty()) {
+                return scenicRepository.findByCityAndNameContaining(city, name);
+            }
+            if (province != null && !province.isEmpty()) {
+                return scenicRepository.findByProvinceAndNameContaining(province, name);
+            }
+            return scenicRepository.findByNameContaining(name);
+        }
+        if (city != null && !city.isEmpty()) {
+            return scenicRepository.findByCity(city);
+        }
+        if (province != null && !province.isEmpty()) {
+            return scenicRepository.findByProvince(province);
+        }
+        return scenicRepository.findAll();
+    }
+
+    private void autoFillCity(Scenic scenic) {
         if ((scenic.getCity() == null || scenic.getCity().isEmpty())
                 && scenic.getName() != null && !scenic.getName().isEmpty()) {
             String address = scenic.getName();
@@ -46,14 +88,5 @@ public class ScenicService {
                 scenic.setCity(detail.get("city"));
             }
         }
-        return scenicRepository.save(scenic);
-    }
-
-    public Scenic getById(Long id) {
-        return scenicRepository.findById(id).orElse(null);
-    }
-
-    public void delete(Long id) {
-        scenicRepository.deleteById(id);
     }
 }

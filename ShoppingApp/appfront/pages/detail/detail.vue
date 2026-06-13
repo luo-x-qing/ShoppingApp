@@ -25,10 +25,10 @@
       <view class="attrs">
         <text class="attr">📍 省份：{{ detail.province }}</text>
         <text class="attr" v-if="detail.city">🏙 城市：{{ detail.city }}</text>
-        <text class="attr">🏷 类型：{{ detail.type || "自然景区" }}</text>
-        <text class="attr">⭐ 等级：{{ detail.level || "AAAA级" }}</text>
-        <text class="attr">🕒 开放：{{ detail.openTime || "09:00-18:00" }}</text>
-        <text class="attr">🎫 门票：¥{{ detail.ticketPrice || 0 }}</text>
+        <text class="attr">🏷 类型：{{ detail.type || "未分类" }}</text>
+        <text class="attr">⭐ 等级：{{ detail.level || "未评级" }}</text>
+        <text class="attr">🕒 开放：{{ detail.openTime || "待确认" }}</text>
+        <text class="attr">🎫 门票：¥{{ detail.ticketPrice != null ? detail.ticketPrice : "待确认" }}</text>
       </view>
 
       <text class="desc-title">景区介绍</text>
@@ -116,10 +116,11 @@ export default {
         url: `http://localhost:8080/api/attractions/${this.id}`,
         success: (res) => {
           this.detail = res.data;
-          if (res.data.images && res.data.images.length > 0) {
-            this.images = res.data.images.map(img => "http://localhost:8080" + img.url);
-          } else if (res.data.photo) {
-            this.images = ["http://localhost:8080" + res.data.photo];
+          if (res.data.photo) {
+            this.images = [res.data.photo.startsWith("http") ? res.data.photo : "http://localhost:8080" + res.data.photo];
+          }
+          if (this.images.length === 0) {
+            this.images = ["/static/home/6.jpg"];
           }
         }
       });

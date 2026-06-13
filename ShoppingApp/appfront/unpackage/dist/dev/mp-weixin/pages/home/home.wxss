@@ -137,14 +137,22 @@ page.data-v-07e72d3c {
   height: 300rpx;
 }
 .card-info.data-v-07e72d3c {
+  padding: 20rpx;
+}
+.card-name-row.data-v-07e72d3c {
   display: flex;
   justify-content: space-between;
-  padding: 20rpx;
   align-items: center;
+  margin-bottom: 8rpx;
 }
 .card-name.data-v-07e72d3c {
   font-size: 30rpx;
   font-weight: 500;
+}
+.card-price.data-v-07e72d3c {
+  font-size: 28rpx;
+  color: #ff4d4f;
+  font-weight: bold;
 }
 .collect-text.data-v-07e72d3c {
   font-size: 26rpx;

@@ -78,7 +78,10 @@
       >
         <image :src="item.image" class="card-img" mode="aspectFill" />
         <view class="card-info">
-          <text class="card-name">{{ item.name }}</text>
+          <view class="card-name-row">
+            <text class="card-name">{{ item.name }}</text>
+            <text class="card-price" v-if="item.ticketPrice != null">¥{{ item.ticketPrice }}</text>
+          </view>
           <view @click.stop="toggleCollect(item)">
             <text class="collect-text">
               {{ item.isCollected ? '★ 已收藏' : '☆ 收藏' }}
@@ -339,7 +342,8 @@ export default {
           this.spots = res.data.map(item => ({
             id: item.id,
             name: item.name,
-            image: "http://localhost:8080" + item.photo,
+            image: item.photo ? (item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo) : "/static/home/6.jpg",
+            ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
             isCollected: this.collectedSpots.some(i => i.id === item.id)
@@ -385,7 +389,8 @@ export default {
           this.spots = res.data.map(item => ({
             id: item.id,
             name: item.name,
-            image: "http://localhost:8080" + item.photo,
+            image: item.photo ? (item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo) : "/static/home/6.jpg",
+            ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
             isCollected: this.collectedSpots.some(i => i.id === item.id)
@@ -598,14 +603,22 @@ page {
   height: 300rpx;
 }
 .card-info {
+  padding: 20rpx;
+}
+.card-name-row {
   display: flex;
   justify-content: space-between;
-  padding: 20rpx;
   align-items: center;
+  margin-bottom: 8rpx;
 }
 .card-name {
   font-size: 30rpx;
   font-weight: 500;
+}
+.card-price {
+  font-size: 28rpx;
+  color: #ff4d4f;
+  font-weight: bold;
 }
 .collect-text {
   font-size: 26rpx;

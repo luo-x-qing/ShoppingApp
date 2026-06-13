@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-@Controller  // 正确！页面必须用这个
+@Controller
 public class AdminController {
 
     @Autowired

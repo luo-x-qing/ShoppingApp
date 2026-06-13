@@ -34,10 +34,11 @@ const _sfc_main = {
         url: `http://localhost:8080/api/attractions/${this.id}`,
         success: (res) => {
           this.detail = res.data;
-          if (res.data.images && res.data.images.length > 0) {
-            this.images = res.data.images.map((img) => "http://localhost:8080" + img.url);
-          } else if (res.data.photo) {
-            this.images = ["http://localhost:8080" + res.data.photo];
+          if (res.data.photo) {
+            this.images = [res.data.photo.startsWith("http") ? res.data.photo : "http://localhost:8080" + res.data.photo];
+          }
+          if (this.images.length === 0) {
+            this.images = ["/static/home/6.jpg"];
           }
         }
       });
@@ -142,10 +143,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.detail.city ? {
     g: common_vendor.t($data.detail.city)
   } : {}, {
-    h: common_vendor.t($data.detail.type || "自然景区"),
-    i: common_vendor.t($data.detail.level || "AAAA级"),
-    j: common_vendor.t($data.detail.openTime || "09:00-18:00"),
-    k: common_vendor.t($data.detail.ticketPrice || 0),
+    h: common_vendor.t($data.detail.type || "未分类"),
+    i: common_vendor.t($data.detail.level || "未评级"),
+    j: common_vendor.t($data.detail.openTime || "待确认"),
+    k: common_vendor.t($data.detail.ticketPrice != null ? $data.detail.ticketPrice : "待确认"),
     l: common_vendor.t($data.detail.description),
     m: common_vendor.o((...args) => $options.addToRoutePlan && $options.addToRoutePlan(...args)),
     n: common_vendor.f(5, (n, k0, i0) => {

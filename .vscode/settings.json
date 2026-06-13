@@ -1,4 +1,5 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "java.configuration.maven.userSettings": "D:\\Downloads\\apache-maven-3.9.9-bin\\apache-maven-3.9.9\\conf\\settings.xml"
+    "java.configuration.maven.userSettings": "D:\\Downloads\\apache-maven-3.9.9-bin\\apache-maven-3.9.9\\conf\\settings.xml",
+    "java.compile.nullAnalysis.mode": "automatic"
 }

@@ -11,7 +11,7 @@
     <a href="/admin" class="btn btn-secondary mb-3">返回</a>
     <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addModal">添加景点</button>
     <button class="btn btn-success mb-3" id="importBtn" onclick="importAll()">一键导入全国景点</button>
-    <button class="btn btn-danger mb-3" id="resetBtn" onclick="resetAndImport()">重置并重新导入（ID从1开始）</button>
+    <button class="btn btn-danger mb-3" id="resetBtn" onclick="resetAndRenumber()">重置并重新编号（ID从1开始）</button>
 
     <table class="table table-bordered">
         <thead>
@@ -300,23 +300,22 @@
         var $reset = $("#resetBtn");
         if(loading){
             $import.prop("disabled", true).text("一键导入全国景点中...");
-            $reset.prop("disabled", true).text("重置并重新导入中...");
+            $reset.prop("disabled", true).text("重置中...");
         } else {
             $import.prop("disabled", false).text("一键导入全国景点");
-            $reset.prop("disabled", false).text("重置并重新导入（ID从1开始）");
+            $reset.prop("disabled", false).text("重置并重新编号（ID从1开始）");
         }
     }
 
     // 一键导入全国景点
     function importAll(){
-        if(!confirm("将使用内置景点数据一键导入全国景点（如已有则跳过），确定继续？")) return;
+        if(!confirm("将从高德API实时拉取全国景点数据（如已有则跳过），操作可能需要几十秒，确定继续？")) return;
         setButtonsLoading(true);
         $.ajax({
             url: "/api/attractions/import-all",
             type: "POST",
-            success: function(results){
-                let last = results[results.length - 1];
-                alert("导入完成！共 " + last.total + " 个，新增 " + last.added + " 个，跳过 " + last.skipped + " 个");
+            success: function(res){
+                alert(res.message);
                 loadAttractions();
             },
             error: function(){
@@ -328,12 +327,12 @@
         });
     }
 
-    // 重置并重新导入
-    function resetAndImport(){
-        if(!confirm("将清空所有景点数据并重新导入，ID从1开始，确定继续？")) return;
+    // 重置并重新编号
+    function resetAndRenumber(){
+        if(!confirm("将为所有景点重新编号（按省/市排序，ID从1开始），确定继续？")) return;
         setButtonsLoading(true);
         $.ajax({
-            url: "/api/attractions/reset-and-import",
+            url: "/api/attractions/reset-and-renumber",
             type: "POST",
             success: function(res){
                 alert(res.message);
