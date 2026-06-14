@@ -74,7 +74,7 @@ export default {
     },
     goToFullPlan() {
       this.showPanel = false;
-      uni.switchTab({ url: "/pages/ai-plan/ai-plan" });
+      uni.navigateTo({ url: "/pages/ai-plan/ai-plan" });
     }
   }
 };

@@ -2,6 +2,7 @@ package com.example.ordermanagement.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,7 +20,14 @@ public class SiliconService {
     @Value("${ai.silicon.model}")
     private String model;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public SiliconService() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(15000);
+        factory.setReadTimeout(30000);
+        restTemplate = new RestTemplate(factory);
+    }
 
     public String chat(String prompt) {
         HttpHeaders headers = new HttpHeaders();

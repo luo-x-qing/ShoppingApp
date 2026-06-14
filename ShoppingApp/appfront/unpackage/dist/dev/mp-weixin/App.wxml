@@ -1,1 +1,1 @@
-<view><router-view u-i="20b286dd-0" bind:__l="__l"></router-view></view>
+<view><router-view u-i="20b286dd-0" bind:__l="__l"></router-view><route-float u-i="20b286dd-1" bind:__l="__l"/></view>

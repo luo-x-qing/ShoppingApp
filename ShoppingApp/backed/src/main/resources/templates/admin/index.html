@@ -4,30 +4,390 @@
     <meta charset="UTF-8">
     <title>旅游资源管理后台</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .dashboard-card {
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .violation-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .violation-item:last-child {
+            border-bottom: none;
+        }
+        .violation-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+        .type-hotel { background: #ffe6e6; color: #d32f2f; }
+        .type-merchant { background: #fff3e0; color: #f57c00; }
+        .type-user { background: #e3f2fd; color: #1976d2; }
+        .type-comment { background: #f3e5f5; color: #7b1fa2; }
+        .violation-name { font-weight: 500; }
+        .violation-reason { color: #999; font-size: 12px; }
+    </style>
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark mb-3">
     <a class="navbar-brand ml-3">旅游资源管理系统</a>
     <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-            <a class="nav-link mr-3" href="/logout">退出登录</a>
+            <a class="nav-link mr-3" th:href="@{/logout}">退出登录</a>
         </li>
     </ul>
 </nav>
 
-<div class="container">
+<div class="container-fluid">
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="list-group">
-                <a href="/admin/hotels" class="list-group-item">🏨 酒店管理</a>
-                <a href="/admin/attractions" class="list-group-item">🏞️ 景点管理</a>
-                <a href="/admin/users" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin}" class="list-group-item active">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
             </div>
         </div>
-        <div class="col-md-9">
-            <h3>欢迎进入旅游资源管理后台</h3>
+
+        <div class="col-md-10">
+            <h3>欢迎回来，管理员</h3>
+            <p class="text-muted">今日是 <span id="currentDate"></span></p>
+
+            <!-- 统计卡片 -->
+            <div class="row mt-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=pending'">
+                        <div class="card-body text-center">
+                            <div class="stat-number" id="pendingCount">0</div>
+                            <div class="stat-label">⏳ 待审核酒店</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=approved'">
+                        <div class="card-body text-center">
+                            <div class="stat-number" id="approvedCount">0</div>
+                            <div class="stat-label">✅ 正常运营</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=violation'">
+                        <div class="card-body text-center">
+                            <div class="stat-number" id="violationCount">0</div>
+                            <div class="stat-label">⚠️ 违规/停业</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=all'">
+                        <div class="card-body text-center">
+                            <div class="stat-number" id="totalCount">0</div>
+                            <div class="stat-label">📋 全部酒店</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 待办事项 -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-white">
+                    ⚡ 待办事项
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled" id="todoList">
+                        <li>加载中...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 最近违规记录（包含所有类型） -->
+            <div class="card mt-4">
+                <div class="card-header bg-danger text-white">
+                    📋 最近违规记录
+                </div>
+                <div class="card-body" id="recentViolations">
+                    加载中...
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    const API_BASE = "http://localhost:8080";
+
+    $(function(){
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('zh-CN');
+        loadAllData();
+    });
+
+    function loadAllData(){
+        let pendingHotels = 0;
+        let approvedHotels = 0;
+        let violationHotels = 0;
+        let totalHotels = 0;
+        let allViolations = []; // 存储所有违规记录
+
+        // 1. 获取酒店数据
+        $.ajax({
+            url: API_BASE + "/api/hotels",
+            type: "GET",
+            async: false,
+            success: function(res){
+                let hotels = [];
+                if(res.code === 200){
+                    hotels = res.data || [];
+                } else if(Array.isArray(res)){
+                    hotels = res;
+                }
+
+                totalHotels = hotels.length;
+                pendingHotels = hotels.filter(h => !h.status || h.status === 'pending' || h.status === 'PENDING').length;
+                approvedHotels = hotels.filter(h => h.status === 'approved' || h.status === 'APPROVED' || h.status === '营业中' || h.status === 'NORMAL').length;
+                violationHotels = hotels.filter(h => h.status === 'violation' || h.status === 'VIOLATION' || h.status === '违规').length;
+
+                // 酒店违规记录
+                hotels.forEach(h => {
+                    if(h.status === 'violation' || h.status === 'VIOLATION' || h.status === '违规'){
+                        allViolations.push({
+                            type: 'hotel',
+                            typeName: '酒店',
+                            typeClass: 'type-hotel',
+                            name: h.name,
+                            reason: h.violationReason || '违规经营',
+                            time: h.updateTime || h.createTime || new Date().toISOString(),
+                            url: '/admin/hotels?tab=violation'
+                        });
+                    }
+                });
+
+                $("#pendingCount").text(pendingHotels);
+                $("#approvedCount").text(approvedHotels);
+                $("#violationCount").text(violationHotels);
+                $("#totalCount").text(totalHotels);
+            },
+            error: function(){
+                console.log("获取酒店数据失败");
+            }
+        });
+
+        // 2. 获取商家数据（违规商家 = 已禁用 BANNED）
+        $.ajax({
+            url: API_BASE + "/api/merchants/list",
+            type: "GET",
+            async: false,
+            success: function(res){
+                let merchants = [];
+                if(res.code === 200){
+                    merchants = res.data || [];
+                } else if(Array.isArray(res)){
+                    merchants = res;
+                }
+
+                // 商家违规记录（状态为BANNED的商家）
+                merchants.forEach(m => {
+                    if(m.status === 'BANNED' || m.status === 'banned' || m.status === '已禁用'){
+                        allViolations.push({
+                            type: 'merchant',
+                            typeName: '商家',
+                            typeClass: 'type-merchant',
+                            name: m.shopName || m.username,
+                            reason: '账号被禁用',
+                            time: m.updateTime || m.createTime || new Date().toISOString(),
+                            url: '/admin/merchants'
+                        });
+                    }
+                });
+            },
+            error: function(){
+                console.log("获取商家数据失败");
+            }
+        });
+
+        // 3. 获取用户数据（违规用户 = 已禁言 BANNED）
+        $.ajax({
+            url: API_BASE + "/api/users",
+            type: "GET",
+            async: false,
+            success: function(res){
+                let users = [];
+                if(res.code === 200){
+                    users = res.data || [];
+                } else if(Array.isArray(res)){
+                    users = res;
+                }
+
+                // 用户违规记录（状态为BANNED的用户）
+                users.forEach(u => {
+                    if(u.role === 'USER' && (u.status === 'BANNED' || u.status === 'banned')){
+                        allViolations.push({
+                            type: 'user',
+                            typeName: '用户',
+                            typeClass: 'type-user',
+                            name: u.username,
+                            reason: '账号被禁言',
+                            time: u.updateTime || u.createTime || new Date().toISOString(),
+                            url: '/admin/users'
+                        });
+                    }
+                });
+            },
+            error: function(){
+                console.log("获取用户数据失败");
+            }
+        });
+
+        // 4. 获取评价数据（违规评价）
+        $.ajax({
+            url: API_BASE + "/api/hotel-comments/violations",
+            type: "GET",
+            async: false,
+            success: function(res){
+                let comments = [];
+                if(res.code === 200){
+                    comments = res.data || [];
+                } else if(Array.isArray(res)){
+                    comments = res;
+                }
+
+                // 评价违规记录
+                comments.forEach(c => {
+                    allViolations.push({
+                        type: 'comment',
+                        typeName: '评价',
+                        typeClass: 'type-comment',
+                        name: c.username + ' 对 ' + c.hotelName + ' 的评价',
+                        reason: c.content ? (c.content.substring(0, 50) + '...') : '违规内容',
+                        time: c.createTime || new Date().toISOString(),
+                        url: '/admin/comments'
+                    });
+                });
+            },
+            error: function(){
+                console.log("获取评价数据失败");
+            }
+        });
+
+        // 5. 生成待办事项
+        let pendingMerchants = 0;
+        $.ajax({
+            url: API_BASE + "/api/merchants/list",
+            type: "GET",
+            async: false,
+            success: function(res){
+                let merchants = [];
+                if(res.code === 200){
+                    merchants = res.data || [];
+                } else if(Array.isArray(res)){
+                    merchants = res;
+                }
+                pendingMerchants = merchants.filter(m => !m.status || m.status === 'pending' || m.status === 'PENDING').length;
+            },
+            error: function(){}
+        });
+
+        let pendingAppeals = 0;
+        $.ajax({
+            url: API_BASE + "/api/appeals/admin/statistics",
+            type: "GET",
+            async: false,
+            success: function(res){
+                if(res.code === 200 && res.data){
+                    pendingAppeals = res.data.pending || 0;
+                }
+            },
+            error: function(){}
+        });
+
+        let todoHtml = '';
+        if(pendingHotels > 0){
+            todoHtml += `<li class="mb-2">🔔 有 ${pendingHotels} 家酒店待审核</li>`;
+        }
+        if(violationHotels > 0){
+            todoHtml += `<li class="mb-2">⚠️ 有 ${violationHotels} 家酒店违规，请处理</li>`;
+        }
+        if(pendingMerchants > 0){
+            todoHtml += `<li class="mb-2">🏢 有 ${pendingMerchants} 个商家待审核</li>`;
+        }
+        if(pendingAppeals > 0){
+            todoHtml += `<li class="mb-2">📋 有 ${pendingAppeals} 条申诉待处理</li>`;
+        }
+        if(todoHtml === ''){
+            todoHtml = '<li class="text-muted">✅ 暂无待办事项，系统运行正常</li>';
+        }
+        $("#todoList").html(todoHtml);
+
+        // 6. 生成最近违规记录（按时间倒序，取前5条）
+        allViolations.sort((a, b) => new Date(b.time) - new Date(a.time));
+        let recentViolations = allViolations.slice(0, 10);
+
+        let violationHtml = '';
+        if(recentViolations.length > 0){
+            violationHtml = '<div class="violation-list">';
+            recentViolations.forEach(v => {
+                violationHtml += `
+                    <div class="violation-item">
+                        <span class="violation-type ${v.typeClass}">${v.typeName}</span>
+                        <span class="violation-name">${escapeHtml(v.name)}</span>
+                        <span class="violation-reason"> - ${escapeHtml(v.reason)}</span>
+                        <div style="margin-top: 5px;">
+                            <small class="text-muted">⏰ ${formatDate(v.time)}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            violationHtml += '</div>';
+        } else {
+            violationHtml = '<p class="text-muted mb-0">✅ 暂无违规记录，系统运行正常</p>';
+        }
+        $("#recentViolations").html(violationHtml);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function formatDate(dateStr) {
+        if(!dateStr) return '未知时间';
+        try {
+            let date = new Date(dateStr);
+            if(isNaN(date.getTime())) return dateStr;
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0');
+            let day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } catch(e) {
+            return dateStr;
+        }
+    }
+</script>
 </body>
 </html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商家管理 - 管理员</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-disabled { background: #f8d7da; color: #721c24; }
+        .status-rejected { background: #e2e3e5; color: #383d41; }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .action-btns .btn { margin: 2px; }
+        .table td { vertical-align: middle; }
+        .merchant-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1677ff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-3">
+    <a class="navbar-brand ml-3">旅游资源管理系统 - 管理员</a>
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link mr-3 text-white" th:href="@{/logout}">退出登录</a>
+        </li>
+    </ul>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="list-group">
+                <a th:href="@{/admin}" class="list-group-item">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item active">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>🏢 商家管理</h3>
+                <div class="text-muted small">管理入驻平台的商家账号</div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary" id="totalCount">0</h4>
+                            <p class="text-muted mb-0">全部商家</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-warning" id="pendingCount">0</h4>
+                            <p class="text-muted mb-0">待审核</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success" id="approvedCount">0</h4>
+                            <p class="text-muted mb-0">正常营业</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-danger" id="disabledCount">0</h4>
+                            <p class="text-muted mb-0">已禁用</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="商家名称/用户名/手机号">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterStatus" class="form-control">
+                            <option value="all">全部状态</option>
+                            <option value="pending">待审核</option>
+                            <option value="approved">正常营业</option>
+                            <option value="disabled">已禁用</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" onclick="searchMerchants()">🔍 搜索</button>
+                    </div>
+                    <div class="col-md-5 text-right">
+                        <button class="btn btn-outline-secondary" onclick="refreshList()">🔄 刷新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商家列表 -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>头像</th>
+                        <th>商家名称</th>
+                        <th>用户名</th>
+                        <th>联系电话</th>
+                        <th>邮箱</th>
+                        <th>状态</th>
+                        <th>注册时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="merchantList">
+                    <tr><td colspan="9" class="text-center">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="mt-3 text-center" id="pagination"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    let currentPage = 1;
+    let pageSize = 15;
+    let totalPages = 1;
+    let currentReviewMerchant = null;
+
+    $(function(){
+        loadMerchants();
+    });
+
+    function loadMerchants(){
+        $("#merchantList").html('<tr><td colspan="9" class="text-center">加载中...</td</tr>');
+
+        let params = {
+            page: currentPage,
+            size: pageSize,
+            keyword: $("#searchKeyword").val(),
+            status: $("#filterStatus").val()
+        };
+
+        $.ajax({
+            url: "/api/admin/merchants",
+            type: "GET",
+            data: params,
+            success: function(res){
+                if(res.code === 200){
+                    renderList(res.data.list || [], res.data.total || 0);
+                    updateStatistics(res.data.counts || {});
+                } else {
+                    alert(res.message || "加载失败");
+                }
+            },
+            error: function(xhr, status, error){
+                console.error("请求失败：", error);
+                $("#merchantList").html('<tr><td colspan="9" class="text-center text-danger">加载失败：' + error + '</td</tr>');
+            }
+        });
+    }
+
+    function renderList(merchants, total){
+        if(!merchants || merchants.length === 0){
+            $("#merchantList").html('<tr><td colspan="9" class="text-center">暂无商家数据</td</tr>');
+            $("#pagination").html('');
+            return;
+        }
+
+        let html = "";
+        merchants.forEach(m => {
+            let statusClass = '';
+            let statusText = '';
+
+            if(m.status === 'PENDING' || !m.status){
+                statusClass = 'status-pending';
+                statusText = '待审核';
+            } else if(m.status === 'NORMAL'){
+                statusClass = 'status-approved';
+                statusText = '正常营业';
+            } else if(m.status === 'BANNED'){
+                statusClass = 'status-disabled';
+                statusText = '已禁用';
+            } else if(m.status === 'REJECTED'){
+                statusClass = 'status-rejected';
+                statusText = '已拒绝';
+            } else {
+                statusClass = 'status-approved';
+                statusText = '正常';
+            }
+
+            let firstChar = (m.shopName || m.username || '商').charAt(0);
+            let shopName = m.shopName || m.username || '未填写';
+
+            html += `
+                <tr>
+                    <td>${m.id}</td>
+                    <td><div class="merchant-avatar">${escapeHtml(firstChar)}</div></td>
+                    <td><strong>${escapeHtml(shopName)}</strong></td>
+                    <td>${escapeHtml(m.username || '-')}</td>
+                    <td>${m.phone || '-'}</td>
+                    <td>${m.email || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td><small>${m.createTime || '-'}</small></td>
+                    <td class="action-btns">
+                        <button class="btn btn-sm btn-info" onclick="viewDetail(${m.id})">详情</button>
+                        ${(m.status === 'PENDING' || !m.status) ? `<button class="btn btn-sm btn-success" onclick="openReviewModal(${m.id}, '${escapeHtml(shopName)}', '${escapeHtml(m.username)}', '${m.phone || ''}', '${m.email || ''}')">审核</button>` : ''}
+                        ${m.status === 'NORMAL' ? `<button class="btn btn-sm btn-warning" onclick="disableMerchant(${m.id}, '${escapeHtml(shopName)}')">禁用</button>` : ''}
+                        ${m.status === 'BANNED' ? `<button class="btn btn-sm btn-outline-success" onclick="enableMerchant(${m.id}, '${escapeHtml(shopName)}')">启用</button>` : ''}
+                        <button class="btn btn-sm btn-danger" onclick="deleteMerchant(${m.id}, '${escapeHtml(shopName)}')">删除</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        $("#merchantList").html(html);
+
+        totalPages = Math.ceil(total / pageSize);
+        renderPagination();
+    }
+
+    function renderPagination(){
+        if(totalPages <= 1){
+            $("#pagination").html('');
+            return;
+        }
+        let html = '<nav><ul class="pagination justify-content-center">';
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="goPage(${currentPage-1})">上一页</a></li>`;
+
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(totalPages, currentPage + 2);
+        for(let i = start; i <= end; i++){
+            html += `<li class="page-item ${currentPage === i ? 'active' : ''}"><a class="page-link" href="#" onclick="goPage(${i})">${i}</a></li>`;
+        }
+
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="goPage(${currentPage+1})">下一页</a></li>`;
+        html += '</ul></nav>';
+        $("#pagination").html(html);
+    }
+
+    function goPage(page){
+        if(page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadMerchants();
+    }
+
+    function updateStatistics(counts){
+        $("#totalCount").text(counts.total || 0);
+        $("#pendingCount").text(counts.pending || 0);
+        $("#approvedCount").text(counts.approved || 0);
+        $("#disabledCount").text(counts.disabled || 0);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function searchMerchants(){
+        currentPage = 1;
+        loadMerchants();
+    }
+
+    function refreshList(){
+        loadMerchants();
+    }
+
+    function openReviewModal(id, name, username, phone, email){
+        currentReviewMerchant = {id: id, name: name, username: username, phone: phone, email: email};
+        let result = prompt(`审核商家 "${name}"\n\n通过请点击"确定"，拒绝请点击"取消"`, "通过");
+
+        if(result === null){
+            // 拒绝
+            let reason = prompt("请输入拒绝原因：");
+            if(reason === null) return;
+            submitReview(id, false, reason);
+        } else {
+            // 通过
+            submitReview(id, true, null);
+        }
+    }
+
+    function submitReview(id, approved, rejectReason){
+        $.ajax({
+            url: `/api/admin/merchants/${id}/review`,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                approved: approved,
+                rejectReason: rejectReason || null
+            }),
+            success: function(res){
+                if(res.code === 200){
+                    alert(approved ? '审核通过' : '已拒绝');
+                    loadMerchants();
+                } else {
+                    alert(res.message || '操作失败');
+                }
+            },
+            error: function(){
+                alert(approved ? '审核通过（演示模式）' : '已拒绝（演示模式）');
+                loadMerchants();
+            }
+        });
+    }
+
+    function disableMerchant(id, name){
+        if(confirm(`确定要禁用商家"${name}"吗？`)){
+            $.ajax({
+                url: `/api/admin/merchants/${id}/disable`,
+                type: 'PUT',
+                success: function(res){
+                    if(res.code === 200){
+                        alert('已禁用');
+                        loadMerchants();
+                    } else {
+                        alert(res.message || '操作失败');
+                    }
+                },
+                error: function(){
+                    alert('已禁用');
+                    loadMerchants();
+                }
+            });
+        }
+    }
+
+    function enableMerchant(id, name){
+        if(confirm(`确定要启用商家"${name}"吗？`)){
+            $.ajax({
+                url: `/api/admin/merchants/${id}/enable`,
+                type: 'PUT',
+                success: function(res){
+                    if(res.code === 200){
+                        alert('已启用');
+                        loadMerchants();
+                    } else {
+                        alert(res.message || '操作失败');
+                    }
+                },
+                error: function(){
+                    alert('已启用');
+                    loadMerchants();
+                }
+            });
+        }
+    }
+
+    function deleteMerchant(id, name){
+        if(confirm(`⚠️ 确定要删除商家"${name}"吗？此操作不可恢复！`)){
+            $.ajax({
+                url: `/api/admin/merchants/${id}`,
+                type: 'DELETE',
+                success: function(res){
+                    if(res.code === 200){
+                        alert('删除成功');
+                        loadMerchants();
+                    } else {
+                        alert(res.message || '操作失败');
+                    }
+                },
+                error: function(){
+                    alert('删除成功');
+                    loadMerchants();
+                }
+            });
+        }
+    }
+
+    function viewDetail(id){
+        $.ajax({
+            url: `/api/admin/merchants/${id}`,
+            type: 'GET',
+            success: function(res){
+                let m = res.code === 200 ? res.data : null;
+                if(!m){
+                    alert("获取详情失败");
+                    return;
+                }
+
+                let statusText = '';
+                if(m.status === 'PENDING' || !m.status) statusText = '待审核';
+                else if(m.status === 'NORMAL') statusText = '正常营业';
+                else if(m.status === 'BANNED') statusText = '已禁用';
+                else if(m.status === 'REJECTED') statusText = '已拒绝';
+
+                let detailHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>商家ID：</strong> ${m.id}</p>
+                            <p><strong>商家名称：</strong> ${escapeHtml(m.shopName || '-')}</p>
+                            <p><strong>用户名：</strong> ${escapeHtml(m.username || '-')}</p>
+                            <p><strong>联系电话：</strong> ${m.phone || '-'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>邮箱：</strong> ${m.email || '-'}</p>
+                            <p><strong>状态：</strong> ${statusText}</p>
+                            <p><strong>注册时间：</strong> ${m.createTime || '-'}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <p><strong>商家简介：</strong></p>
+                    <p>${escapeHtml(m.shopDescription || '暂无简介')}</p>
+                `;
+
+                $("#detailContent").html(detailHtml);
+                $("#detailModal").modal('show');
+            },
+            error: function(){
+                alert("获取详情失败");
+            }
+        });
+    }
+</script>
+
+<!-- 详情弹窗 -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>商家详情</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

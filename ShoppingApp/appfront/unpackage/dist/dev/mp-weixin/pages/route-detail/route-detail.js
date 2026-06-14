@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const BASE_URL = "http://localhost:8080";
 const _sfc_main = {
   data() {
     return {
@@ -38,7 +39,7 @@ const _sfc_main = {
   methods: {
     getRouteDetail() {
       common_vendor.index.request({
-        url: `http://localhost:8080/tour-route/${this.routeId}/detail`,
+        url: BASE_URL + "/tour-route/" + this.routeId + "/detail",
         method: "GET",
         success: (res) => {
           this.route = res.data;
@@ -63,7 +64,7 @@ const _sfc_main = {
       }
       common_vendor.index.showLoading({ title: "添加中..." });
       common_vendor.index.request({
-        url: "http://localhost:8080/api/cart/add-route",
+        url: BASE_URL + "/api/cart/add-route",
         method: "POST",
         data: { username, routeId: this.routeId },
         success: (res) => {

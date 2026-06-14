@@ -83,4 +83,33 @@ public class HotelController {
     public List<Hotel> getHotelsByCategory(@PathVariable String category) {
         return hotelService.getHotelsByCategory(category);
     }
+
+    @GetMapping("/merchant/{merchantId}")
+    public List<Hotel> getHotelsByMerchant(@PathVariable Long merchantId) {
+        return hotelService.getHotelsByMerchant(merchantId);
+    }
+
+    @PostMapping("/{id}/room-types")
+    public ResponseEntity<Hotel> addRoomType(@PathVariable Long id, @RequestBody com.example.ordermanagement.model.RoomType roomType) {
+        Hotel hotel = hotelService.getHotelById(id);
+        if (hotel == null) return ResponseEntity.notFound().build();
+        hotelService.addRoomType(hotel, roomType);
+        return ResponseEntity.ok(hotelService.saveHotel(hotel));
+    }
+
+    @PutMapping("/{hotelId}/room-types/{roomTypeId}")
+    public ResponseEntity<Hotel> updateRoomType(@PathVariable Long hotelId, @PathVariable Long roomTypeId, @RequestBody com.example.ordermanagement.model.RoomType roomType) {
+        Hotel hotel = hotelService.getHotelById(hotelId);
+        if (hotel == null) return ResponseEntity.notFound().build();
+        hotelService.updateRoomType(hotel, roomTypeId, roomType);
+        return ResponseEntity.ok(hotelService.saveHotel(hotel));
+    }
+
+    @DeleteMapping("/{hotelId}/room-types/{roomTypeId}")
+    public ResponseEntity<Hotel> deleteRoomType(@PathVariable Long hotelId, @PathVariable Long roomTypeId) {
+        Hotel hotel = hotelService.getHotelById(hotelId);
+        if (hotel == null) return ResponseEntity.notFound().build();
+        hotelService.deleteRoomType(hotel, roomTypeId);
+        return ResponseEntity.ok(hotelService.saveHotel(hotel));
+    }
 }

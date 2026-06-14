@@ -2,6 +2,8 @@
   "pages": [
     "pages/home/home",
     "pages/flight/flight",
+    "pages/flight/search-flight",
+    "pages/flight/order",
     "pages/category/category",
     "pages/profile/profile",
     "pages/detail/detail",
@@ -12,7 +14,17 @@
     "pages/login-register/login-register",
     "pages/route-detail/route-detail",
     "pages/cart/cart",
-    "pages/ai-plan/ai-plan"
+    "pages/ai-plan/ai-plan",
+    "pages/merchant/home",
+    "pages/merchant/hotel-list",
+    "pages/merchant/order-list",
+    "pages/merchant/comment-list",
+    "pages/merchant/messages",
+    "pages/merchant/notifications",
+    "pages/merchant/setting",
+    "pages/message/message",
+    "pages/profile/setting",
+    "pages/profile/notifications"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -37,16 +49,16 @@
         "selectedIconPath": "static/tab/酒店.png"
       },
       {
-        "pagePath": "pages/flight/flight",
+        "pagePath": "pages/message/message",
+        "text": "消息",
+        "iconPath": "static/tab/消息.png",
+        "selectedIconPath": "static/tab/消息-active.png"
+      },
+      {
+        "pagePath": "pages/flight/search-flight",
         "text": "购票",
         "iconPath": "static/tab/机票.png",
         "selectedIconPath": "static/tab/机票.png"
-      },
-      {
-        "pagePath": "pages/ai-plan/ai-plan",
-        "text": "路线",
-        "iconPath": "static/tab/旅游景点.png",
-        "selectedIconPath": "static/tab/旅游景点.png"
       },
       {
         "pagePath": "pages/profile/profile",

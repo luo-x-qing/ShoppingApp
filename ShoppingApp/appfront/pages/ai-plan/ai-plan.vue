@@ -66,8 +66,7 @@
       </view>
 
       <view class="action-row">
-        <button class="action-btn" @click="addRouteToCart">加入购物车</button>
-        <button class="action-btn secondary" @click="planResult = null">重新规划</button>
+        <button class="action-btn" @click="planResult = null">重新规划</button>
       </view>
     </view>
   </view>
@@ -75,6 +74,8 @@
 </template>
 
 <script>
+const BASE_URL = 'http://localhost:8080'
+
 export default {
   data() {
     return {
@@ -127,9 +128,13 @@ export default {
       this.generating = true;
       const city = this.targetCity.split('、')[0];
       uni.request({
-        url: `http://localhost:8080/travel/plan?city=${encodeURIComponent(city)}&days=${this.days}`,
+        url: `${BASE_URL}/travel/plan?city=${encodeURIComponent(city)}&days=${this.days}`,
         method: 'GET',
         success: (res) => {
+          if (res.data.error) {
+            uni.showToast({ title: res.data.error, icon: 'none' });
+            return;
+          }
           this.planResult = res.data;
           uni.showToast({ title: '路线生成成功', icon: 'success' });
         },
@@ -139,30 +144,6 @@ export default {
         complete: () => {
           this.generating = false;
         }
-      });
-    },
-    addRouteToCart() {
-      if (!this.planResult || !this.planResult.spots) return;
-      const username = uni.getStorageSync("loginUsername");
-      if (!username) {
-        uni.showToast({ title: '请先登录', icon: 'none' });
-        return;
-      }
-      let count = 0;
-      const promises = this.planResult.spots.map(spotName => {
-        return new Promise((resolve) => {
-          uni.request({
-            url: 'http://localhost:8080/api/cart/add-scenic',
-            method: 'POST',
-            data: { username, scenicName: spotName, quantity: 1 },
-            success: () => { count++; },
-            fail: () => {},
-            complete: () => resolve()
-          });
-        });
-      });
-      Promise.all(promises).then(() => {
-        uni.showToast({ title: `已添加 ${count} 个景点到购物车` });
       });
     }
   }

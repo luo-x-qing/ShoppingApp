@@ -2,35 +2,140 @@
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>景点管理</title>
+    <title>景点管理 - 管理员</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-normal { background: #d4edda; color: #155724; }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .attraction-img {
+            width: 60px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .action-btns .btn { margin: 2px; }
+        .table td { vertical-align: middle; }
+    </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h3>景点管理</h3>
-    <a href="/admin" class="btn btn-secondary mb-3">返回</a>
-    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addModal">添加景点</button>
-    <button class="btn btn-success mb-3" id="importBtn" onclick="importAll()">一键导入全国景点</button>
-    <button class="btn btn-danger mb-3" id="resetBtn" onclick="resetAndRenumber()">重置并重新编号（ID从1开始）</button>
+<nav class="navbar navbar-dark bg-dark mb-3">
+    <a class="navbar-brand ml-3">旅游资源管理系统 - 管理员</a>
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link mr-3 text-white" th:href="@{/logout}">退出登录</a>
+        </li>
+    </ul>
+</nav>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>景点名称</th>
-                <th>省份</th>
-                <th>城市</th>
-                <th>照片</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody id="attrList">
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="list-group">
+                <a th:href="@{/admin}" class="list-group-item">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item active">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>🏞️ 景点管理</h3>
+                <div class="text-muted small">管理旅游景点信息</div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary" id="totalCount">0</h4>
+                            <p class="text-muted mb-0">全部景点</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success" id="normalCount">0</h4>
+                            <p class="text-muted mb-0">正常景点</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-info" id="provinceCount">0</h4>
+                            <p class="text-muted mb-0">覆盖省份</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="景点名称">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterProvince" class="form-control">
+                            <option value="all">全部省份</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" onclick="searchAttractions()">🔍 搜索</button>
+                    </div>
+                    <div class="col-md-5 text-right">
+                        <button class="btn btn-success" data-toggle="modal" data-target="#addModal">➕ 添加景点</button>
+                        <button class="btn btn-outline-secondary ml-2" onclick="refreshList()">🔄 刷新</button>
+                        <button class="btn btn-info ml-2" onclick="importAll()">📥 一键导入全国景点</button>
+                        <button class="btn btn-danger ml-2" onclick="resetAndRenumber()">🔄 重置并重新编号</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 景点列表 -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>照片</th>
+                        <th>景点名称</th>
+                        <th>省份</th>
+                        <th>城市</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="attractionList">
+                    <tr><td colspan="9" class="text-center">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 添加弹窗 -->
-<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -40,11 +145,11 @@
             <div class="modal-body">
                 <form id="addForm">
                     <div class="form-group">
-                        <label>景点名称</label>
+                        <label>景点名称 <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="name" required>
                     </div>
                     <div class="form-group">
-                        <label>省份</label>
+                        <label>省份 <span class="text-danger">*</span></label>
                         <select class="form-control" id="province" required>
                             <option value="">请选择省份</option>
                             <option value="北京市">北京市</option>
@@ -88,21 +193,22 @@
                         <input type="text" class="form-control" id="city" placeholder="例如：成都市">
                     </div>
                     <div class="form-group">
-                        <label>上传景点照片</label>
+                        <label>景点照片 <span class="text-danger">*</span></label>
                         <input type="file" class="form-control-file" id="photoFile" accept="image/*">
+                        <small class="form-text text-muted">支持jpg、png格式</small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveAttraction()">保存</button>
+                <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button class="btn btn-primary" onclick="saveAttraction()">保存</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- 修改弹窗 -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -113,11 +219,11 @@
                 <form id="editForm">
                     <input type="hidden" id="editId">
                     <div class="form-group">
-                        <label>景点名称</label>
+                        <label>景点名称 <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="editName" required>
                     </div>
                     <div class="form-group">
-                        <label>省份</label>
+                        <label>省份 <span class="text-danger">*</span></label>
                         <select class="form-control" id="editProvince" required>
                             <option value="">请选择省份</option>
                             <option value="北京市">北京市</option>
@@ -161,14 +267,15 @@
                         <input type="text" class="form-control" id="editCity" placeholder="例如：成都市">
                     </div>
                     <div class="form-group">
-                        <label>更换照片（不选则保留原图）</label>
+                        <label>更换照片</label>
                         <input type="file" class="form-control-file" id="editPhotoFile" accept="image/*">
+                        <small class="form-text text-muted">不选则保留原图</small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="updateAttraction()">保存修改</button>
+                <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button class="btn btn-primary" onclick="updateAttraction()">保存修改</button>
             </div>
         </div>
     </div>
@@ -177,48 +284,122 @@
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
 <script>
-    // 页面加载
+    const API_BASE = "http://localhost:8080";
+
     $(function(){
         loadAttractions();
+        loadProvinces();
     });
 
-    // 加载列表
     function loadAttractions(){
-        $.get("/api/attractions", function(data){
-            let html = "";
-            data.forEach(a => {
-                html += `
-                <tr>
-                    <td>${a.id}</td>
-                    <td>${a.name}</td>
-                    <td>${a.province}</td>
-                    <td>${a.city || ''}</td>
-                    <td><img src="${a.photo}" width="50"></td>
-                    <td>
-                        <button class="btn btn-sm btn-warning mr-1" onclick="openEdit(${a.id})">修改</button>
-                        <button class="btn btn-sm btn-danger" onclick="del(${a.id})">删除</button>
-                    </td>
-                </tr>`;
-            });
-            $("#attrList").html(html);
+        $("#attractionList").html('<tr><td colspan="9" class="text-center">加载中...</td</tr>');
+
+        $.get(API_BASE + "/api/attractions", function(data){
+            let attractions = [];
+            if(data.code === 200){
+                attractions = data.data || [];
+            } else if(Array.isArray(data)){
+                attractions = data;
+            } else {
+                attractions = [];
+            }
+
+            // 筛选
+            let keyword = $("#searchKeyword").val().toLowerCase();
+            let province = $("#filterProvince").val();
+
+            let filtered = attractions;
+            if(keyword){
+                filtered = filtered.filter(a => a.name.toLowerCase().includes(keyword));
+            }
+            if(province && province !== 'all'){
+                filtered = filtered.filter(a => a.province === province);
+            }
+
+            renderList(filtered);
+            updateStatistics(attractions);
+        }).fail(()=>{
+            $("#attractionList").html('<tr><td colspan="9" class="text-center text-danger">加载失败</td</tr>');
         });
     }
 
-    // 上传文件
+    function renderList(attractions){
+        if(!attractions || attractions.length === 0){
+            $("#attractionList").html('<td><td colspan="9" class="text-center">暂无景点数据</td</tr>');
+            return;
+        }
+
+        let html = "";
+        attractions.forEach(a => {
+            let statusClass = 'status-normal';
+            let statusText = '正常';
+
+            html += `
+                <tr>
+                    <td>${a.id}</td>
+                    <td><img src="${a.photo || '/default.png'}" class="attraction-img" onerror="this.src='/default.png'"></td>
+                    <td><strong>${escapeHtml(a.name)}</strong></td>
+                    <td>${a.province || '-'}</td>
+                    <td>${a.city || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td><small>${a.createTime || '-'}</small></td>
+                    <td class="action-btns">
+                        <button class="btn btn-sm btn-warning" onclick="openEdit(${a.id})">修改</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAttraction(${a.id})">删除</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        $("#attractionList").html(html);
+    }
+
+    function updateStatistics(attractions){
+        let total = attractions.length;
+        let provinces = new Set(attractions.map(a => a.province));
+
+        $("#totalCount").text(total);
+        $("#normalCount").text(total);
+        $("#provinceCount").text(provinces.size);
+    }
+
+    function loadProvinces(){
+        $.get(API_BASE + "/api/attractions", function(data){
+            let attractions = [];
+            if(data.code === 200){
+                attractions = data.data || [];
+            } else if(Array.isArray(data)){
+                attractions = data;
+            }
+
+            let provinces = [...new Set(attractions.map(a => a.province).filter(p => p))];
+            let options = '<option value="all">全部省份</option>';
+            provinces.forEach(p => {
+                options += `<option value="${p}">${p}</option>`;
+            });
+            $("#filterProvince").html(options);
+        }).fail(()=>{
+            console.log("加载省份列表失败");
+        });
+    }
+
     function upload(file, callback){
         let fd = new FormData();
         fd.append("file", file);
         $.ajax({
-            url: "/api/upload",
+            url: API_BASE + "/api/upload",
             type: "POST",
             data: fd,
             processData: false,
             contentType: false,
-            success: callback
+            success: callback,
+            error: function(err){
+                console.error("上传失败", err);
+                callback(null);
+            }
         });
     }
 
-    // 保存
     function saveAttraction(){
         let name = $("#name").val();
         let province = $("#province").val();
@@ -226,37 +407,55 @@
         let file = $("#photoFile")[0].files[0];
 
         if(!name || !province || !file){
-            alert("请填写完整！");
+            alert("请填写完整信息并上传照片！");
             return;
         }
 
         upload(file, function(photoUrl){
+            if(!photoUrl){
+                alert("照片上传失败");
+                return;
+            }
+
             $.ajax({
-                url: "/api/attractions",
+                url: API_BASE + "/api/attractions",
                 type: "POST",
                 contentType: "application/json",
-                data: JSON.stringify({ name, province, city, photo: photoUrl }),
+                data: JSON.stringify({
+                    name: name,
+                    province: province,
+                    city: city,
+                    photo: photoUrl
+                }),
                 success: function(){
                     alert("添加成功！");
                     $("#addModal").modal("hide");
+                    $("#addForm")[0].reset();
                     loadAttractions();
+                    loadProvinces();
+                },
+                error: function(){
+                    alert("添加失败");
                 }
             });
         });
     }
 
-    // 打开修改
     function openEdit(id){
-        $.get("/api/attractions/"+id, function(a){
+        $.get(API_BASE + "/api/attractions/" + id, function(res){
+            let a = res.code === 200 ? res.data : res;
+            if(!a){
+                alert("获取数据失败");
+                return;
+            }
             $("#editId").val(a.id);
             $("#editName").val(a.name);
             $("#editProvince").val(a.province);
-            $("#editCity").val(a.city || '');
+            $("#editCity").val(a.city);
             $("#editModal").modal("show");
         });
     }
 
-    // 修改
     function updateAttraction(){
         let id = $("#editId").val();
         let name = $("#editName").val();
@@ -265,97 +464,144 @@
         let file = $("#editPhotoFile")[0].files[0];
 
         if(!name || !province){
-            alert("请填写完整！");
+            alert("请填写完整信息！");
             return;
         }
 
         if(file){
             upload(file, function(photoUrl){
-                sendUpdate(id, name, province, city, photoUrl);
+                if(photoUrl){
+                    sendUpdate(id, name, province, city, photoUrl);
+                } else {
+                    alert("照片上传失败");
+                }
             });
-        }else{
+        } else {
             sendUpdate(id, name, province, city, null);
         }
     }
 
     function sendUpdate(id, name, province, city, photo){
-        let data = { name, province, city };
+        let data = { name: name, province: province, city: city };
         if(photo) data.photo = photo;
 
         $.ajax({
-            url: "/api/attractions/"+id,
+            url: API_BASE + "/api/attractions/" + id,
             type: "PUT",
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(){
                 alert("修改成功！");
                 $("#editModal").modal("hide");
+                $("#editForm")[0].reset();
                 loadAttractions();
+                loadProvinces();
+            },
+            error: function(){
+                alert("修改失败");
             }
+        });
+    }
+
+    function deleteAttraction(id){
+        if(confirm("确定要删除该景点吗？删除后无法恢复！")){
+            $.ajax({
+                url: API_BASE + "/api/attractions/" + id,
+                type: "DELETE",
+                success: function(){
+                    alert("删除成功");
+                    loadAttractions();
+                    loadProvinces();
+                },
+                error: function(){
+                    alert("删除失败");
+                }
+            });
+        }
+    }
+
+    function searchAttractions(){
+        loadAttractions();
+    }
+
+    function refreshList(){
+        loadAttractions();
+        loadProvinces();
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
         });
     }
 
     function setButtonsLoading(loading){
-        var $import = $("#importBtn");
-        var $reset = $("#resetBtn");
-        if(loading){
-            $import.prop("disabled", true).text("一键导入全国景点中...");
-            $reset.prop("disabled", true).text("重置中...");
-        } else {
-            $import.prop("disabled", false).text("一键导入全国景点");
-            $reset.prop("disabled", false).text("重置并重新编号（ID从1开始）");
-        }
+        $("button[onclick*='importAll'], button[onclick*='resetAndRenumber']").each(function(){
+            if(loading){
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> 处理中...');
+            } else {
+                let text = $(this).text().includes('导入') ? '📥 一键导入全国景点' : '🔄 重置并重新编号';
+                $(this).prop('disabled', false).text($(this).text().includes('导入') ? '📥 一键导入全国景点' : '🔄 重置并重新编号');
+            }
+        });
     }
 
-    // 一键导入全国景点
     function importAll(){
-        if(!confirm("将从高德API实时拉取全国景点数据（如已有则跳过），操作可能需要几十秒，确定继续？")) return;
-        setButtonsLoading(true);
-        $.ajax({
-            url: "/api/attractions/import-all",
-            type: "POST",
-            success: function(res){
-                alert(res.message);
-                loadAttractions();
-            },
-            error: function(){
-                alert("导入失败，请查看后端日志");
-            },
-            complete: function(){
-                setButtonsLoading(false);
-            }
-        });
-    }
-
-    // 重置并重新编号
-    function resetAndRenumber(){
-        if(!confirm("将为所有景点重新编号（按省/市排序，ID从1开始），确定继续？")) return;
-        setButtonsLoading(true);
-        $.ajax({
-            url: "/api/attractions/reset-and-renumber",
-            type: "POST",
-            success: function(res){
-                alert(res.message);
-                loadAttractions();
-            },
-            error: function(){
-                alert("操作失败，请查看后端日志");
-            },
-            complete: function(){
-                setButtonsLoading(false);
-            }
-        });
-    }
-
-    // 删除
-    function del(id){
-        if(confirm("确定删除？")){
-            $.ajax({
-                url: "/api/attractions/"+id,
-                type: "DELETE",
-                success: loadAttractions
-            });
+        if(!confirm('确定要一键导入全国景点数据吗？这将添加大量景点数据！')){
+            return;
         }
+        setButtonsLoading(true);
+        $.ajax({
+            url: API_BASE + "/api/attractions/import-all",
+            type: "POST",
+            success: function(res){
+                alert("导入成功！共导入 " + (res.data || res.count || 0) + " 个景点");
+                loadAttractions();
+                loadProvinces();
+            },
+            error: function(err){
+                let msg = "导入失败";
+                try{
+                    let r = JSON.parse(err.responseText);
+                    if(r.message) msg = r.message;
+                }catch(e){}
+                alert(msg);
+            },
+            complete: function(){
+                setButtonsLoading(false);
+            }
+        });
+    }
+
+    function resetAndRenumber(){
+        if(!confirm('确定要重置并重新编号吗？此操作将重置景点ID从1开始，同时保留所有数据！')){
+            return;
+        }
+        setButtonsLoading(true);
+        $.ajax({
+            url: API_BASE + "/api/attractions/reset-and-renumber",
+            type: "POST",
+            success: function(res){
+                alert("重置成功！" + (res.message || ""));
+                loadAttractions();
+                loadProvinces();
+            },
+            error: function(err){
+                let msg = "重置失败";
+                try{
+                    let r = JSON.parse(err.responseText);
+                    if(r.message) msg = r.message;
+                }catch(e){}
+                alert(msg);
+            },
+            complete: function(){
+                setButtonsLoading(false);
+            }
+        });
     }
 </script>
 </body>

@@ -1,64 +1,7 @@
 "use strict";
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-const common_vendor = require("./common/vendor.js");
-const utils_http = require("./utils/http.js");
-if (!Math) {
-  "./pages/home/home.js";
-  "./pages/flight/flight.js";
-  "./pages/category/category.js";
-  "./pages/profile/profile.js";
-  "./pages/detail/detail.js";
-  "./pages/hotelDetail/hotelDetail.js";
-  "./pages/booking/booking.js";
-  "./pages/my-orders/my-orders.js";
-  "./pages/collection/collection.js";
-  "./pages/login-register/login-register.js";
-  "./pages/route-detail/route-detail.js";
-  "./pages/cart/cart.js";
-  "./pages/ai-plan/ai-plan.js";
-}
-const _sfc_main = {
-  onLaunch() {
-    this.checkLogin();
-  },
-  onShow() {
-    this.checkLogin();
-  },
-  onHide() {
-  },
-  methods: {
-    checkLogin() {
-      const token = common_vendor.index.getStorageSync("token");
-      if (!token) {
-        const pages = getCurrentPages();
-        if (pages.length > 0) {
-          const route = pages[pages.length - 1].route;
-          if (route === "pages/login-register/login-register") {
-            return;
-          }
-        }
-        common_vendor.index.reLaunch({ url: "/pages/login-register/login-register" });
-      }
-    }
-  }
-};
-if (!Array) {
-  const _component_router_view = common_vendor.resolveComponent("router-view");
-  _component_router_view();
-}
-function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {};
-}
-const App = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
-const RouteFloat = () => "./components/RouteFloat.js";
-function createApp() {
-  const app = common_vendor.createSSRApp(App);
-  app.config.globalProperties.$http = utils_http.http;
-  app.component("RouteFloat", RouteFloat);
-  return {
-    app
-  };
-}
-createApp().app.mount("#app");
-exports.createApp = createApp;
+require("./common/vendor.js");
+const app = require("./main.js");
+require("./utils/http.js");
+exports.createApp = app.createApp;
 //# sourceMappingURL=../.sourcemap/mp-weixin/app.js.map
