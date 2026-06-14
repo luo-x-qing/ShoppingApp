@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface FlightOrderRepository extends JpaRepository<FlightOrder, Long> {
     List<FlightOrder> findAllByOrderByIdDesc();
-    List<FlightOrder> findByLoginUsernameOrderByIdDesc(String loginUsername);
+    List<FlightOrder> findByUsernameOrderByCreateTimeDesc(String username);
 
     @Modifying
     @Transactional

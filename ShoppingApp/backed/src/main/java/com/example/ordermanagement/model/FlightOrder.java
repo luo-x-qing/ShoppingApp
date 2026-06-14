@@ -6,58 +6,67 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "flight_order")
 public class FlightOrder {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = true)
+    private Long flightId;
+
     private String flightNumber;
     private String departCity;
     private String arriveCity;
-    private String departTime;
-    private String arriveTime;
-    private String userName;
-    private String userPhone;
+    private LocalDateTime departTime;
+    private LocalDateTime arriveTime;
     private Double price;
-    private LocalDateTime createTime;
 
-    // ================================
-    // 🔥 改名！避免与 userName 冲突
-    // ================================
-    private String loginUsername;
+    @Column(name = "username")
+    private String username;
+    private String passengerName;
+    private String passengerIdCard;
+    private String contactPhone;
+
+    private String status;
+    private LocalDateTime createTime;
+    private LocalDateTime payTime;
+    private LocalDateTime cancelTime;
 
     @PrePersist
     public void prePersist() {
-        createTime = LocalDateTime.now();
-    }
-
-    public String getLoginUsername() {
-        return loginUsername;
-    }
-
-    public void setLoginUsername(String loginUsername) {
-        this.loginUsername = loginUsername;
+        this.createTime = LocalDateTime.now();
+        if (this.status == null) this.status = "待支付";
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getFlightId() { return flightId; }
+    public void setFlightId(Long flightId) { this.flightId = flightId; }
     public String getFlightNumber() { return flightNumber; }
     public void setFlightNumber(String flightNumber) { this.flightNumber = flightNumber; }
     public String getDepartCity() { return departCity; }
-    public String getDepartCity(String departCity) { return this.departCity; }
     public void setDepartCity(String departCity) { this.departCity = departCity; }
     public String getArriveCity() { return arriveCity; }
     public void setArriveCity(String arriveCity) { this.arriveCity = arriveCity; }
-    public String getDepartTime() { return departTime; }
-    public void setDepartTime(String departTime) { this.departTime = departTime; }
-    public String getArriveTime() { return arriveTime; }
-    public void setArriveTime(String arriveTime) { this.arriveTime = arriveTime; }
-    public String getUserName() { return userName; }
-    public void setUserName(String userName) { this.userName = userName; }
-    public String getUserPhone() { return userPhone; }
-    public void setUserPhone(String userPhone) { this.userPhone = userPhone; }
+    public LocalDateTime getDepartTime() { return departTime; }
+    public void setDepartTime(LocalDateTime departTime) { this.departTime = departTime; }
+    public LocalDateTime getArriveTime() { return arriveTime; }
+    public void setArriveTime(LocalDateTime arriveTime) { this.arriveTime = arriveTime; }
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassengerName() { return passengerName; }
+    public void setPassengerName(String passengerName) { this.passengerName = passengerName; }
+    public String getPassengerIdCard() { return passengerIdCard; }
+    public void setPassengerIdCard(String passengerIdCard) { this.passengerIdCard = passengerIdCard; }
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+    public LocalDateTime getPayTime() { return payTime; }
+    public void setPayTime(LocalDateTime payTime) { this.payTime = payTime; }
+    public LocalDateTime getCancelTime() { return cancelTime; }
+    public void setCancelTime(LocalDateTime cancelTime) { this.cancelTime = cancelTime; }
 }
