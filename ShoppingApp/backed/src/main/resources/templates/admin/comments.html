@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>评价管理 - 管理员</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-normal { background: #d4edda; color: #155724; }
+        .status-violation { background: #f8d7da; color: #721c24; }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .action-btns .btn { margin: 2px; }
+        .table td { vertical-align: middle; }
+        .comment-content {
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .score-star { color: #ffc107; font-size: 14px; }
+        .nav-tabs .nav-link.active { font-weight: bold; }
+        .reply-content {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #1677ff;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-3">
+    <a class="navbar-brand ml-3">旅游资源管理系统 - 管理员</a>
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link mr-3 text-white" th:href="@{/logout}">退出登录</a>
+        </li>
+    </ul>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="list-group">
+                <a th:href="@{/admin}" class="list-group-item">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item active">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>💬 评价管理</h3>
+                <div class="text-muted small">管理员可查看、处理违规评价</div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary" id="totalCount">0</h4>
+                            <p class="text-muted mb-0">全部评价</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success" id="normalCount">0</h4>
+                            <p class="text-muted mb-0">正常评价</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-danger" id="violationCount">0</h4>
+                            <p class="text-muted mb-0">违规评价</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-warning" id="avgScore">0</h4>
+                            <p class="text-muted mb-0">平均评分</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签页 -->
+            <ul class="nav nav-tabs mb-3" id="commentTab">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-tab="all">📋 全部评价</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="normal">✅ 正常评价</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="violation">⚠️ 违规评价</a>
+                </li>
+            </ul>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="用户名/酒店名/内容">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterScore" class="form-control">
+                            <option value="0">全部评分</option>
+                            <option value="5">5星</option>
+                            <option value="4">4星及以上</option>
+                            <option value="3">3星及以上</option>
+                            <option value="2">2星及以上</option>
+                            <option value="1">1星及以上</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterReply" class="form-control">
+                            <option value="all">全部</option>
+                            <option value="replied">已回复</option>
+                            <option value="unreplied">未回复</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" onclick="searchComments()">🔍 搜索</button>
+                    </div>
+                    <div class="col-md-3 text-right">
+                        <button class="btn btn-outline-secondary" onclick="refreshList()">🔄 刷新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 评价列表 -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>用户</th>
+                        <th>酒店</th>
+                        <th>评分</th>
+                        <th>评价内容</th>
+                        <th>商家回复</th>
+                        <th>状态</th>
+                        <th>评价时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="commentList">
+                    <tr><td colspan="9" class="text-center">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5>评价详情</h5><button type="button" class="close" data-dismiss="modal">&times;</button></div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 违规处理弹窗 -->
+<div class="modal fade" id="violationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>标记违规</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>评价ID：</strong> <span id="violationCommentId"></span></p>
+                <p><strong>用户：</strong> <span id="violationUsername"></span></p>
+                <p><strong>评价内容：</strong> <span id="violationContent"></span></p>
+                <hr>
+                <div class="alert alert-warning">
+                    ⚠️ 标记为违规后，该评价将对用户隐藏。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button class="btn btn-danger" onclick="submitViolation()">确认标记违规</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    let currentTab = 'all';
+    let comments = [];
+    let currentViolationComment = null;
+
+    $(function(){
+        loadComments();
+
+        $('a[data-tab]').click(function(e){
+            e.preventDefault();
+            currentTab = $(this).data('tab');
+            $('a[data-tab]').removeClass('active');
+            $(this).addClass('active');
+            renderList();
+        });
+    });
+
+    function loadComments(){
+        $("#commentList").html('<tr><td colspan="9" class="text-center">加载中...</td</tr>');
+
+        $.ajax({
+            url: "/api/hotel-comments/all",
+            type: "GET",
+            success: function(data){
+                console.log("获取到的评价数据：", data);
+                if(data.code === 200){
+                    comments = data.data || [];
+                } else if(Array.isArray(data)){
+                    comments = data;
+                } else {
+                    comments = [];
+                }
+                updateStatistics();
+                renderList();
+            },
+            error: function(xhr, status, error){
+                console.error("请求失败：", error);
+                $("#commentList").html('<td><td colspan="9" class="text-center text-danger">加载失败：' + error + '</td></tr>');
+            }
+        });
+    }
+
+    function updateStatistics(){
+        let total = comments.length;
+        let normalCount = comments.filter(c => c.status !== '违规' && c.status !== 'violation').length;
+        let violationCount = comments.filter(c => c.status === '违规' || c.status === 'violation').length;
+        let totalScore = comments.reduce((sum, c) => sum + (c.score || 0), 0);
+        let avgScore = total > 0 ? (totalScore / total).toFixed(1) : 0;
+
+        $("#totalCount").text(total);
+        $("#normalCount").text(normalCount);
+        $("#violationCount").text(violationCount);
+        $("#avgScore").text(avgScore);
+    }
+
+    function renderList(){
+        let keyword = $("#searchKeyword").val().toLowerCase();
+        let scoreFilter = parseInt($("#filterScore").val());
+        let replyFilter = $("#filterReply").val();
+
+        let filtered = comments.filter(c => {
+            // 标签筛选
+            if(currentTab === 'normal' && (c.status === '违规' || c.status === 'violation')) return false;
+            if(currentTab === 'violation' && c.status !== '违规' && c.status !== 'violation') return false;
+
+            // 关键词筛选
+            if(keyword && !(c.username || '').toLowerCase().includes(keyword)
+                && !(c.hotelName || '').toLowerCase().includes(keyword)
+                && !(c.content || '').toLowerCase().includes(keyword)){
+                return false;
+            }
+
+            // 评分筛选
+            if(scoreFilter > 0 && (c.score || 0) < scoreFilter) return false;
+
+            // 回复状态筛选
+            if(replyFilter === 'replied' && !c.reply) return false;
+            if(replyFilter === 'unreplied' && c.reply) return false;
+
+            return true;
+        });
+
+        if(filtered.length === 0){
+            $("#commentList").html('<tr><td colspan="9" class="text-center">暂无评价数据</td</tr>');
+            return;
+        }
+
+        let html = "";
+        filtered.forEach(c => {
+            let starHtml = '';
+            for(let i = 1; i <= 5; i++) starHtml += i <= (c.score || 0) ? '★' : '☆';
+            let statusText = (c.status === '违规' || c.status === 'violation') ? '违规' : '正常';
+            let statusClass = statusText === '违规' ? 'status-violation' : 'status-normal';
+            let replyText = c.reply ? (c.reply.length > 30 ? c.reply.substring(0, 30) + '...' : c.reply) : '未回复';
+
+            html += `<tr>
+                <td>${c.id}</td>
+                <td>${escapeHtml(c.username || '匿名用户')}</td>
+                <td>${escapeHtml(c.hotelName || '未知酒店')}</td>
+                <td><span class="score-star">${starHtml}</span> (${c.score || 0}分)</td>
+                <td class="comment-content" title="${escapeHtml(c.content || '')}">${escapeHtml(c.content || '-')}</td>
+                <td class="reply-content" title="${escapeHtml(c.reply || '')}">${escapeHtml(replyText)}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td><small>${c.createTime || '-'}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewDetail(${c.id})">详情</button>
+                    ${statusText !== '违规' ? `<button class="btn btn-sm btn-outline-danger" onclick="openViolationModal(${c.id}, '${escapeHtml(c.username)}', '${escapeHtml(c.content || '')}')">标记违规</button>` : ''}
+                    <button class="btn btn-sm btn-danger" onclick="deleteComment(${c.id})">删除</button>
+                 </td>
+            </tr>`;
+        });
+        $("#commentList").html(html);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function searchComments(){ renderList(); }
+    function refreshList(){ loadComments(); }
+
+    function viewDetail(id){
+        let c = comments.find(c => c.id == id);
+        if(!c){
+            alert("找不到评价数据");
+            return;
+        }
+
+        let starHtml = '';
+        for(let i = 1; i <= 5; i++) starHtml += i <= (c.score || 0) ? '★' : '☆';
+
+        let detailHtml = `
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>评价ID：</strong> ${c.id}</p>
+                            <p><strong>用户：</strong> ${escapeHtml(c.username || '匿名用户')}</p>
+                            <p><strong>酒店：</strong> ${escapeHtml(c.hotelName || '未知酒店')}</p>
+                            <p><strong>酒店ID：</strong> ${c.hotelId || '-'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>评分：</strong> ${starHtml} (${c.score || 0}分)</p>
+                            <p><strong>状态：</strong> ${c.status === '违规' ? '违规' : '正常'}</p>
+                            <p><strong>订单号：</strong> ${c.orderId || '-'}</p>
+                            <p><strong>评价时间：</strong> ${c.createTime || '-'}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <h6>评价内容：</h6>
+                        <div class="alert alert-light">${escapeHtml(c.content || '无内容')}</div>
+                    </div>
+                    ${c.reply ? `
+                    <div class="mb-3">
+                        <h6>商家回复：</h6>
+                        <div class="alert alert-info">🏨 ${escapeHtml(c.reply)}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        $("#detailContent").html(detailHtml);
+        $("#detailModal").modal('show');
+    }
+
+    function openViolationModal(id, username, content){
+        currentViolationComment = {id: id, username: username, content: content};
+        $("#violationCommentId").text(id);
+        $("#violationUsername").text(username);
+        $("#violationContent").text(content);
+        $("#violationModal").modal('show');
+    }
+
+    function submitViolation(){
+        if(!currentViolationComment) return;
+
+        $.ajax({
+            url: `/api/hotel-comments/${currentViolationComment.id}/violation`,
+            type: 'POST',
+            contentType: 'application/json',
+            success: function(res){
+                if(res.code === 200 || res.success){
+                    alert('已标记为违规');
+                    $("#violationModal").modal('hide');
+                    loadComments();
+                } else {
+                    alert(res.message || '标记失败');
+                }
+            },
+            error: function(){
+                alert('标记失败，请检查后端接口');
+            }
+        });
+    }
+
+    function deleteComment(id){
+        if(confirm('确定删除该评价吗？删除后无法恢复！')){
+            $.ajax({
+                url: `/api/hotel-comments/${id}`,
+                type: 'DELETE',
+                success: function(res){
+                    if(res.code === 200 || res.success){
+                        alert('删除成功');
+                        loadComments();
+                    } else {
+                        alert(res.message || '删除失败');
+                    }
+                },
+                error: function(){
+                    alert('删除失败，请检查后端接口');
+                }
+            });
+        }
+    }
+</script>
+</body>
+</html>

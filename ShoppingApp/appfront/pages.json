@@ -15,6 +15,20 @@
             }
         },
         {
+            "path": "pages/flight/search-flight",
+            "style": {
+                "navigationBarTitleText": "机票搜索",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path": "pages/flight/order",
+            "style": {
+                "navigationBarTitleText": "填写订单",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
             "path": "pages/category/category",
             "style": {
                 "navigationBarTitleText": "酒店",
@@ -84,6 +98,75 @@
             "style": {
                 "navigationBarTitleText": "AI路线规划"
             }
+        },
+        {
+            "path": "pages/merchant/home",
+            "style": { 
+                "navigationBarTitleText": "商家中心" 
+            }
+        },
+        {
+            "path": "pages/merchant/hotel-list",
+            "style": { 
+                "navigationBarTitleText": "酒店管理" 
+            }
+        },
+        {
+            "path": "pages/merchant/order-list",
+            "style": { 
+                "navigationBarTitleText": "订单管理" 
+            }
+        },
+        {
+            "path": "pages/merchant/comment-list",
+            "style": { 
+                "navigationBarTitleText": "评价管理" 
+            }
+        },
+        {
+            "path": "pages/merchant/messages",
+            "style": { 
+                "navigationBarTitleText": "客户消息" 
+            }
+        },
+        {
+            "path" : "pages/merchant/notifications",
+            "style" : 
+            {
+                "navigationBarTitleText" : "消息通知",
+                "enablePullDownRefresh" : false
+            }
+        },
+        {
+            "path" : "pages/merchant/setting",
+            "style" : 
+            {
+                "navigationBarTitleText" : "",
+                "enablePullDownRefresh" : false
+            }
+        },
+        {
+            "path": "pages/message/message",
+            "style": {
+                "navigationBarTitleText": "消息中心",
+                "enablePullDownRefresh": false
+            }
+        },
+        {
+            "path" : "pages/profile/setting",
+            "style" : 
+            {
+                "navigationBarTitleText" : "",
+                "enablePullDownRefresh" : false
+            }
+        },
+        {
+            "path" : "pages/profile/notifications",
+            "style" : 
+            {
+                "navigationBarTitleText" : "",
+                "enablePullDownRefresh" : false
+            }
         }
     ],
     "globalStyle": {
@@ -109,16 +192,16 @@
                 "selectedIconPath": "static/tab/酒店.png"
             },
             {
-                "pagePath": "pages/flight/flight",
+                "pagePath": "pages/message/message",
+                "text": "消息",
+                "iconPath": "static/tab/消息.png",
+                "selectedIconPath": "static/tab/消息-active.png"
+            },
+            {
+                "pagePath": "pages/flight/search-flight",
                 "text": "购票",
                 "iconPath": "static/tab/机票.png",
                 "selectedIconPath": "static/tab/机票.png"
-            },
-            {
-                "pagePath": "pages/ai-plan/ai-plan",
-                "text": "路线",
-                "iconPath": "static/tab/旅游景点.png",
-                "selectedIconPath": "static/tab/旅游景点.png"
             },
             {
                 "pagePath": "pages/profile/profile",

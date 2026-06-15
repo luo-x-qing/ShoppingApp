@@ -2,61 +2,195 @@
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>酒店管理</title>
+    <title>酒店管理 - 管理员</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-open { background: #d4edda; color: #155724; }
+        .status-closed { background: #e2e3e5; color: #383d41; }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .hotel-img {
+            width: 60px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .action-btns .btn { margin: 2px; }
+        .table td { vertical-align: middle; }
+        .star-display {
+            color: #ffc107;
+            font-size: 14px;
+        }
         .star {
-            font-size: 22px;
-            color: #ccc;
+            font-size: 24px;
             cursor: pointer;
+            color: #ddd;
         }
         .star.active {
             color: #ffc107;
         }
-        .detail-item{
-            display: flex;
-            gap:8px;
-            align-items: center;
-            margin-bottom:8px;
+        .current-detail-item {
+            display: inline-block;
+            margin: 5px;
+            position: relative;
         }
-        .current-detail-item{
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            padding: 8px;
-            border: 1px solid #eee;
+        .current-detail-item img {
+            width: 100px;
+            height: 80px;
+            object-fit: cover;
             border-radius: 4px;
         }
-        .current-detail-item img{
-            width: 50px;
-            height: 30px;
-            object-fit: cover;
+        .current-detail-item .btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 0 5px;
+            font-size: 12px;
+        }
+        .detail-item {
+            margin-bottom: 8px;
+        }
+        .nav-tabs .nav-link.active { font-weight: bold; }
+        .api-base {
+            font-size: 12px;
+            color: #999;
         }
     </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h3>酒店管理</h3>
-    <a href="/admin" class="btn btn-secondary mb-3">返回</a>
-    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addHotelModal">添加酒店</button>
+<nav class="navbar navbar-dark bg-dark mb-3">
+    <a class="navbar-brand ml-3">旅游资源管理系统 - 管理员</a>
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link mr-3 text-white" th:href="@{/logout}">退出登录</a>
+        </li>
+    </ul>
+</nav>
 
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>酒店名称</th>
-            <th>星级</th>
-            <th>价格</th>
-            <th>酒店分类</th>
-            <th>酒店地址</th>
-            <th>封面图</th>
-            <th>操作</th>
-        </tr>
-        </thead>
-        <tbody id="hotelList">
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="list-group">
+                <a th:href="@{/admin}" class="list-group-item">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item active">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>🏨 酒店管理</h3>
+                <div class="text-muted small">管理员可查看、筛选、删除酒店，以及修改酒店状态（禁用/启用时会通知商家）</div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary" id="totalCount">0</h4>
+                            <p class="text-muted mb-0">全部酒店</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success" id="openCount">0</h4>
+                            <p class="text-muted mb-0">营业中</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-secondary" id="closedCount">0</h4>
+                            <p class="text-muted mb-0">已停业</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-warning" id="avgPrice">0</h4>
+                            <p class="text-muted mb-0">平均价格(元)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="酒店名称/地址">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterStatus" class="form-control">
+                            <option value="all">全部状态</option>
+                            <option value="营业中">营业中</option>
+                            <option value="已停业">已停业</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterStar" class="form-control">
+                            <option value="0">全部星级</option>
+                            <option value="5">五星级</option>
+                            <option value="4">四星级</option>
+                            <option value="3">三星级</option>
+                            <option value="2">二星级</option>
+                            <option value="1">一星级</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" onclick="searchHotels()">🔍 搜索</button>
+                    </div>
+                    <div class="col-md-3 text-right">
+                        <button class="btn btn-success" data-toggle="modal" data-target="#addHotelModal">➕ 添加酒店</button>
+                        <button class="btn btn-outline-secondary ml-2" onclick="refreshList()">🔄 刷新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 酒店列表表格 -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>封面</th>
+                        <th>酒店名称</th>
+                        <th>分类</th>
+                        <th>地址</th>
+                        <th>星级</th>
+                        <th>价格</th>
+                        <th>评分</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="hotelList">
+                    <tr><td colspan="10" class="text-center">加载中...</td</tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 添加弹窗 -->
@@ -73,7 +207,6 @@
                         <label>酒店名称</label>
                         <input type="text" class="form-control" id="name" required>
                     </div>
-
                     <div class="form-group">
                         <label>酒店分类</label>
                         <select class="form-control" id="category" required>
@@ -83,13 +216,10 @@
                             <option value="连锁酒店">连锁酒店</option>
                         </select>
                     </div>
-
-                    <!-- 新增地址 -->
                     <div class="form-group">
                         <label>酒店地址</label>
                         <input type="text" class="form-control" id="address" required>
                     </div>
-
                     <div class="form-group">
                         <label>星级</label>
                         <div>
@@ -101,17 +231,14 @@
                         </div>
                         <input type="hidden" id="starLevel" value="0">
                     </div>
-
                     <div class="form-group">
                         <label>价格</label>
                         <input type="number" class="form-control" id="price" required>
                     </div>
-
                     <div class="form-group">
                         <label>上传封面图</label>
                         <input type="file" class="form-control-file" id="coverFile" accept="image/*">
                     </div>
-
                     <div class="form-group">
                         <label>详情图（可无限添加）</label>
                         <div id="detailBox">
@@ -143,12 +270,10 @@
             <div class="modal-body">
                 <form id="editForm">
                     <input type="hidden" id="editId">
-
                     <div class="form-group">
                         <label>酒店名称</label>
                         <input type="text" class="form-control" id="editName" required>
                     </div>
-
                     <div class="form-group">
                         <label>酒店分类</label>
                         <select class="form-control" id="editCategory" required>
@@ -158,13 +283,10 @@
                             <option value="连锁酒店">连锁酒店</option>
                         </select>
                     </div>
-
-                    <!-- 修改地址 -->
                     <div class="form-group">
                         <label>酒店地址</label>
                         <input type="text" class="form-control" id="editAddress" required>
                     </div>
-
                     <div class="form-group">
                         <label>星级</label>
                         <div>
@@ -176,23 +298,19 @@
                         </div>
                         <input type="hidden" id="editStarLevel" value="0">
                     </div>
-
                     <div class="form-group">
                         <label>价格</label>
                         <input type="number" class="form-control" id="editPrice" required>
                     </div>
-
                     <div class="form-group">
                         <label>更换封面图（可选）</label>
                         <input type="file" class="form-control-file" id="editCoverFile" accept="image/*">
-                        <small class="form-text text-muted">不选则保留原图片</small>
+                        <small class="form-text text-muted">不选则保留原图</small>
                     </div>
-
                     <div class="form-group">
                         <label>当前详情图</label>
                         <div id="currentDetailsBox"></div>
                     </div>
-
                     <div class="form-group">
                         <label>新增详情图</label>
                         <div id="newDetailUploadBox">
@@ -213,21 +331,410 @@
     </div>
 </div>
 
+<!-- 状态修改弹窗 -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>修改酒店状态</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>酒店名称：</strong> <span id="statusHotelName"></span></p>
+                <div class="form-group">
+                    <label>状态</label>
+                    <select id="newStatus" class="form-control">
+                        <option value="营业中">✅ 营业中</option>
+                        <option value="已停业">⛔ 已停业</option>
+                    </select>
+                </div>
+                <div id="statusWarning" class="alert alert-warning mt-2" style="display:none;">
+                    ⚠️ 禁用酒店后，系统会自动通知商家。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button class="btn btn-primary" onclick="submitStatusChange()">确认修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 酒店详情弹窗 -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>酒店详情</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
 <script>
-    $(function(){ loadHotels(); });
+    const API_BASE = "http://localhost:8080";
+    let hotels = [];
+    let currentStatusHotel = null;
 
+    $(function(){
+        loadHotels();
+        $('#addHotelModal').on('show.bs.modal', function(){
+            $(".star").removeClass("active");
+            $("#starLevel").val(0);
+        });
+        $('#editHotelModal').on('show.bs.modal', function(){
+            $(".edit-star").removeClass("active");
+            $("#editStarLevel").val(0);
+            $("#newDetailUploadBox").html(`
+                <div class="detail-item">
+                    <input type="file" class="form-control-file edit-detail-file" accept="image/*">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeEditDetailItem(this)">删除</button>
+                </div>
+            `);
+        });
+    });
+
+    function loadHotels(){
+        $("#hotelList").html('<tr><td colspan="10" class="text-center">加载中...</td</tr>');
+
+        $.ajax({
+            url: API_BASE + "/api/hotels",
+            type: "GET",
+            success: function(data){
+                console.log("获取到的酒店数据：", data);
+
+                if(data.code === 200){
+                    hotels = data.data || [];
+                } else if(Array.isArray(data)){
+                    hotels = data;
+                } else {
+                    hotels = [];
+                }
+
+                console.log("酒店数量：", hotels.length);
+                updateStatistics();
+                renderList();
+            },
+            error: function(xhr, status, error){
+                console.error("请求失败：", error);
+                $("#hotelList").html('<tr><td colspan="10" class="text-center text-danger">加载失败：' + error + '</td</tr>');
+            }
+        });
+    }
+
+    function updateStatistics(){
+        let total = hotels.length;
+        let openCount = hotels.filter(h => h.status === '营业中' || !h.status).length;
+        let closedCount = hotels.filter(h => h.status === '已停业').length;
+        let avgPrice = total > 0 ? hotels.reduce((sum, h) => sum + (h.price || 0), 0) / total : 0;
+
+        $("#totalCount").text(total);
+        $("#openCount").text(openCount);
+        $("#closedCount").text(closedCount);
+        $("#avgPrice").text(avgPrice.toFixed(0));
+    }
+
+    function renderList(){
+        let keyword = $("#searchKeyword").val().toLowerCase();
+        let statusFilter = $("#filterStatus").val();
+        let starFilter = parseInt($("#filterStar").val());
+
+        let filtered = hotels.filter(h => {
+            if(keyword && !h.name.toLowerCase().includes(keyword) && !(h.address || '').toLowerCase().includes(keyword)){
+                return false;
+            }
+            if(statusFilter !== 'all' && (h.status || '营业中') !== statusFilter){
+                return false;
+            }
+            if(starFilter > 0 && (h.starLevel || 0) !== starFilter){
+                return false;
+            }
+            return true;
+        });
+
+        if(filtered.length === 0){
+            $("#hotelList").html('<tr><td colspan="10" class="text-center">暂无酒店数据</td</tr>');
+            return;
+        }
+
+        let html = "";
+        filtered.forEach(h => {
+            let status = h.status || '营业中';
+            let statusClass = status === '营业中' ? 'status-open' : 'status-closed';
+            let avgRating = h.avgRating || 0;
+
+            let starHtml = '';
+            for(let i = 1; i <= 5; i++){
+                starHtml += i <= (h.starLevel || 0) ? '★' : '☆';
+            }
+
+            html += `
+                <tr>
+                    <td>${h.id}</td>
+                    <td><img src="${h.coverImage || '/default.png'}" class="hotel-img" onerror="this.src='/default.png'"></td>
+                    <td><strong>${escapeHtml(h.name || '-')}</strong></td>
+                    <td>${h.category || '未分类'}</td>
+                    <td>${(h.address || '-').substring(0, 20)}${(h.address || '').length > 20 ? '...' : ''}</td>
+                    <td><span class="star-display">${starHtml}</span></td>
+                    <td>¥${h.price || 0}</td>
+                    <td>${avgRating > 0 ? avgRating.toFixed(1) + '分' : '暂无评分'}</td>
+                    <td><span class="status-badge ${statusClass}">${status}</span></td>
+                    <td class="action-btns">
+                        <button class="btn btn-sm btn-info" onclick="viewDetail(${h.id})">详情</button>
+                        <button class="btn btn-sm btn-success" onclick="openEditModal(${h.id})">修改</button>
+                        <button class="btn btn-sm btn-warning" onclick="openStatusModal(${h.id}, '${escapeHtml(h.name)}', '${status}')">改状态</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteHotel(${h.id})">删除</button>
+                    </td>
+                 `
+            ;
+        });
+
+        $("#hotelList").html(html);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function searchHotels(){
+        renderList();
+    }
+
+    function refreshList(){
+        loadHotels();
+    }
+
+    function openStatusModal(id, name, currentStatus){
+        currentStatusHotel = {id: id, name: name, currentStatus: currentStatus};
+        $("#statusHotelName").text(name);
+        $("#newStatus").val(currentStatus === '营业中' ? '已停业' : '营业中');
+
+        // 显示警告提示
+        if (currentStatus === '营业中') {
+            $("#statusWarning").show();
+        } else {
+            $("#statusWarning").hide();
+        }
+
+        $("#statusModal").modal('show');
+    }
+
+    // ========== 修改后的核心方法：调用带通知功能的接口 ==========
+    function submitStatusChange(){
+        if(!currentStatusHotel) return;
+
+        let newStatus = $("#newStatus").val();
+        let oldStatus = currentStatusHotel.currentStatus;
+
+        let hotel = hotels.find(h => h.id === currentStatusHotel.id);
+        if(!hotel){
+            alert("找不到酒店数据");
+            return;
+        }
+
+        // 情况1：从营业中改为已停业（禁用）- 调用禁用接口并发送通知
+        if (newStatus === '已停业' && oldStatus !== '已停业') {
+            let reason = prompt("请输入禁用原因：", "违规经营");
+            if (reason === null) return;
+
+            $.ajax({
+                url: API_BASE + "/api/admin/hotels/" + currentStatusHotel.id + "/disable",
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({ reason: reason }),
+                success: function(res){
+                    if(res.code === 200){
+                        alert('✅ ' + (res.message || '禁用成功，已通知商家'));
+                        $("#statusModal").modal('hide');
+                        loadHotels();
+                    } else {
+                        alert('❌ ' + (res.message || '禁用失败'));
+                    }
+                },
+                error: function(xhr){
+                    console.error(xhr);
+                    alert('❌ 禁用失败：' + (xhr.responseText || '请重试'));
+                }
+            });
+            return;
+        }
+
+        // 情况2：从已停业改为营业中（启用）- 调用启用接口并发送通知
+        if (newStatus === '营业中' && oldStatus === '已停业') {
+            $.ajax({
+                url: API_BASE + "/api/admin/hotels/" + currentStatusHotel.id + "/enable",
+                type: 'PUT',
+                success: function(res){
+                    if(res.code === 200){
+                        alert('✅ ' + (res.message || '启用成功，已通知商家'));
+                        $("#statusModal").modal('hide');
+                        loadHotels();
+                    } else {
+                        alert('❌ ' + (res.message || '启用失败'));
+                    }
+                },
+                error: function(xhr){
+                    console.error(xhr);
+                    alert('❌ 启用失败：' + (xhr.responseText || '请重试'));
+                }
+            });
+            return;
+        }
+
+        // 情况3：其他状态变更（兜底）
+        let updatedHotel = {...hotel, status: newStatus};
+        $.ajax({
+            url: API_BASE + "/api/hotels/" + currentStatusHotel.id,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(updatedHotel),
+            success: function(res){
+                if(res.code === 200){
+                    alert(`状态已修改为：${newStatus}`);
+                    $("#statusModal").modal('hide');
+                    loadHotels();
+                } else {
+                    alert(res.message || '修改失败');
+                }
+            },
+            error: function(){
+                alert('修改失败，请重试');
+            }
+        });
+    }
+
+    function deleteHotel(id){
+        if(confirm('⚠️ 确定删除该酒店吗？删除后无法恢复！')){
+            $.ajax({
+                url: API_BASE + "/api/hotels/" + id,
+                type: 'DELETE',
+                success: function(res){
+                    if(res.code === 200){
+                        alert('删除成功');
+                        loadHotels();
+                    } else {
+                        alert(res.message || '删除失败');
+                    }
+                },
+                error: function(){
+                    alert('删除失败，请重试');
+                }
+            });
+        }
+    }
+
+    function viewDetail(id){
+        $.ajax({
+            url: API_BASE + "/api/hotels/" + id,
+            type: 'GET',
+            success: function(res){
+                let h = res.code === 200 ? res.data : res;
+                if(!h){
+                    alert("获取详情失败");
+                    return;
+                }
+
+                let starHtml = '';
+                for(let i = 1; i <= 5; i++){
+                    starHtml += i <= (h.starLevel || 0) ? '★' : '☆';
+                }
+
+                let detailHtml = `
+                    <div class="row">
+                        <div class="col-md-5">
+                            <img src="${h.coverImage || '/default.png'}" class="img-fluid rounded" onerror="this.src='/default.png'">
+                        </div>
+                        <div class="col-md-7">
+                            <h4>${escapeHtml(h.name)}</h4>
+                            <p><strong>星级：</strong> ${starHtml}</p>
+                            <p><strong>价格：</strong> ¥${h.price}/晚</p>
+                            <p><strong>分类：</strong> ${h.category || '未分类'}</p>
+                            <p><strong>地址：</strong> ${h.address || '--'}</p>
+                            <p><strong>状态：</strong> ${h.status || '营业中'}</p>
+                            <p><strong>平均评分：</strong> ${(h.avgRating || 0).toFixed(1)}分</p>
+                            <p><strong>商家ID：</strong> ${h.merchantId || '--'}</p>
+                            <p><strong>创建时间：</strong> ${h.createTime || '--'}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>详情图片</h6>
+                    <div class="row">
+                        ${(h.detailImages || []).map(img => `
+                            <div class="col-md-3 mb-2">
+                                <img src="${img.imageUrl}" class="img-fluid rounded" style="height:100px; object-fit:cover;">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <hr>
+                    <h6>房型信息</h6>
+                    <div id="roomTypesDetail">加载中...</div>
+                `;
+
+                $("#detailContent").html(detailHtml);
+                $("#detailModal").modal('show');
+                loadRoomTypesForDetail(id);
+            },
+            error: function(){
+                alert("获取详情失败");
+            }
+        });
+    }
+
+    function loadRoomTypesForDetail(hotelId){
+        $.ajax({
+            url: API_BASE + "/api/hotels/" + hotelId + "/room-types",
+            type: 'GET',
+            success: function(res){
+                let rooms = res.code === 200 ? (res.data || []) : [];
+                if(rooms.length === 0){
+                    $("#roomTypesDetail").html('<p class="text-muted">暂无房型信息</p>');
+                    return;
+                }
+
+                let html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>房型</th><th>面积</th><th>床型</th><th>窗户</th><th>早餐</th><th>价格</th><th>库存</th></tr></thead><tbody>';
+                rooms.forEach(r => {
+                    html += `<tr>
+                        <td>${r.typeName || '-'}</td>
+                        <td>${r.size || '-'}</td>
+                        <td>${r.bedType || '-'}</td>
+                        <td>${r.windowStatus || '-'}</td>
+                        <td>${r.breakfast || '-'}</td>
+                        <td>¥${r.price || 0}</td>
+                        <td>${r.availableCount || 0}/${r.totalCount || 0}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+                $("#roomTypesDetail").html(html);
+            },
+            error: function(){
+                $("#roomTypesDetail").html('<p class="text-muted">获取房型信息失败</p>');
+            }
+        });
+    }
+
+    // ==== CRUD functions ====
     function setStar(level){
         $("#starLevel").val(level);
-        $(".star").removeClass("active");
-        $(".star").each((i,e)=>{ if(i<level) $(e).addClass("active"); });
+        $(".star").each(function(i){
+            $(this).toggleClass("active", i < level);
+        });
     }
 
     function setEditStar(level){
         $("#editStarLevel").val(level);
-        $(".edit-star").removeClass("active");
-        $(".edit-star").each((i,e)=>{ if(i<level) $(e).addClass("active"); });
+        $(".edit-star").each(function(i){
+            $(this).toggleClass("active", i < level);
+        });
     }
 
     function addDetailItem(){
@@ -240,8 +747,8 @@
     }
 
     function removeDetailItem(btn){
-        if($("#detailBox .detail-item").length>1) $(btn).parent().remove();
-        else alert("至少保留一个");
+        if($("#detailBox .detail-item").length > 1) $(btn).parent().remove();
+        else alert("至少保留一项");
     }
 
     function addEditDetailItem(){
@@ -254,48 +761,25 @@
     }
 
     function removeEditDetailItem(btn){
-        if($("#newDetailUploadBox .detail-item").length>1) $(btn).parent().remove();
-        else alert("至少保留一个");
+        if($("#newDetailUploadBox .detail-item").length > 1) $(btn).parent().remove();
+        else alert("至少保留一项");
     }
 
     function removeCurrentDetailItem(btn){
         $(btn).parent().remove();
     }
 
-    function loadHotels(){
-        $.get("/api/hotels", data=>{
-            let html = "";
-            data.forEach(h=>{
-                html += `
-                <tr>
-                    <td>${h.id}</td>
-                    <td>${h.name}</td>
-                    <td>${h.starLevel}星</td>
-                    <td>¥${h.price}</td>
-                    <td>${h.category || '未分类'}</td>
-                    <td>${h.address || ''}</td>
-                    <td><img src="${h.coverImage}" width="50"></td>
-                    <td>
-                        <button class="btn btn-sm btn-warning mr-1" onclick="openEditModal(${h.id})">修改</button>
-                        <button class="btn btn-sm btn-danger" onclick="del(${h.id})">删除</button>
-                    </td>
-                </tr>`;
-            });
-            $("#hotelList").html(html);
-        });
-    }
-
     function upload(file, callback){
         let fd = new FormData();
         fd.append("file", file);
         $.ajax({
-            url: "/api/upload",
+            url: API_BASE + "/api/upload",
             type: "POST",
             data: fd,
             processData: false,
             contentType: false,
-            success: url=>callback(null,url),
-            error: err=>callback(err,null)
+            success: function(url){ callback(null, url); },
+            error: function(err){ callback(err, null); }
         });
     }
 
@@ -307,9 +791,12 @@
         let price = $("#price").val();
         let coverFile = $("#coverFile")[0].files[0];
 
-        if(!name||!category||!address||!star||!price||!coverFile){ alert("请填完整"); return; }
+        if(!name || !category || !address || !star || !price || !coverFile){
+            alert("请填写完整信息");
+            return;
+        }
 
-        upload(coverFile, (err,coverUrl)=>{
+        upload(coverFile, function(err, coverUrl){
             if(err){ alert("封面上传失败"); return; }
 
             let files = [];
@@ -324,25 +811,29 @@
             function next(){
                 if(idx >= files.length){
                     $.ajax({
-                        url: "/api/hotels",
+                        url: API_BASE + "/api/hotels",
                         type: "POST",
                         contentType: "application/json",
                         data: JSON.stringify({
-                            name,category,address,
-                            starLevel:parseInt(star),
-                            price:parseFloat(price),
-                            coverImage:coverUrl,
-                            detailImages: details.map(u=>({imageUrl:u}))
+                            name: name,
+                            category: category,
+                            address: address,
+                            starLevel: parseInt(star),
+                            price: parseFloat(price),
+                            coverImage: coverUrl,
+                            detailImages: details.map(function(u){ return {imageUrl: u}; })
                         }),
-                        success: ()=>{
+                        success: function(){
                             alert("添加成功");
                             $("#addHotelModal").modal("hide");
+                            $("#addForm")[0].reset();
+                            $(".star").removeClass("active");
                             loadHotels();
                         }
                     });
                     return;
                 }
-                upload(files[idx], (err,u)=>{
+                upload(files[idx], function(err, u){
                     details.push(u);
                     idx++;
                     next();
@@ -353,21 +844,26 @@
     }
 
     function openEditModal(id){
-        $.get("/api/hotels/"+id, h=>{
-            $("#editId").val(h.id);
-            $("#editName").val(h.name);
-            $("#editCategory").val(h.category||"度假型酒店");
-            $("#editAddress").val(h.address || "");
-            $("#editPrice").val(h.price);
-            setEditStar(h.starLevel);
+        $.get(API_BASE + "/api/hotels/" + id, function(h){
+            let data = h.code === 200 ? h.data : h;
+            if(!data){
+                alert("获取数据失败");
+                return;
+            }
+            $("#editId").val(data.id);
+            $("#editName").val(data.name);
+            $("#editCategory").val(data.category || "度假型酒店");
+            $("#editAddress").val(data.address || "");
+            $("#editPrice").val(data.price);
+            setEditStar(data.starLevel);
 
             let html = "";
-            if(h.detailImages) h.detailImages.forEach(d=>{
+            if(data.detailImages) data.detailImages.forEach(function(d){
                 html += `
-                <div class="current-detail-item">
-                    <img src="${d.imageUrl}">
-                    <button class="btn btn-sm btn-danger" onclick="removeCurrentDetailItem(this)">删除</button>
-                </div>`;
+                    <div class="current-detail-item">
+                        <img src="${d.imageUrl}" style="width:100px;height:80px;object-fit:cover;border-radius:4px;">
+                        <button class="btn btn-sm btn-danger" onclick="removeCurrentDetailItem(this)">删除</button>
+                    </div>`;
             });
             $("#currentDetailsBox").html(html);
             $("#editHotelModal").modal("show");
@@ -399,51 +895,50 @@
 
         function uploadNew(){
             if(idx >= newFiles.length){
-                let all = kept.concat(newUrls.map(u=>({imageUrl:u})));
+                let all = kept.concat(newUrls.map(function(u){ return {imageUrl: u}; }));
                 let data = {
-                    name,category,address,
-                    starLevel:parseInt(star),
-                    price:parseFloat(price),
+                    name: name,
+                    category: category,
+                    address: address,
+                    starLevel: parseInt(star),
+                    price: parseFloat(price),
                     detailImages: all
                 };
                 if(coverFile){
-                    upload(coverFile, (err,u)=>{
-                        data.coverImage = u;
-                        send(data);
+                    upload(coverFile, function(err, u){
+                        if(!err) data.coverImage = u;
+                        sendUpdate(data);
                     });
                 } else {
-                    send(data);
+                    sendUpdate(data);
                 }
                 return;
             }
-            upload(newFiles[idx], (err,u)=>{
+            upload(newFiles[idx], function(err, u){
                 newUrls.push(u);
                 idx++;
                 uploadNew();
             });
         }
 
-        function send(data){
+        function sendUpdate(data){
             $.ajax({
-                url: "/api/hotels/"+id,
+                url: API_BASE + "/api/hotels/" + id,
                 type: "PUT",
                 contentType: "application/json",
                 data: JSON.stringify(data),
-                success: ()=>{
+                success: function(){
                     alert("修改成功");
                     $("#editHotelModal").modal("hide");
                     loadHotels();
+                },
+                error: function(){
+                    alert("修改失败");
                 }
             });
         }
 
         uploadNew();
-    }
-
-    function del(id){
-        if(confirm("确定删除？")){
-            $.ajax({url:"/api/hotels/"+id,type:"DELETE",success:loadHotels});
-        }
     }
 </script>
 </body>

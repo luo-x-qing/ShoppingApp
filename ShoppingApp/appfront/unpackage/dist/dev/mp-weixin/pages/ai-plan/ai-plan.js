@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const BASE_URL = "http://localhost:8080";
 const _sfc_main = {
   data() {
     return {
@@ -52,9 +53,13 @@ const _sfc_main = {
       this.generating = true;
       const city = this.targetCity.split("、")[0];
       common_vendor.index.request({
-        url: `http://localhost:8080/travel/plan?city=${encodeURIComponent(city)}&days=${this.days}`,
+        url: `${BASE_URL}/travel/plan?city=${encodeURIComponent(city)}&days=${this.days}`,
         method: "GET",
         success: (res) => {
+          if (res.data.error) {
+            common_vendor.index.showToast({ title: res.data.error, icon: "none" });
+            return;
+          }
           this.planResult = res.data;
           common_vendor.index.showToast({ title: "路线生成成功", icon: "success" });
         },
@@ -64,34 +69,6 @@ const _sfc_main = {
         complete: () => {
           this.generating = false;
         }
-      });
-    },
-    addRouteToCart() {
-      if (!this.planResult || !this.planResult.spots)
-        return;
-      const username = common_vendor.index.getStorageSync("loginUsername");
-      if (!username) {
-        common_vendor.index.showToast({ title: "请先登录", icon: "none" });
-        return;
-      }
-      let count = 0;
-      const promises = this.planResult.spots.map((spotName) => {
-        return new Promise((resolve) => {
-          common_vendor.index.request({
-            url: "http://localhost:8080/api/cart/add-scenic",
-            method: "POST",
-            data: { username, scenicName: spotName, quantity: 1 },
-            success: () => {
-              count++;
-            },
-            fail: () => {
-            },
-            complete: () => resolve()
-          });
-        });
-      });
-      Promise.all(promises).then(() => {
-        common_vendor.index.showToast({ title: `已添加 ${count} 个景点到购物车` });
       });
     }
   }
@@ -151,8 +128,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: i
       });
     }),
-    r: common_vendor.o((...args) => $options.addRouteToCart && $options.addRouteToCart(...args)),
-    s: common_vendor.o(($event) => $data.planResult = null)
+    r: common_vendor.o(($event) => $data.planResult = null)
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-f6c85b3a"]]);

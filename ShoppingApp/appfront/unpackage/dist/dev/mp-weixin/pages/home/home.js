@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const BASE_URL = "http://localhost:8080";
 const provinceCityMap = {
   "北京市": ["北京市"],
   "天津市": ["天津市"],
@@ -308,9 +309,9 @@ const _sfc_main = {
       const city = this.selectedCity;
       let url;
       if (city && city !== "全部城市") {
-        url = "http://localhost:8080/api/attractions/province/" + encodeURIComponent(province) + "/city/" + encodeURIComponent(city);
+        url = BASE_URL + "/api/attractions/province/" + encodeURIComponent(province) + "/city/" + encodeURIComponent(city);
       } else {
-        url = "http://localhost:8080/api/attractions/province/" + encodeURIComponent(province);
+        url = BASE_URL + "/api/attractions/province/" + encodeURIComponent(province);
       }
       common_vendor.index.request({
         url,
@@ -323,7 +324,7 @@ const _sfc_main = {
           this.spots = res.data.map((item) => ({
             id: item.id,
             name: item.name,
-            image: item.photo ? item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo : "/static/home/6.jpg",
+            image: item.photo ? item.photo.startsWith("http") ? item.photo : BASE_URL + item.photo : "/static/home/6.jpg",
             ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
@@ -353,9 +354,9 @@ const _sfc_main = {
       const city = this.selectedCity;
       let url;
       if (city && city !== "全部城市") {
-        url = `http://localhost:8080/api/attractions/search?province=${encodeURIComponent(province)}&city=${encodeURIComponent(city)}&name=${encodeURIComponent(kw)}`;
+        url = `${BASE_URL}/api/attractions/search?province=${encodeURIComponent(province)}&city=${encodeURIComponent(city)}&name=${encodeURIComponent(kw)}`;
       } else {
-        url = `http://localhost:8080/api/attractions/search?province=${encodeURIComponent(province)}&name=${encodeURIComponent(kw)}`;
+        url = `${BASE_URL}/api/attractions/search?province=${encodeURIComponent(province)}&name=${encodeURIComponent(kw)}`;
       }
       common_vendor.index.request({
         url,
@@ -367,7 +368,7 @@ const _sfc_main = {
           this.spots = res.data.map((item) => ({
             id: item.id,
             name: item.name,
-            image: item.photo ? item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo : "/static/home/6.jpg",
+            image: item.photo ? item.photo.startsWith("http") ? item.photo : BASE_URL + item.photo : "/static/home/6.jpg",
             ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
@@ -403,7 +404,7 @@ const _sfc_main = {
     getRecommendedRoutes() {
       const province = this.selectedProvince;
       const city = this.selectedCity;
-      let url = "http://localhost:8080/api/recommend/routes?province=" + encodeURIComponent(province);
+      let url = BASE_URL + "/api/recommend/routes?province=" + encodeURIComponent(province);
       if (city && city !== "全部城市") {
         url += "&city=" + encodeURIComponent(city);
       }

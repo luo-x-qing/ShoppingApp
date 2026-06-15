@@ -1,67 +1,118 @@
 <template>
   <view class="container">
-    <!-- 顶部标题 -->
-    <view class="header">
-      <text class="title">👤 个人中心</text>
+    <!-- 顶部背景 -->
+    <view class="top-bg"></view>
+    
+    <!-- 顶部导航栏 -->
+    <view class="nav-bar">
+      <text class="nav-title">个人中心</text>
+      <view class="notification-icon" @click="goToNotifications">
+        <text class="icon">🔔</text>
+        <view class="badge" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</view>
+      </view>
     </view>
-
+    
     <!-- 用户信息卡片 -->
-    <view class="info-card">
-      <view class="user-row">
+    <view class="user-card">
+      <view class="user-info" @click="showEditModal = true">
         <image class="avatar" :src="userInfo.avatar" mode="aspectFill" />
         <view class="info">
           <text class="name">{{ userInfo.name }}</text>
           <text class="desc">{{ userInfo.desc }}</text>
         </view>
+        <view class="edit-icon">✎</view>
       </view>
-      <button class="edit-btn" @click="showEditModal = true">编辑信息</button>
+      
+      <!-- 统计数据 -->
+      <view class="stats-row">
+        <view class="stat-item" @click="goToOrders">
+          <text class="stat-num">{{ orderCount }}</text>
+          <text class="stat-label">订单</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item" @click="goToCollection">
+          <text class="stat-num">{{ collectionCount }}</text>
+          <text class="stat-label">收藏</text>
+        </view>
+      </view>
     </view>
 
     <!-- 功能菜单 -->
-    <view class="menu-box">
+    <view class="menu-grid">
       <view class="menu-item" @click="goToOrders">
+        <view class="menu-icon orders">📋</view>
         <text class="menu-text">我的订单</text>
-        <text class="arrow">></text>
-      </view>
-      <view class="menu-item" @click="goToCart">
-        <text class="menu-text">🛒 购物车</text>
-        <text class="arrow">></text>
       </view>
       <view class="menu-item" @click="goToCollection">
-        <text class="menu-text">我的收藏夹</text>
-        <text class="arrow">></text>
+        <view class="menu-icon collection">⭐</view>
+        <text class="menu-text">我的收藏</text>
       </view>
-      
-      <!-- 退出登录 -->
-      <view class="menu-item" @click="logout" style="color:#ff5722;">
-        <text class="menu-text">退出登录</text>
-        <text class="arrow">></text>
+      <view class="menu-item" @click="goToSetting">
+        <view class="menu-icon setting">⚙️</view>
+        <text class="menu-text">设置</text>
       </view>
+    </view>
+
+    <!-- 其他功能 -->
+    <view class="other-menu">
+      <view class="other-item" @click="showAbout">
+        <text class="other-text">关于我们</text>
+        <text class="other-arrow">›</text>
+      </view>
+      <view class="other-item" @click="showFeedback">
+        <text class="other-text">意见反馈</text>
+        <text class="other-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <button class="logout-btn" @click="logout">退出登录</button>
+
+    <!-- 版本信息 -->
+    <view class="version">
+      <text class="version-text">版本 v1.0.0</text>
     </view>
 
     <!-- 编辑弹窗 -->
     <view class="modal-overlay" v-if="showEditModal" @click="showEditModal = false">
       <view class="modal-content" @click.stop>
-        <text class="modal-title">编辑个人信息</text>
+        <view class="modal-header">
+          <text class="modal-title">编辑个人信息</text>
+          <text class="modal-close" @click="showEditModal = false">×</text>
+        </view>
 
         <view class="form-item">
           <text class="label">用户名</text>
           <input class="input" v-model="editForm.name" placeholder="请输入用户名" />
         </view>
         <view class="form-item">
-          <text class="label">简介</text>
+          <text class="label">个人简介</text>
           <textarea class="textarea" v-model="editForm.desc" placeholder="介绍一下自己吧"></textarea>
         </view>
 
-        <button class="save-btn" @click="saveInfo">保存</button>
+        <button class="save-btn" @click="saveInfo">保存修改</button>
+      </view>
+    </view>
+
+    <!-- 关于弹窗 -->
+    <view class="modal-overlay" v-if="showAboutModal" @click="showAboutModal = false">
+      <view class="about-modal" @click.stop>
+        <image class="about-logo" src="/static/logo.png" mode="aspectFit" />
+        <text class="about-name">旅游资源管理系统</text>
+        <text class="about-version">版本 1.0.0</text>
+        <text class="about-desc">为您提供优质的旅游服务体验</text>
+        <view class="about-contact">
+          <text>📧 service@example.com</text>
+          <text>📞 400-123-4567</text>
+        </view>
+        <button class="about-close" @click="showAboutModal = false">关闭</button>
       </view>
     </view>
   </view>
-    <RouteFloat/>
 </template>
 
 <script>
-// 默认用户资料（新用户默认值）
+// 默认用户资料
 const defaultUser = {
   name: "点击编辑",
   desc: "这家伙很懒，什么都没留下",
@@ -73,13 +124,17 @@ export default {
   data() {
     return {
       showEditModal: false,
+      showAboutModal: false,
       userInfo: { ...defaultUser },
-      editForm: { name: "", desc: "" }
+      editForm: { name: "", desc: "" },
+      orderCount: 0,
+      collectionCount: 0,
+      unreadCount: 0
     };
   },
 
   onShow() {
-    // 1. 先判断登录状态
+    // 判断登录状态
     const token = uni.getStorageSync('token');
     const username = uni.getStorageSync('loginUsername');
     
@@ -88,12 +143,15 @@ export default {
       return;
     }
 
-    // 2. 加载【当前登录用户】自己的资料
+    // 加载用户资料
     this.loadUserProfile(username);
+    // 加载统计数据
+    this.loadStats();
+    // 加载未读通知数量
+    this.loadUnreadCount();
   },
 
   methods: {
-    // 加载对应用户的资料
     loadUserProfile(username) {
       const key = `userProfile_${username}`;
       const saved = uni.getStorageSync(key);
@@ -104,46 +162,109 @@ export default {
         this.userInfo = { ...defaultUser };
       }
     },
+    
+    loadStats() {
+      // 获取订单数量
+      const username = uni.getStorageSync('loginUsername');
+      uni.request({
+        url: `http://localhost:8080/api/hotel-orders/user?username=${username}`,
+        method: 'GET',
+        success: (res) => {
+          let orders = [];
+          if (res.data && res.data.code === 200) {
+            orders = res.data.data || [];
+          } else if (Array.isArray(res.data)) {
+            orders = res.data;
+          }
+          this.orderCount = orders.length;
+        }
+      });
+      
+      // 获取收藏数量
+      const key = `myCollection_${username}`;
+      const collections = uni.getStorageSync(key) || [];
+      this.collectionCount = collections.length;
+    },
+    
+    loadUnreadCount() {
+      const token = uni.getStorageSync('token');
+      if (!token) return;
+      
+      uni.request({
+        url: 'http://localhost:8080/api/user/notifications/unread-count',
+        method: 'GET',
+        header: {
+          'Authorization': 'Bearer ' + token
+        },
+        success: (res) => {
+          if (res.data && res.data.code === 200) {
+            this.unreadCount = res.data.data.count || 0;
+          }
+        },
+        fail: () => {
+          console.log('获取未读数量失败');
+        }
+      });
+    },
 
     goToOrders() {
       uni.navigateTo({ url: "/pages/my-orders/my-orders" });
     },
-    goToCart() {
-      uni.navigateTo({ url: "/pages/cart/cart" });
-    },
+    
     goToCollection() {
       uni.navigateTo({ url: "/pages/collection/collection" });
     },
+    
+    goToSetting() {
+      uni.navigateTo({ url: "/pages/profile/setting" });
+    },
+    
+    goToNotifications() {
+      uni.navigateTo({ url: "/pages/profile/notifications" });
+    },
+    
+    showAbout() {
+      this.showAboutModal = true;
+    },
+    
+    showFeedback() {
+      uni.showModal({
+        title: '意见反馈',
+        content: '请将您的意见发送至：service@example.com',
+        showCancel: false,
+        confirmText: '我知道了'
+      });
+    },
 
-    // 退出登录
     logout() {
       uni.showModal({
         title: '提示',
         content: '确定退出登录吗？',
         success: (res) => {
           if (res.confirm) {
-            uni.removeStorageSync('token');
-            uni.removeStorageSync('loginUsername');
+            uni.clearStorageSync();
             uni.reLaunch({ url: '/pages/login-register/login-register' });
           }
         }
       })
     },
 
-    // 保存【当前用户】自己的资料
     saveInfo() {
       const username = uni.getStorageSync('loginUsername');
       if (!username) return;
 
-      this.userInfo.name = this.editForm.name || this.userInfo.name;
-      
-      this.userInfo.desc = this.editForm.desc || this.userInfo.desc;
+      if (this.editForm.name) {
+        this.userInfo.name = this.editForm.name;
+      }
+      if (this.editForm.desc) {
+        this.userInfo.desc = this.editForm.desc;
+      }
 
-      // 按用户名保存
       const key = `userProfile_${username}`;
       uni.setStorageSync(key, this.userInfo);
 
       this.showEditModal = false;
+      this.editForm = { name: "", desc: "" };
       uni.showToast({ title: "保存成功", icon: "success" });
     }
   }
@@ -151,150 +272,392 @@ export default {
 </script>
 
 <style scoped>
-page {
-  background: #f5f5f5;
-  margin: 0;
-  padding: 0;
-}
 .container {
-  width: 100%;
-  box-sizing: border-box;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  position: relative;
 }
 
-.header {
-  background: #fff;
-  padding: 25rpx 0;
-  text-align: center;
-  font-size: 32rpx;
+/* 顶部背景渐变 */
+.top-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 320rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0 0 40rpx 40rpx;
+}
+
+/* 顶部导航栏 */
+.nav-bar {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx 30rpx 0;
+}
+
+.nav-title {
+  font-size: 36rpx;
   font-weight: bold;
-  margin-bottom: 20rpx;
+  color: #fff;
 }
 
-.info-card {
-  background: #fff;
-  margin: 20rpx;
-  padding: 30rpx;
-  border-radius: 12rpx;
-}
-.user-row {
+.notification-icon {
+  position: relative;
+  width: 70rpx;
+  height: 70rpx;
   display: flex;
   align-items: center;
-  margin-bottom: 20rpx;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 35rpx;
 }
+
+.notification-icon .icon {
+  font-size: 36rpx;
+  color: #fff;
+}
+
+.notification-icon .badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  background-color: #ff4d4f;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 20rpx;
+  min-width: 32rpx;
+  text-align: center;
+}
+
+/* 用户卡片 */
+.user-card {
+  position: relative;
+  background: #fff;
+  margin: 20rpx 30rpx 20rpx;
+  border-radius: 30rpx;
+  padding: 40rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.08);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 30rpx;
+}
+
 .avatar {
   width: 120rpx;
   height: 120rpx;
   border-radius: 60rpx;
-  margin-right: 20rpx;
+  border: 3rpx solid #fff;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
+
 .info {
   flex: 1;
+  margin-left: 25rpx;
 }
 
 .name {
   display: block;
-  font-size: 36rpx !important;
-  font-weight: bold !important;
-  color: #222;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
   margin-bottom: 8rpx;
 }
 
-.id, .desc {
+.desc {
   display: block;
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 8rpx;
+  font-size: 26rpx;
+  color: #999;
 }
 
-.edit-btn {
-  width: 100%;
-  background: #1677ff;
-  color: #fff;
-  border-radius: 12rpx;
-  padding: 15rpx 0;
+.edit-icon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 56rpx;
+  height: 56rpx;
+  background: #f0f0f0;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 28rpx;
-  border: none;
-  margin-top: 10rpx;
+  color: #999;
 }
 
-.menu-box {
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-top: 30rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-label {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 50rpx;
+  background-color: #eee;
+}
+
+/* 功能菜单网格 */
+.menu-grid {
+  display: flex;
+  justify-content: space-around;
   background: #fff;
-  margin: 0 20rpx;
-  border-radius: 12rpx;
+  margin: 20rpx 30rpx;
+  padding: 30rpx 20rpx;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.menu-icon {
+  width: 90rpx;
+  height: 90rpx;
+  border-radius: 45rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  margin-bottom: 15rpx;
+}
+
+.menu-icon.orders {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.menu-icon.collection {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.menu-icon.setting {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.menu-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 其他菜单 */
+.other-menu {
+  background: #fff;
+  margin: 20rpx 30rpx;
+  border-radius: 30rpx;
   overflow: hidden;
 }
-.menu-item {
+
+.other-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 30rpx;
-  font-size: 28rpx;
-  border-bottom: 1rpx solid #eee;
-}
-.menu-item:last-child {
-  border-bottom: none;
-}
-.menu-text {
-  color: #333;
-}
-.arrow {
-  color: #999;
+  border-bottom: 1rpx solid #f0f0f0;
 }
 
+.other-item:last-child {
+  border-bottom: none;
+}
+
+.other-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.other-arrow {
+  font-size: 32rpx;
+  color: #ccc;
+}
+
+/* 退出登录按钮 */
+.logout-btn {
+  background: #fff;
+  margin: 30rpx 30rpx 20rpx;
+  border-radius: 50rpx;
+  padding: 28rpx;
+  font-size: 30rpx;
+  color: #ff6b6b;
+  border: none;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 版本信息 */
+.version {
+  text-align: center;
+  padding: 30rpx;
+}
+
+.version-text {
+  font-size: 24rpx;
+  color: #ccc;
+}
+
+/* 弹窗样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999;
 }
+
 .modal-content {
-  width: 80%;
+  width: 85%;
   background: #fff;
-  border-radius: 12rpx;
-  padding: 40rpx;
+  border-radius: 40rpx;
+  overflow: hidden;
 }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
 .modal-title {
-  display: block;
-  text-align: center;
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 48rpx;
+  color: #999;
+  line-height: 1;
+}
+
+.form-item {
+  padding: 0 30rpx;
   margin-bottom: 30rpx;
 }
-.form-item {
-  margin-bottom: 25rpx;
-}
+
 .label {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #666;
-  margin-bottom: 8rpx;
+  margin-bottom: 12rpx;
   display: block;
 }
+
 .input, .textarea {
   width: 100%;
   border: 1rpx solid #eee;
-  border-radius: 12rpx;
-  padding: 28rpx 24rpx;
+  border-radius: 20rpx;
+  padding: 24rpx;
   font-size: 28rpx;
   box-sizing: border-box;
   background: #fafafa;
 }
+
 .textarea {
-  height: 120rpx;
+  height: 150rpx;
 }
+
 .save-btn {
-  width: 100%;
-  background: #1677ff;
+  margin: 20rpx 30rpx 40rpx;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: #fff;
-  border-radius: 12rpx;
-  padding: 20rpx 0;
-  font-size: 28rpx;
+  border-radius: 50rpx;
+  padding: 28rpx;
+  font-size: 30rpx;
   border: none;
-  margin-top: 20rpx;
+}
+
+/* 关于弹窗 */
+.about-modal {
+  width: 80%;
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 50rpx 40rpx;
+  text-align: center;
+}
+
+.about-logo {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 20rpx;
+}
+
+.about-name {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.about-version {
+  display: block;
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.about-desc {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 30rpx;
+}
+
+.about-contact {
+  background: #f8f8f8;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.about-contact text {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+.about-close {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border-radius: 50rpx;
+  padding: 24rpx;
+  font-size: 30rpx;
+  border: none;
 }
 </style>

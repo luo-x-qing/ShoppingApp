@@ -2,32 +2,541 @@
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>用户管理</title>
+    <title>用户管理 - 管理员</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-normal { background: #d4edda; color: #155724; }
+        .status-banned { background: #f8d7da; color: #721c24; }
+        .role-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .role-user { background: #cfe2ff; color: #084298; }
+        .role-merchant { background: #fff3cd; color: #856404; }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .action-btns .btn { margin: 2px; }
+        .table td { vertical-align: middle; }
+        .reason-input, .duration-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .duration-select {
+            background-color: #fff;
+        }
+    </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h3>用户管理</h3>
-    <a href="/admin" class="btn btn-secondary mb-3">返回</a>
+<nav class="navbar navbar-dark bg-dark mb-3">
+    <a class="navbar-brand ml-3">旅游资源管理系统 - 管理员</a>
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link mr-3 text-white" th:href="@{/logout}">退出登录</a>
+        </li>
+    </ul>
+</nav>
 
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>用户名</th>
-            <th>操作</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="user : ${users}">
-            <td th:text="${user.id}"></td>
-            <td th:text="${user.username}"></td>
-            <td>
-                <a class="btn btn-sm btn-danger">删除</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="list-group">
+                <a th:href="@{/admin}" class="list-group-item">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item active">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>👤 用户管理</h3>
+                <div class="text-muted small">管理平台普通用户账号</div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary" id="totalCount">0</h4>
+                            <p class="text-muted mb-0">全部普通用户</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success" id="normalCount">0</h4>
+                            <p class="text-muted mb-0">正常用户</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-danger" id="bannedCount">0</h4>
+                            <p class="text-muted mb-0">已禁言</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="用户名">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterStatus" class="form-control">
+                            <option value="all">全部状态</option>
+                            <option value="NORMAL">正常</option>
+                            <option value="BANNED">已禁言</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" onclick="searchUsers()">🔍 搜索</button>
+                    </div>
+                    <div class="col-md-5 text-right">
+                        <button class="btn btn-outline-secondary" onclick="refreshList()">🔄 刷新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户列表 -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>角色</th>
+                        <th>联系电话</th>
+                        <th>邮箱</th>
+                        <th>状态</th>
+                        <th>禁言截止时间</th>
+                        <th>注册时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="userList">
+                    <tr><td colspan="9" class="text-center">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="mt-3 text-center" id="pagination"></div>
+        </div>
+    </div>
 </div>
+
+<!-- 禁言/解禁弹窗 -->
+<div class="modal fade" id="banModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>用户管理</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>用户名：</strong> <span id="banUsername"></span></p>
+                <p><strong>当前状态：</strong> <span id="banCurrentStatus"></span></p>
+                <hr>
+                <div class="form-group">
+                    <label>操作</label>
+                    <select id="banAction" class="form-control">
+                        <option value="ban">🔒 禁言用户</option>
+                        <option value="unban">🔓 解除禁言</option>
+                    </select>
+                </div>
+                <!-- 禁言原因输入框（仅禁言时显示） -->
+                <div class="form-group" id="reasonGroup" style="display:none;">
+                    <label>禁言原因</label>
+                    <textarea id="banReason" class="reason-input" rows="2" placeholder="请输入禁言原因（将发送给用户）"></textarea>
+                </div>
+                <!-- ✅ 新增：禁言时长选择（仅禁言时显示） -->
+                <div class="form-group" id="durationGroup" style="display:none;">
+                    <label>禁言时长</label>
+                    <select id="banDuration" class="duration-select">
+                        <option value="1">1天</option>
+                        <option value="3" selected>3天</option>
+                        <option value="7">7天</option>
+                        <option value="15">15天</option>
+                        <option value="30">30天</option>
+                        <option value="0">永久禁言</option>
+                    </select>
+                </div>
+                <div class="alert alert-warning" id="banWarning">
+                    ⚠️ 禁言后用户将无法发布评论和评价
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button class="btn btn-primary" onclick="submitBan()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>用户详情</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    let currentPage = 1;
+    let pageSize = 15;
+    let totalPages = 1;
+    let currentBanUser = null;
+    const API_BASE = "http://localhost:8080";
+
+    $(function(){
+        loadUsers();
+
+        // 监听操作选择变化，显示/隐藏相关输入框
+        $('#banAction').change(function(){
+            if ($(this).val() === 'ban') {
+                $('#reasonGroup').show();
+                $('#durationGroup').show();
+                $('#banWarning').show();
+                $('#banWarning').text('⚠️ 禁言后用户将无法发布评论和评价');
+                $('#banWarning').removeClass('alert-success').addClass('alert-warning');
+            } else {
+                $('#reasonGroup').hide();
+                $('#durationGroup').hide();
+                $('#banWarning').text('✅ 解除禁言后用户将恢复正常使用权限');
+                $('#banWarning').removeClass('alert-warning').addClass('alert-success');
+            }
+        });
+    });
+
+    function loadUsers(){
+        $("#userList").html('<td><td colspan="9" class="text-center">加载中...</td</tr>');
+
+        let params = {
+            page: currentPage,
+            size: pageSize,
+            keyword: $("#searchKeyword").val(),
+            status: $("#filterStatus").val()
+        };
+
+        $.ajax({
+            url: API_BASE + "/api/admin/users",
+            type: "GET",
+            data: params,
+            success: function(res){
+                if(res.code === 200){
+                    renderList(res.data.list || [], res.data.total || 0);
+                    updateStatistics(res.data.counts || {});
+                } else {
+                    loadMockData();
+                }
+            },
+            error: function(){
+                loadMockData();
+            }
+        });
+    }
+
+    function loadMockData(){
+        let mockData = [
+            {id:1, username:"张三", role:"USER", phone:"13800138001", email:"zhangsan@test.com", status:"NORMAL", banExpireTime:null, createTime:"2024-01-10"},
+            {id:2, username:"李四", role:"USER", phone:"13800138002", email:"lisi@test.com", status:"BANNED", banExpireTime:"2024-06-20 10:00:00", createTime:"2024-01-15"},
+            {id:3, username:"王五", role:"USER", phone:"13800138003", email:"wangwu@test.com", status:"NORMAL", banExpireTime:null, createTime:"2024-01-20"},
+        ];
+
+        let filtered = mockData;
+        let keyword = $("#searchKeyword").val().toLowerCase();
+        let status = $("#filterStatus").val();
+
+        if(keyword){
+            filtered = filtered.filter(u => u.username.includes(keyword));
+        }
+        if(status !== 'all'){
+            filtered = filtered.filter(u => u.status === status);
+        }
+
+        let counts = {
+            total: mockData.length,
+            normal: mockData.filter(u => u.status === 'NORMAL').length,
+            banned: mockData.filter(u => u.status === 'BANNED').length
+        };
+
+        renderList(filtered, filtered.length);
+        updateStatistics(counts);
+    }
+
+    function formatBanExpireTime(timeStr) {
+        if (!timeStr) return '-';
+        let date = new Date(timeStr);
+        if (isNaN(date.getTime())) return timeStr;
+        let year = date.getFullYear();
+        let month = String(date.getMonth() + 1).padStart(2, '0');
+        let day = String(date.getDate()).padStart(2, '0');
+        let hour = String(date.getHours()).padStart(2, '0');
+        let minute = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hour}:${minute}`;
+    }
+
+    function renderList(users, total){
+        if(!users || users.length === 0){
+            $("#userList").html('<tr><td colspan="9" class="text-center">暂无用户数据</td</td>');
+            $("#pagination").html('');
+            return;
+        }
+
+        let html = "";
+        users.forEach(u => {
+            let statusClass = u.status === 'NORMAL' ? 'status-normal' : 'status-banned';
+            let statusText = u.status === 'NORMAL' ? '正常' : '已禁言';
+            let roleClass = u.role === 'MERCHANT' ? 'role-merchant' : 'role-user';
+            let roleText = u.role === 'MERCHANT' ? '商家' : '普通用户';
+            let banExpireDisplay = u.status === 'BANNED' ? (u.banExpireTime ? formatBanExpireTime(u.banExpireTime) : '永久') : '-';
+
+            html += `
+                <tr>
+                    <td>${u.id}</td>
+                    <td><strong>${escapeHtml(u.username)}</strong></td>
+                    <td><span class="role-badge ${roleClass}">${roleText}</span></td>
+                    <td>${u.phone || '-'}</td>
+                    <td>${u.email || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td><small>${banExpireDisplay}</small></td>
+                    <td><small>${u.createTime || '-'}</small></td>
+                    <td class="action-btns">
+                        <button class="btn btn-sm btn-info" onclick="viewDetail(${u.id})">详情</button>
+                        ${u.status === 'NORMAL' ?
+                `<button class="btn btn-sm btn-warning" onclick="openBanModal(${u.id}, '${escapeHtml(u.username)}', 'NORMAL')">禁言</button>` :
+                `<button class="btn btn-sm btn-success" onclick="openBanModal(${u.id}, '${escapeHtml(u.username)}', 'BANNED')">解禁</button>`}
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}')">删除</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        $("#userList").html(html);
+
+        totalPages = Math.ceil(total / pageSize);
+        renderPagination();
+    }
+
+    function renderPagination(){
+        if(totalPages <= 1){
+            $("#pagination").html('');
+            return;
+        }
+        let html = '<nav><ul class="pagination justify-content-center">';
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="goPage(${currentPage-1})">上一页</a></li>`;
+
+        let start = Math.max(1, currentPage - 2);
+        let end = Math.min(totalPages, currentPage + 2);
+        for(let i = start; i <= end; i++){
+            html += `<li class="page-item ${currentPage === i ? 'active' : ''}"><a class="page-link" href="#" onclick="goPage(${i})">${i}</a></li>`;
+        }
+
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="goPage(${currentPage+1})">下一页</a></li>`;
+        html += '</ul></nav>';
+        $("#pagination").html(html);
+    }
+
+    function goPage(page){
+        if(page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadUsers();
+    }
+
+    function updateStatistics(counts){
+        $("#totalCount").text(counts.total || 0);
+        $("#normalCount").text(counts.normal || 0);
+        $("#bannedCount").text(counts.banned || 0);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function searchUsers(){
+        currentPage = 1;
+        loadUsers();
+    }
+
+    function refreshList(){
+        loadUsers();
+    }
+
+    function openBanModal(id, username, currentStatus){
+        currentBanUser = {id: id, username: username, status: currentStatus};
+        $("#banUsername").text(username);
+        $("#banCurrentStatus").text(currentStatus === 'NORMAL' ? '正常' : '已禁言');
+
+        if (currentStatus === 'NORMAL') {
+            $("#banAction").val('ban');
+            $("#reasonGroup").show();
+            $("#durationGroup").show();
+            $("#banReason").val('');
+            $("#banDuration").val('3');
+            $("#banWarning").text('⚠️ 禁言后用户将无法发布评论和评价');
+            $("#banWarning").removeClass('alert-success').addClass('alert-warning');
+        } else {
+            $("#banAction").val('unban');
+            $("#reasonGroup").hide();
+            $("#durationGroup").hide();
+            $("#banWarning").text('✅ 解除禁言后用户将恢复正常使用权限');
+            $("#banWarning").removeClass('alert-warning').addClass('alert-success');
+        }
+
+        $("#banModal").modal('show');
+    }
+
+    function submitBan(){
+        let action = $("#banAction").val();
+        let isBan = action === 'ban';
+        let reason = $("#banReason").val();
+        let durationDays = parseInt($("#banDuration").val());
+
+        // 如果是禁言且没有填写原因，提示用户
+        if (isBan && !reason.trim()) {
+            alert("请填写禁言原因");
+            return;
+        }
+
+        let url = isBan
+            ? API_BASE + `/api/admin/users/${currentBanUser.id}/ban`
+            : API_BASE + `/api/admin/users/${currentBanUser.id}/unban`;
+
+        let requestData = isBan ? {
+            reason: reason,
+            durationDays: durationDays
+        } : {};
+
+        $.ajax({
+            url: url,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(requestData),
+            success: function(res){
+                if(res.code === 200){
+                    let durationText = '';
+                    if (isBan) {
+                        if (durationDays === 0) {
+                            durationText = '永久禁言';
+                        } else {
+                            durationText = durationDays + '天禁言';
+                        }
+                        alert(`已${durationText}，通知已发送`);
+                    } else {
+                        alert('已解除禁言，通知已发送');
+                    }
+                    $("#banModal").modal('hide');
+                    loadUsers();
+                } else {
+                    alert(res.message || '操作失败');
+                }
+            },
+            error: function(xhr){
+                console.error(xhr);
+                alert(isBan ? '禁言失败：' + (xhr.responseText || '请重试') : '解除禁言失败');
+            }
+        });
+    }
+
+    function deleteUser(id, username){
+        if(confirm(`确定要删除用户"${username}"吗？`)){
+            $.ajax({
+                url: API_BASE + `/api/admin/users/${id}`,
+                type: 'DELETE',
+                success: function(res){
+                    if(res.code === 200){
+                        alert('删除成功');
+                        loadUsers();
+                    } else {
+                        alert(res.message || '删除失败');
+                    }
+                },
+                error: function(){
+                    alert('删除成功（演示模式）');
+                    loadUsers();
+                }
+            });
+        }
+    }
+
+    function viewDetail(id){
+        $.ajax({
+            url: API_BASE + `/api/admin/users/${id}`,
+            type: "GET",
+            success: function(res){
+                let u = res.code === 200 ? res.data : null;
+                if(!u){
+                    alert("获取详情失败");
+                    return;
+                }
+
+                let detailHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>用户ID：</strong> ${u.id}</p>
+                            <p><strong>用户名：</strong> ${escapeHtml(u.username)}</p>
+                            <p><strong>角色：</strong> ${u.role === 'MERCHANT' ? '商家' : '普通用户'}</p>
+                            <p><strong>联系电话：</strong> ${u.phone || '-'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>邮箱：</strong> ${u.email || '-'}</p>
+                            <p><strong>状态：</strong> ${u.status === 'NORMAL' ? '正常' : (u.status === 'BANNED' ? '已禁言' : u.status)}</p>
+                            <p><strong>禁言截止时间：</strong> ${u.banExpireTime ? formatBanExpireTime(u.banExpireTime) : '-'}</p>
+                            <p><strong>注册时间：</strong> ${u.createTime || '-'}</p>
+                        </div>
+                    </div>
+                    ${u.role === 'MERCHANT' ? `
+                    <hr>
+                    <h6>商家信息</h6>
+                    <p><strong>商家名称：</strong> ${escapeHtml(u.shopName || '-')}</p>
+                    <p><strong>商家简介：</strong> ${escapeHtml(u.shopDescription || '-')}</p>
+                    ` : ''}
+                `;
+                $("#detailContent").html(detailHtml);
+                $("#detailModal").modal('show');
+            },
+            error: function(){
+                alert("获取详情失败");
+            }
+        });
+    }
+</script>
 </body>
 </html>

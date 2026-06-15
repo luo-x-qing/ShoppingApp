@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "variflight-aviation": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://ai.variflight.com/servers/aviation/mcp/?api_key=sk-tdFuSjLq-FkNfQE7RMYjXpCTySzdwWO2sy8ABXHGdbM"
+      ]
+    }
+  }
+}

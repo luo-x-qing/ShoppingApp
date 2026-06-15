@@ -123,6 +123,7 @@
 </template>
 
 <script>
+const BASE_URL = 'http://localhost:8080'
 // 省份对应城市映射
 const provinceCityMap = {
   "北京市": ["北京市"],
@@ -327,9 +328,9 @@ export default {
       const city = this.selectedCity;
       let url;
       if (city && city !== "全部城市") {
-        url = "http://localhost:8080/api/attractions/province/" + encodeURIComponent(province) + "/city/" + encodeURIComponent(city);
+        url = BASE_URL + "/api/attractions/province/" + encodeURIComponent(province) + "/city/" + encodeURIComponent(city);
       } else {
-        url = "http://localhost:8080/api/attractions/province/" + encodeURIComponent(province);
+        url = BASE_URL + "/api/attractions/province/" + encodeURIComponent(province);
       }
       uni.request({
         url: url,
@@ -342,7 +343,7 @@ export default {
           this.spots = res.data.map(item => ({
             id: item.id,
             name: item.name,
-            image: item.photo ? (item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo) : "/static/home/6.jpg",
+            image: item.photo ? (item.photo.startsWith("http") ? item.photo : BASE_URL + item.photo) : "/static/home/6.jpg",
             ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
@@ -375,9 +376,9 @@ export default {
       const city = this.selectedCity;
       let url;
       if (city && city !== "全部城市") {
-        url = `http://localhost:8080/api/attractions/search?province=${encodeURIComponent(province)}&city=${encodeURIComponent(city)}&name=${encodeURIComponent(kw)}`;
+        url = `${BASE_URL}/api/attractions/search?province=${encodeURIComponent(province)}&city=${encodeURIComponent(city)}&name=${encodeURIComponent(kw)}`;
       } else {
-        url = `http://localhost:8080/api/attractions/search?province=${encodeURIComponent(province)}&name=${encodeURIComponent(kw)}`;
+        url = `${BASE_URL}/api/attractions/search?province=${encodeURIComponent(province)}&name=${encodeURIComponent(kw)}`;
       }
       uni.request({
         url: url,
@@ -389,7 +390,7 @@ export default {
           this.spots = res.data.map(item => ({
             id: item.id,
             name: item.name,
-            image: item.photo ? (item.photo.startsWith("http") ? item.photo : "http://localhost:8080" + item.photo) : "/static/home/6.jpg",
+            image: item.photo ? (item.photo.startsWith("http") ? item.photo : BASE_URL + item.photo) : "/static/home/6.jpg",
             ticketPrice: item.ticketPrice,
             desc: item.description,
             city: item.city,
@@ -430,7 +431,7 @@ export default {
     getRecommendedRoutes() {
       const province = this.selectedProvince;
       const city = this.selectedCity;
-      let url = "http://localhost:8080/api/recommend/routes?province=" + encodeURIComponent(province);
+      let url = BASE_URL + "/api/recommend/routes?province=" + encodeURIComponent(province);
       if (city && city !== "全部城市") {
         url += "&city=" + encodeURIComponent(city);
       }

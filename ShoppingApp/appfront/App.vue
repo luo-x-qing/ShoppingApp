@@ -1,11 +1,15 @@
 <template>
   <view>
     <router-view></router-view>
+    <RouteFloat/>
   </view>
 </template>
 
 <script>
+import RouteFloat from '@/components/RouteFloat.vue';
+
 export default {
+  components: { RouteFloat },
   onLaunch() {
     this.checkLogin();
   },

@@ -3,6 +3,7 @@ package com.example.ordermanagement.controller;
 import com.example.ordermanagement.service.AmapService;
 import com.example.ordermanagement.service.SiliconService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -18,7 +19,7 @@ public class TravelController {
     private AmapService amapService;
 
     @GetMapping("/plan")
-    public Map<String, Object> plan(
+    public ResponseEntity<Map<String, Object>> plan(
             @RequestParam String city,
             @RequestParam(defaultValue = "2") int days) {
 
@@ -28,13 +29,18 @@ public class TravelController {
                 city, days);
 
         String spotStr = siliconService.chat(prompt);
-        String[] spots = spotStr.split("[，,、]");
-        List<String> spotList = new ArrayList<>();
-        for (String s : spots) {
-            String trimmed = s.trim();
-            if (!trimmed.isEmpty()) {
-                spotList.add(trimmed);
-            }
+        if (spotStr.isEmpty()) {
+            return ResponseEntity.badRequest().body(error("AI暂无回复，请重试"));
+        }
+
+        List<String> spotList = parseSpots(spotStr);
+        if (spotList.isEmpty()) {
+            return ResponseEntity.badRequest().body(error("AI返回格式异常，请重试"));
+        }
+
+        int maxSpots = Math.min(days * 3, 12);
+        if (spotList.size() > maxSpots) {
+            spotList = spotList.subList(0, maxSpots);
         }
 
         String[] spotArray = spotList.toArray(new String[0]);
@@ -47,6 +53,27 @@ public class TravelController {
         result.put("spots", spotList);
         result.put("route", routeResult);
         result.put("locations", geoResult.get("locations"));
-        return result;
+        return ResponseEntity.ok(result);
+    }
+
+    private List<String> parseSpots(String raw) {
+        raw = raw.replaceAll("^[\\d\\s\\[\\]（(）).、]+", "");
+        raw = raw.replaceAll("[\\d]+\\.\\s*", "");
+        raw = raw.replaceAll("[\\[\\]【】]", "");
+        String[] parts = raw.split("[，,、\\n]+");
+        List<String> list = new ArrayList<>();
+        for (String s : parts) {
+            String t = s.trim();
+            if (!t.isEmpty() && t.length() >= 2) {
+                list.add(t);
+            }
+        }
+        return list;
+    }
+
+    private Map<String, Object> error(String msg) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("error", msg);
+        return m;
     }
 }

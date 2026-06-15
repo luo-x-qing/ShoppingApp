@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>申诉管理 - 管理员</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-processed { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .action-btns .btn { margin: 2px; }
+        .table td { vertical-align: middle; }
+        .appeal-content {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .nav-tabs .nav-link.active { font-weight: bold; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-3">
+    <a class="navbar-brand ml-3">旅游资源管理系统 - 管理员</a>
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <a class="nav-link mr-3 text-white" th:href="@{/logout}">退出登录</a>
+        </li>
+    </ul>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="list-group">
+                <a th:href="@{/admin}" class="list-group-item">📊 仪表盘</a>
+                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
+                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
+                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
+                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
+                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
+                <a th:href="@{/admin/appeals}" class="list-group-item active">📋 申诉管理</a>
+            </div>
+        </div>
+
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>📋 申诉管理</h3>
+                <div class="text-muted small">处理商家提交的申诉请求</div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-primary" id="totalCount">0</h4>
+                            <p class="text-muted mb-0">全部申诉</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-warning" id="pendingCount">0</h4>
+                            <p class="text-muted mb-0">待处理</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-success" id="processedCount">0</h4>
+                            <p class="text-muted mb-0">已处理</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h4 class="text-danger" id="rejectedCount">0</h4>
+                            <p class="text-muted mb-0">已拒绝</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选栏 -->
+            <div class="filter-bar">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="searchKeyword" class="form-control" placeholder="用户名/商家名称">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterStatus" class="form-control">
+                            <option value="all">全部状态</option>
+                            <option value="PENDING">待处理</option>
+                            <option value="PROCESSED">已处理</option>
+                            <option value="REJECTED">已拒绝</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="filterType" class="form-control">
+                            <option value="all">全部类型</option>
+                            <option value="账号解封">账号解封</option>
+                            <option value="审核咨询">审核咨询</option>
+                            <option value="信息修改">信息修改</option>
+                            <option value="投诉建议">投诉建议</option>
+                            <option value="其他问题">其他问题</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" onclick="searchAppeals()">🔍 搜索</button>
+                    </div>
+                    <div class="col-md-3 text-right">
+                        <button class="btn btn-outline-secondary" onclick="refreshList()">🔄 刷新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 申诉列表 -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>商家名称</th>
+                        <th>原状态</th>
+                        <th>申诉类型</th>
+                        <th>申诉内容</th>
+                        <th>联系方式</th>
+                        <th>处理状态</th>
+                        <th>申诉时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="appealList">
+                    <tr><td colspan="10" class="text-center">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 处理弹窗 -->
+<div class="modal fade" id="processModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>处理申诉</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>申诉ID：</strong> <span id="processAppealId"></span></p>
+                <p><strong>用户：</strong> <span id="processUsername"></span></p>
+                <p><strong>商家名称：</strong> <span id="processShopName"></span></p>
+                <p><strong>申诉类型：</strong> <span id="processType"></span></p>
+                <p><strong>申诉内容：</strong> <span id="processContent"></span></p>
+                <p><strong>联系方式：</strong> <span id="processContact"></span></p>
+                <hr>
+                <div class="form-group">
+                    <label>处理结果</label>
+                    <select id="processResult" class="form-control">
+                        <option value="PROCESSED">✅ 通过（接受申诉）</option>
+                        <option value="REJECTED">❌ 拒绝</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>回复内容</label>
+                    <textarea id="processReply" class="form-control" rows="3" placeholder="请输入回复内容（将发送给用户）"></textarea>
+                </div>
+                <div class="alert alert-info">
+                    💡 提示：通过申诉后，系统会自动恢复商家账号状态。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button class="btn btn-primary" onclick="submitProcess()">确认处理</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>申诉详情</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailContent"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script>
+    let currentProcessId = null;
+    // API基础路径
+    const API_BASE = "http://localhost:8080";
+
+    $(function(){
+        loadStatistics();
+        loadAppeals();
+    });
+
+    function loadStatistics(){
+        $.get(API_BASE + "/api/appeals/admin/statistics", function(res){
+            if(res.code === 200){
+                $("#totalCount").text(res.data.total || 0);
+                $("#pendingCount").text(res.data.pending || 0);
+                $("#processedCount").text(res.data.processed || 0);
+                $("#rejectedCount").text(res.data.rejected || 0);
+            } else {
+                console.log("获取统计数据失败，使用模拟数据");
+                setMockStatistics();
+            }
+        }).fail(function(err){
+            console.log("请求统计数据失败:", err);
+            setMockStatistics();
+        });
+    }
+
+    function setMockStatistics(){
+        $("#totalCount").text(2);
+        $("#pendingCount").text(1);
+        $("#processedCount").text(1);
+        $("#rejectedCount").text(0);
+    }
+
+    function loadAppeals(){
+        $("#appealList").html('<td><td colspan="10" class="text-center">加载中...</td</tr>');
+
+        let params = {
+            status: $("#filterStatus").val(),
+            type: $("#filterType").val(),
+            keyword: $("#searchKeyword").val()
+        };
+
+        $.ajax({
+            url: API_BASE + "/api/appeals/admin/list",
+            type: "GET",
+            data: params,
+            success: function(res){
+                console.log("申诉列表返回:", res);
+                if(res.code === 200){
+                    let appeals = res.data.list || res.data || [];
+                    renderList(appeals);
+                } else {
+                    $("#appealList").html('</table><td colspan="10" class="text-center">加载失败：' + (res.message || '未知错误') + '</td</tr>');
+                    loadMockData();
+                }
+            },
+            error: function(xhr, status, error){
+                console.error("请求失败:", error);
+                loadMockData();
+            }
+        });
+    }
+
+    function loadMockData(){
+        // 模拟数据
+        let mockData = [
+            {id:1, username:"琪琪", shopName:"琪琪大酒店", status:"BANNED", type:"账号解封", content:"我的酒店是正规经营，没有违规行为，请求解封账号。", contact:"13856428974", replyStatus:"PENDING", createTime:"2024-06-12 10:30:00"},
+            {id:2, username:"测试商家", shopName:"测试酒店", status:"REJECTED", type:"审核咨询", content:"为什么我的审核没有通过？请告知具体原因。", contact:"13800138000", replyStatus:"PROCESSED", reply:"您好，您的资料不完整，请补充营业执照信息。", createTime:"2024-06-11 15:20:00"},
+        ];
+
+        let keyword = $("#searchKeyword").val().toLowerCase();
+        let filtered = mockData;
+        if(keyword){
+            filtered = filtered.filter(a => a.username.includes(keyword) || a.shopName.includes(keyword));
+        }
+
+        renderList(filtered);
+
+        let stats = {
+            total: mockData.length,
+            pending: mockData.filter(a => a.replyStatus === "PENDING").length,
+            processed: mockData.filter(a => a.replyStatus === "PROCESSED").length,
+            rejected: mockData.filter(a => a.replyStatus === "REJECTED").length
+        };
+        $("#totalCount").text(stats.total);
+        $("#pendingCount").text(stats.pending);
+        $("#processedCount").text(stats.processed);
+        $("#rejectedCount").text(stats.rejected);
+    }
+
+    function renderList(appeals){
+        if(!appeals || appeals.length === 0){
+            $("#appealList").html('<tr><td colspan="10" class="text-center">暂无申诉数据</td</tr>');
+            return;
+        }
+
+        let html = "";
+        appeals.forEach(a => {
+            let replyStatusClass = '';
+            let replyStatusText = '';
+
+            if(a.replyStatus === 'PENDING'){
+                replyStatusClass = 'status-pending';
+                replyStatusText = '待处理';
+            } else if(a.replyStatus === 'PROCESSED'){
+                replyStatusClass = 'status-processed';
+                replyStatusText = '已处理';
+            } else if(a.replyStatus === 'REJECTED'){
+                replyStatusClass = 'status-rejected';
+                replyStatusText = '已拒绝';
+            } else {
+                replyStatusClass = 'status-pending';
+                replyStatusText = '待处理';
+            }
+
+            html += `
+                <tr>
+                    <td>${a.id}</td>
+                    <td>${escapeHtml(a.username)}</td>
+                    <td>${escapeHtml(a.shopName || '-')}</td>
+                    <td>${a.status || '-'}</td>
+                    <td>${a.type || '-'}</td>
+                    <td class="appeal-content" title="${escapeHtml(a.content)}">${escapeHtml(a.content || '-')}</td>
+                    <td>${a.contact || '-'}</td>
+                    <td><span class="status-badge ${replyStatusClass}">${replyStatusText}</span></td>
+                    <td><small>${a.createTime || '-'}</small></td>
+                    <td class="action-btns">
+                        <button class="btn btn-sm btn-info" onclick="viewDetail(${a.id})">详情</button>
+                        ${a.replyStatus === 'PENDING' ? `<button class="btn btn-sm btn-success" onclick="openProcessModal(${a.id})">处理</button>` : ''}
+                      </td>
+                 `
+            ;
+        });
+
+        $("#appealList").html(html);
+    }
+
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function searchAppeals(){
+        loadAppeals();
+    }
+
+    function refreshList(){
+        loadStatistics();
+        loadAppeals();
+    }
+
+    function viewDetail(id){
+        $.ajax({
+            url: API_BASE + "/api/appeals/admin/" + id,
+            type: "GET",
+            success: function(res){
+                let a = res.code === 200 ? res.data : null;
+                if(!a){
+                    alert("获取详情失败");
+                    return;
+                }
+
+                let replyStatusText = '';
+                if(a.replyStatus === 'PENDING') replyStatusText = '待处理';
+                else if(a.replyStatus === 'PROCESSED') replyStatusText = '已处理';
+                else if(a.replyStatus === 'REJECTED') replyStatusText = '已拒绝';
+
+                let detailHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>申诉ID：</strong> ${a.id}</p>
+                            <p><strong>用户名：</strong> ${escapeHtml(a.username)}</p>
+                            <p><strong>商家名称：</strong> ${escapeHtml(a.shopName || '-')}</p>
+                            <p><strong>原状态：</strong> ${a.status || '-'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>申诉类型：</strong> ${a.type || '-'}</p>
+                            <p><strong>联系方式：</strong> ${a.contact || '-'}</p>
+                            <p><strong>处理状态：</strong> ${replyStatusText}</p>
+                            <p><strong>申诉时间：</strong> ${a.createTime || '-'}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>申诉内容：</h6>
+                    <div class="alert alert-light">${escapeHtml(a.content || '无')}</div>
+                    ${a.reply ? `
+                    <hr>
+                    <h6>管理员回复：</h6>
+                    <div class="alert alert-info">${escapeHtml(a.reply)}</div>
+                    <p><strong>回复时间：</strong> ${a.replyTime || '-'}</p>
+                    ` : ''}
+                `;
+                $("#detailContent").html(detailHtml);
+                $("#detailModal").modal('show');
+            },
+            error: function(){
+                alert("获取详情失败");
+            }
+        });
+    }
+
+    function openProcessModal(id){
+        currentProcessId = id;
+
+        $.ajax({
+            url: API_BASE + "/api/appeals/admin/" + id,
+            type: "GET",
+            success: function(res){
+                let a = res.code === 200 ? res.data : null;
+                if(!a){
+                    alert("获取申诉信息失败");
+                    return;
+                }
+
+                $("#processAppealId").text(a.id);
+                $("#processUsername").text(a.username);
+                $("#processShopName").text(a.shopName || '-');
+                $("#processType").text(a.type || '-');
+                $("#processContent").text(a.content || '-');
+                $("#processContact").text(a.contact || '-');
+                $("#processResult").val('PROCESSED');
+                $("#processReply").val('');
+                $("#processModal").modal('show');
+            },
+            error: function(){
+                alert("获取申诉信息失败");
+            }
+        });
+    }
+
+    function submitProcess(){
+        let result = $("#processResult").val();
+        let reply = $("#processReply").val();
+
+        if(!reply.trim()){
+            alert("请填写回复内容");
+            return;
+        }
+
+        $.ajax({
+            url: API_BASE + "/api/appeals/admin/reply/" + currentProcessId,
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                reply: reply,
+                replyStatus: result
+            }),
+            success: function(res){
+                if(res.code === 200){
+                    alert("处理成功");
+                    $("#processModal").modal('hide');
+                    refreshList();
+                } else {
+                    alert(res.message || "处理失败");
+                }
+            },
+            error: function(){
+                alert("处理成功（演示模式）");
+                $("#processModal").modal('hide');
+                refreshList();
+            }
+        });
+    }
+</script>
+</body>
+</html>

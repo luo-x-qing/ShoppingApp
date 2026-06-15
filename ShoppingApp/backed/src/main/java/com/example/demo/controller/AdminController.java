@@ -8,6 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.stream.Collectors;
+
 @Controller
 public class AdminController {
 
@@ -39,5 +41,20 @@ public class AdminController {
     public String userPage(Model model) {
         model.addAttribute("users", userService.getAllUsers());
         return "admin/user";
+    }
+
+    @GetMapping("/admin/comments")
+    public String comments() {
+        return "admin/comments";
+    }
+
+    @GetMapping("/admin/merchants")
+    public String merchants() {
+        return "admin/merchants";
+    }
+
+    @GetMapping("/admin/appeals")
+    public String appeals() {
+        return "admin/appeals";
     }
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"config.js","sources":["utils/config.js"],"sourcesContent":["const BASE_URL = 'http://localhost:8080'\n\nexport { BASE_URL }\n"],"names":[],"mappings":";AAAK,MAAC,WAAW;;"}

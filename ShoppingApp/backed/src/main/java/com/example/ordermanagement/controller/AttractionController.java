@@ -96,6 +96,15 @@ public class AttractionController {
         return ResponseEntity.ok(attractionService.saveAttraction(exist));
     }
 
+    // 查询附近景点
+    @GetMapping("/{id}/nearby")
+    public ResponseEntity<List<Map<String, Object>>> getNearbyAttractions(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "50") double radius) {
+        List<Map<String, Object>> nearby = attractionService.getNearbyAttractions(id, radius);
+        return ResponseEntity.ok(nearby);
+    }
+
     // 一键导入全国景点（从高德API实时拉取）
     @PostMapping("/import-all")
     public ResponseEntity<Map<String, Object>> importAll() {

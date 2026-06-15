@@ -86,6 +86,7 @@
 </template>
 
 <script>
+const BASE_URL = 'http://localhost:8080'
 export default {
   data() {
     return {
@@ -123,7 +124,7 @@ export default {
   methods: {
     getRouteDetail() {
       uni.request({
-        url: `http://localhost:8080/tour-route/${this.routeId}/detail`,
+        url: BASE_URL + '/tour-route/' + this.routeId + '/detail',
         method: "GET",
         success: (res) => {
           this.route = res.data;
@@ -148,7 +149,7 @@ export default {
       }
       uni.showLoading({ title: "添加中..." });
       uni.request({
-        url: "http://localhost:8080/api/cart/add-route",
+        url: BASE_URL + "/api/cart/add-route",
         method: "POST",
         data: { username, routeId: this.routeId },
         success: (res) => {
