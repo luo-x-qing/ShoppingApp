@@ -100,6 +100,25 @@
 
 <script>
 const BASE_URL = 'http://localhost:8080'
+const AMAP_KEY = '91b34b28376cdf588bb43f354db27157'
+
+const PROVINCE_CENTERS = {
+  '北京市': [39.9042, 116.4074],
+  '上海市': [31.2304, 121.4737],
+  '天津市': [39.1252, 117.1908],
+  '重庆市': [29.5330, 106.5048],
+  '四川省': [30.5728, 104.0668],
+  '广东省': [23.1292, 113.2644],
+  '浙江省': [30.2741, 120.1551],
+  '福建省': [26.0745, 119.2965],
+  '江苏省': [32.0617, 118.7969],
+  '湖北省': [30.5465, 114.3423],
+  '湖南省': [28.2569, 112.9410],
+  '山东省': [36.6516, 117.0204],
+  '河南省': [34.7656, 113.7532],
+  '河北省': [38.0455, 114.5020],
+  '陕西省': [34.2655, 108.9542]
+}
 
 export default {
   data() {
@@ -111,10 +130,13 @@ export default {
       userScore: 5,
       commentContent: '',
 
-      centerLat: 39.9042,
-      centerLng: 116.4074,
+      centerLat: null,
+      centerLng: null,
+      currentLat: null,
+      currentLng: null,
       markers: [],
       nearbyList: [],
+      nearbyMarkers: [],
 
       sheetOffset: 0,
       maxOffset: 0,
@@ -192,14 +214,79 @@ export default {
       if (d.latitude && d.longitude) {
         this.centerLat = d.latitude
         this.centerLng = d.longitude
+        this.setCurrentCoords(d.latitude, d.longitude)
+      } else {
+        this.geocodeAndSetup(d)
       }
-      const currentMarker = {
+    },
+
+    geocodeAndSetup(d) {
+      const address = d.city ? d.city + d.name : (d.province ? d.province + d.name : d.name)
+      console.log('[高德] 开始地理编码:', address)
+      uni.request({
+        url: 'https://restapi.amap.com/v3/geocode/geo',
+        data: {
+          key: AMAP_KEY,
+          address,
+          city: d.city || '',
+          extensions: 'all',
+          s: 'rsx',
+          platform: 'WXJS',
+          appname: AMAP_KEY,
+          sdkversion: '1.2.0',
+          logversion: '2.0'
+        },
+        success: (res) => {
+          console.log('[高德] 返回:', JSON.stringify(res.data))
+          const data = res.data
+          if (data && data.status === '1' && data.geocodes && data.geocodes.length > 0) {
+            const loc = data.geocodes[0].location.split(',')
+            const lng = parseFloat(loc[0])
+            const lat = parseFloat(loc[1])
+            console.log('[高德] 成功获取坐标:', lat, lng)
+            this.centerLat = lat
+            this.centerLng = lng
+            this.setCurrentCoords(lat, lng)
+            uni.request({
+              url: `${BASE_URL}/api/attractions/${this.id}`,
+              method: 'PUT',
+              data: { ...this.detail, latitude: lat, longitude: lng }
+            })
+          } else {
+            console.warn('[高德] 地理编码无结果:', data)
+            this.useProvinceFallback(d)
+          }
+        },
+        fail: (err) => {
+          console.error('[高德] 请求失败:', err)
+          this.useProvinceFallback(d)
+        }
+      })
+    },
+
+    useProvinceFallback(d) {
+      if (d.province && PROVINCE_CENTERS[d.province]) {
+        const c = PROVINCE_CENTERS[d.province]
+        this.centerLat = c[0]
+        this.centerLng = c[1]
+        this.setCurrentCoords(c[0], c[1])
+      }
+    },
+
+    setCurrentCoords(lat, lng) {
+      this.currentLat = lat
+      this.currentLng = lng
+      this.renderMarkers()
+    },
+
+    renderMarkers() {
+      const currentMarker = this.currentLat && this.currentLng ? {
         id: 0,
-        latitude: d.latitude || this.centerLat,
-        longitude: d.longitude || this.centerLng,
-        title: d.name,
+        latitude: this.currentLat,
+        longitude: this.currentLng,
+        title: this.detail.name,
         label: {
-          content: d.name,
+          content: this.detail.name,
           color: '#fff',
           fontSize: 13,
           borderRadius: 6,
@@ -209,8 +296,8 @@ export default {
         },
         width: 36,
         height: 36
-      }
-      this.markers = [currentMarker]
+      } : null
+      this.markers = currentMarker ? [currentMarker, ...this.nearbyMarkers] : this.nearbyMarkers
     },
 
     getNearby() {
@@ -218,7 +305,7 @@ export default {
         url: `${BASE_URL}/api/attractions/${this.id}/nearby?radius=50`,
         success: (res) => {
           this.nearbyList = res.data || []
-          const nearbyMarkers = this.nearbyList.map((item, i) => ({
+          this.nearbyMarkers = this.nearbyList.map((item, i) => ({
             id: i + 1,
             latitude: item.latitude,
             longitude: item.longitude,
@@ -235,8 +322,7 @@ export default {
             width: 24,
             height: 24
           }))
-          const current = this.markers.length > 0 ? this.markers[0] : null
-          this.markers = current ? [current, ...nearbyMarkers] : nearbyMarkers
+          this.renderMarkers()
         }
       })
     },

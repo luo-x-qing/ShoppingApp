@@ -16,6 +16,44 @@ import java.util.*;
 @Service
 public class AttractionService {
 
+    private static final Map<String, double[]> PROVINCE_CENTERS = new HashMap<>();
+    static {
+        PROVINCE_CENTERS.put("北京市", new double[]{39.9042, 116.4074});
+        PROVINCE_CENTERS.put("上海市", new double[]{31.2304, 121.4737});
+        PROVINCE_CENTERS.put("天津市", new double[]{39.1252, 117.1908});
+        PROVINCE_CENTERS.put("重庆市", new double[]{29.5330, 106.5048});
+        PROVINCE_CENTERS.put("河北省", new double[]{38.0455, 114.5020});
+        PROVINCE_CENTERS.put("山西省", new double[]{37.8570, 112.5624});
+        PROVINCE_CENTERS.put("辽宁省", new double[]{41.8057, 123.4315});
+        PROVINCE_CENTERS.put("吉林省", new double[]{43.8960, 125.3265});
+        PROVINCE_CENTERS.put("黑龙江省", new double[]{45.7420, 126.6425});
+        PROVINCE_CENTERS.put("江苏省", new double[]{32.0617, 118.7969});
+        PROVINCE_CENTERS.put("浙江省", new double[]{30.2741, 120.1551});
+        PROVINCE_CENTERS.put("安徽省", new double[]{31.8206, 117.2272});
+        PROVINCE_CENTERS.put("福建省", new double[]{26.0745, 119.2965});
+        PROVINCE_CENTERS.put("江西省", new double[]{28.6763, 115.8955});
+        PROVINCE_CENTERS.put("山东省", new double[]{36.6516, 117.0204});
+        PROVINCE_CENTERS.put("河南省", new double[]{34.7656, 113.7532});
+        PROVINCE_CENTERS.put("湖北省", new double[]{30.5465, 114.3423});
+        PROVINCE_CENTERS.put("湖南省", new double[]{28.2569, 112.9410});
+        PROVINCE_CENTERS.put("广东省", new double[]{23.1292, 113.2644});
+        PROVINCE_CENTERS.put("海南省", new double[]{20.0200, 110.3486});
+        PROVINCE_CENTERS.put("四川省", new double[]{30.5728, 104.0668});
+        PROVINCE_CENTERS.put("贵州省", new double[]{26.6470, 106.6302});
+        PROVINCE_CENTERS.put("云南省", new double[]{25.0453, 102.7100});
+        PROVINCE_CENTERS.put("陕西省", new double[]{34.2655, 108.9542});
+        PROVINCE_CENTERS.put("甘肃省", new double[]{36.0642, 103.8264});
+        PROVINCE_CENTERS.put("青海省", new double[]{36.6232, 101.7805});
+        PROVINCE_CENTERS.put("台湾省", new double[]{25.0330, 121.5654});
+        PROVINCE_CENTERS.put("内蒙古自治区", new double[]{40.8174, 111.7663});
+        PROVINCE_CENTERS.put("广西壮族自治区", new double[]{22.8170, 108.3665});
+        PROVINCE_CENTERS.put("西藏自治区", new double[]{29.6500, 91.1170});
+        PROVINCE_CENTERS.put("宁夏回族自治区", new double[]{38.4713, 106.2588});
+        PROVINCE_CENTERS.put("新疆维吾尔自治区", new double[]{43.7930, 87.6270});
+        PROVINCE_CENTERS.put("香港特别行政区", new double[]{22.3072, 114.1759});
+        PROVINCE_CENTERS.put("澳门特别行政区", new double[]{22.1987, 113.5492});
+    }
+
     @Autowired
     private AttractionRepository attractionRepository;
 
@@ -34,7 +72,7 @@ public class AttractionService {
         return a;
     }
 
-    // 自动补全坐标
+    // 自动补全坐标（高德 API → 省份中心兜底）
     private void fillCoordinates(Attraction a) {
         if (a.getLatitude() != null && a.getLongitude() != null) return;
         String address = a.getName();
@@ -43,6 +81,8 @@ public class AttractionService {
         } else if (a.getProvince() != null && !a.getProvince().isEmpty()) {
             address = a.getProvince() + a.getName();
         }
+
+        // 1. 高德 API 地理编码
         String location = amapService.geo(address);
         if (location != null && location.contains(",")) {
             String[] parts = location.split(",");
@@ -50,7 +90,18 @@ public class AttractionService {
                 a.setLongitude(Double.parseDouble(parts[0]));
                 a.setLatitude(Double.parseDouble(parts[1]));
                 attractionRepository.save(a);
+                return;
             } catch (NumberFormatException ignored) {}
+        }
+
+        // 2. 高德 API 没返回，用省份中心坐标兜底
+        if (a.getProvince() != null) {
+            double[] center = PROVINCE_CENTERS.get(a.getProvince());
+            if (center != null) {
+                a.setLatitude(center[0]);
+                a.setLongitude(center[1]);
+                attractionRepository.save(a);
+            }
         }
     }
 
