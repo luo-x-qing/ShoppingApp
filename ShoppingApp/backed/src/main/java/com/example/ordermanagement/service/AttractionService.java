@@ -11,8 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class AttractionService {
@@ -28,9 +27,84 @@ public class AttractionService {
         return attractionRepository.findAll();
     }
 
-    // 根据ID查询景点
+    // 根据ID查询景点（自动补全坐标）
     public Attraction getAttractionById(Long id) {
-        return attractionRepository.findById(id).orElse(null);
+        Attraction a = attractionRepository.findById(id).orElse(null);
+        if (a != null) fillCoordinates(a);
+        return a;
+    }
+
+    // 自动补全坐标
+    private void fillCoordinates(Attraction a) {
+        if (a.getLatitude() != null && a.getLongitude() != null) return;
+        String address = a.getName();
+        if (a.getCity() != null && !a.getCity().isEmpty()) {
+            address = a.getCity() + a.getName();
+        } else if (a.getProvince() != null && !a.getProvince().isEmpty()) {
+            address = a.getProvince() + a.getName();
+        }
+        String location = amapService.geo(address);
+        if (location != null && location.contains(",")) {
+            String[] parts = location.split(",");
+            try {
+                a.setLongitude(Double.parseDouble(parts[0]));
+                a.setLatitude(Double.parseDouble(parts[1]));
+                attractionRepository.save(a);
+            } catch (NumberFormatException ignored) {}
+        }
+    }
+
+    // 查询附近景点（同一省份，按距离排序）
+    public List<Map<String, Object>> getNearbyAttractions(Long id, double radiusKm) {
+        Attraction current = getAttractionById(id);
+        if (current == null || current.getLatitude() == null) return Collections.emptyList();
+
+        List<Attraction> candidates;
+        if (current.getProvince() != null && !current.getProvince().isEmpty()) {
+            candidates = attractionRepository.findByProvinceAndIdNot(current.getProvince(), id);
+        } else {
+            candidates = attractionRepository.findAll();
+            candidates.removeIf(a -> a.getId().equals(id));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Attraction a : candidates) {
+            fillCoordinates(a);
+            if (a.getLatitude() == null) continue;
+            double dist = calculateDistance(
+                current.getLatitude(), current.getLongitude(),
+                a.getLatitude(), a.getLongitude()
+            );
+            if (dist <= radiusKm) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", a.getId());
+                item.put("name", a.getName());
+                item.put("province", a.getProvince());
+                item.put("city", a.getCity());
+                item.put("latitude", a.getLatitude());
+                item.put("longitude", a.getLongitude());
+                item.put("photo", a.getPhoto());
+                item.put("score", a.getScore());
+                item.put("type", a.getType());
+                item.put("ticketPrice", a.getTicketPrice());
+                item.put("distance", Math.round(dist * 10) / 10.0);
+                result.add(item);
+            }
+        }
+        result.sort(Comparator.comparingDouble(m -> (Double) m.get("distance")));
+        return result;
+    }
+
+    // Haversine 距离计算（单位：km）
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     // 按省份查询景点
@@ -157,6 +231,18 @@ public class AttractionService {
                         }
 
                         a.setLevel("");
+
+                        // 保存坐标信息
+                        Object locationObj = poi.get("location");
+                        if (locationObj instanceof String && !((String) locationObj).isEmpty()) {
+                            String[] parts = ((String) locationObj).split(",");
+                            if (parts.length == 2) {
+                                try {
+                                    a.setLongitude(Double.parseDouble(parts[0]));
+                                    a.setLatitude(Double.parseDouble(parts[1]));
+                                } catch (NumberFormatException ignored) {}
+                            }
+                        }
 
                         attractionRepository.save(a);
                         added++;

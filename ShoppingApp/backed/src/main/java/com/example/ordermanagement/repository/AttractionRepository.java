@@ -15,4 +15,5 @@ public interface AttractionRepository extends JpaRepository<Attraction, Long> {
     List<Attraction> findByProvinceAndNameContaining(String province, String name);
     List<Attraction> findByCityAndNameContaining(String city, String name);
     Attraction findByNameAndProvince(String name, String province);
+    List<Attraction> findByProvinceAndIdNot(String province, Long id);
 }

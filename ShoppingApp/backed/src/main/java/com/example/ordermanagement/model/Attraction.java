@@ -22,6 +22,8 @@ public class Attraction {
     private String openTime;
     @Column(columnDefinition = "TEXT")
     private String description;
+    private Double latitude;
+    private Double longitude;
 
     // 👇 下面这两个必须加上
     public Double getScore() {
@@ -51,4 +53,8 @@ public class Attraction {
     public void setLevel(String level) { this.level = level; }
     public String getOpenTime() { return openTime; }
     public void setOpenTime(String openTime) { this.openTime = openTime; }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }
