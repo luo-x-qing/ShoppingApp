@@ -74,6 +74,15 @@ public class AttractionController {
         return ResponseEntity.noContent().build();
     }
 
+    // 清空所有景点
+    @DeleteMapping
+    public ResponseEntity<Map<String, Object>> deleteAll() {
+        attractionService.deleteAll();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("message", "所有景点已清空");
+        return ResponseEntity.ok(result);
+    }
+
     // 搜索景点（支持省份或城市）
     @GetMapping("/search")
     public List<Attraction> searchAttractions(
@@ -131,6 +140,16 @@ public class AttractionController {
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("updated", count);
         result.put("message", "成功更新 " + count + " 个景点的城市信息");
+        return ResponseEntity.ok(result);
+    }
+
+    // 批量补全景点经纬度（通过高德API地理编码 + 省份中心兜底）
+    @PostMapping("/batch-fill-coords")
+    public ResponseEntity<Map<String, Object>> batchFillCoordinates() {
+        int count = attractionService.batchFillCoordinates();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("filled", count);
+        result.put("message", "成功补全 " + count + " 个景点的经纬度");
         return ResponseEntity.ok(result);
     }
 }

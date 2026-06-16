@@ -1,0 +1,103 @@
+
+page.data-v-197ccafb {
+  background: #f5f5f5;
+}
+.container.data-v-197ccafb {
+  width: 100%;
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+  box-sizing: border-box;
+}
+.header.data-v-197ccafb {
+  background: linear-gradient(135deg, #1677ff, #0050b3);
+  padding: 40rpx 0;
+  text-align: center;
+}
+.header .title.data-v-197ccafb {
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: bold;
+}
+.flight-card.data-v-197ccafb, .passenger-card.data-v-197ccafb {
+  background: #fff;
+  margin: 30rpx;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+.card-title.data-v-197ccafb {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 20rpx;
+}
+.flight-row.data-v-197ccafb, .form-item.data-v-197ccafb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+.flight-row.data-v-197ccafb:last-child, .form-item.data-v-197ccafb:last-child {
+  border-bottom: none;
+}
+.label.data-v-197ccafb {
+  font-size: 28rpx;
+  color: #666;
+  width: 160rpx;
+}
+.value.data-v-197ccafb {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+  text-align: right;
+}
+.price.data-v-197ccafb {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+.input-box.data-v-197ccafb {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 28rpx;
+  color: #333;
+  text-align: right;
+}
+.input-box input.data-v-197ccafb {
+  text-align: right;
+  width: 100%;
+}
+.total-row.data-v-197ccafb {
+  margin-top: 10rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #eee;
+}
+.total-price.data-v-197ccafb {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+.arrow.data-v-197ccafb {
+  margin-left: 10rpx;
+  color: #ccc;
+  font-size: 32rpx;
+}
+.submit-btn.data-v-197ccafb {
+  width: 90%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #1677ff, #0050b3);
+  color: #fff;
+  border-radius: 44rpx;
+  margin: 60rpx auto 30rpx;
+  font-size: 34rpx;
+  font-weight: bold;
+  display: block;
+}
+.submit-btn[disabled].data-v-197ccafb {
+  opacity: 0.6;
+}

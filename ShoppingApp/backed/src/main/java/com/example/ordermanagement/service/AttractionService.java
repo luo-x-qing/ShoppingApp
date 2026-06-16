@@ -210,9 +210,28 @@ public class AttractionService {
         return count;
     }
 
+    // 批量补全所有景点的经纬度坐标
+    public int batchFillCoordinates() {
+        List<Attraction> all = attractionRepository.findAll();
+        int count = 0;
+        for (Attraction a : all) {
+            if (a.getLatitude() == null || a.getLongitude() == null) {
+                fillCoordinates(a);
+                if (a.getLatitude() != null) count++;
+            }
+        }
+        return count;
+    }
+
     // 删除景点
     public void deleteAttraction(Long id) {
         attractionRepository.deleteById(id);
+    }
+
+    // 清空所有景点
+    @Transactional
+    public void deleteAll() {
+        attractionRepository.deleteAll();
     }
 
     // 按省份搜索景点

@@ -1,0 +1,211 @@
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #fffde7;
+  padding: 20px;
+}
+.role-tabs {
+  display: flex;
+  width: 80%;
+  margin-bottom: 30rpx;
+  background-color: #fff9e6;
+  border-radius: 16rpx;
+  overflow: hidden;
+  border: 1px solid #f0e68c;
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  background-color: #fff9e6;
+  transition: all 0.3s;
+}
+.tab-item.active {
+  background-color: #f0e68c;
+  color: #333;
+  font-weight: bold;
+}
+.form {
+  width: 80%;
+  background-color: #fff9e6;
+  padding: 30rpx;
+  border-radius: 10px;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+}
+.input {
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  border: 1px solid #f0e68c;
+  border-radius: 8rpx;
+  background-color: #fff;
+  font-size: 28rpx;
+}
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+.button {
+  padding: 20rpx;
+  background-color: #f0e68c;
+  color: #333;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  flex: 1;
+  margin: 0 6rpx;
+}
+
+/* 申诉弹窗样式 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-container {
+  width: 85%;
+  max-height: 85vh;
+  background-color: #fff;
+  border-radius: 30rpx;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1px solid #eee;
+}
+.modal-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+}
+.modal-close {
+  font-size: 48rpx;
+  color: #999;
+  line-height: 1;
+}
+.modal-body {
+  flex: 1;
+  padding: 30rpx;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.modal-footer {
+  display: flex;
+  padding: 20rpx 30rpx;
+  border-top: 1px solid #eee;
+  gap: 20rpx;
+  padding-bottom: 40rpx;
+}
+.cancel-btn, .submit-btn {
+  flex: 1;
+  border-radius: 50rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  border: none;
+}
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+.submit-btn {
+  background-color: #f0e68c;
+  color: #333;
+}
+.form-item {
+  margin-bottom: 30rpx;
+}
+.label {
+  font-size: 28rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+.picker {
+  width: 100%;
+  padding: 24rpx;
+  border: 1px solid #e0e0e0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+.appeal-textarea {
+  width: 100%;
+  min-height: 150rpx;
+  border: 1px solid #e0e0e0;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+.char-count {
+  font-size: 22rpx;
+  color: #999;
+  text-align: right;
+  display: block;
+  margin-top: 8rpx;
+}
+.appeal-info {
+  background-color: #f8f9fa;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 30rpx;
+}
+.info-item {
+  display: flex;
+  margin-bottom: 12rpx;
+}
+.info-label {
+  width: 140rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+.info-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+}
+.status-pending {
+  color: #856404;
+}
+.status-rejected {
+  color: #721c24;
+}
+.status-banned {
+  color: #383d41;
+}
+.contact-tips {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background-color: #fff9e6;
+  border-radius: 12rpx;
+  margin-top: 20rpx;
+}
+.tips-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+.tips-text {
+  font-size: 24rpx;
+  color: #999;
+  flex: 1;
+}
