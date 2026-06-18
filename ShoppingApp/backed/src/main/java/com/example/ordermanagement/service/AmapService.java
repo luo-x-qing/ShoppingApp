@@ -258,6 +258,45 @@ public class AmapService {
     }
 
     @SuppressWarnings("unchecked")
+    public Map<String, Double> geocodeWithPreference(String address) {
+        try {
+            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
+            String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey + "&output=JSON";
+            Map<String, Object> response = httpGetJson(url);
+            if (response != null && "1".equals(response.get("status"))) {
+                List<Map<String, Object>> geocodes = (List<Map<String, Object>>) response.get("geocodes");
+                if (geocodes != null && !geocodes.isEmpty()) {
+                    String[] priorityKeywords = {"景点", "风景", "名胜", "景区", "公园", "山", "峰", "峡谷"};
+                    int bestIndex = 0;
+                    for (int i = 0; i < geocodes.size(); i++) {
+                        Object levelObj = geocodes.get(i).get("level");
+                        String level = levelObj instanceof String ? (String) levelObj : "";
+                        for (String kw : priorityKeywords) {
+                            if (level.contains(kw)) {
+                                bestIndex = i;
+                                break;
+                            }
+                        }
+                        if (bestIndex == i) break;
+                    }
+                    Object locObj = geocodes.get(bestIndex).get("location");
+                    String location = locObj instanceof String ? (String) locObj : null;
+                    if (location != null && location.contains(",")) {
+                        String[] parts = location.split(",");
+                        Map<String, Double> result = new HashMap<>();
+                        result.put("lng", Double.parseDouble(parts[0]));
+                        result.put("lat", Double.parseDouble(parts[1]));
+                        return result;
+                    }
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            System.err.println("[精确编码] 失败: " + address + ", " + e.getMessage());
+            return null;
+        }
+    }
+
     public Map<String, String> geoDetail(String address) {
         Map<String, String> detail = new HashMap<>();
         try {

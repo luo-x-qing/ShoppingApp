@@ -20,6 +20,15 @@ public class AttractionController {
     @Autowired
     private AmapService amapService;
 
+    // 查询附近景点（基于坐标计算距离）
+    @GetMapping("/{id}/nearby")
+    public ResponseEntity<List<Map<String, Object>>> getNearbyAttractions(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "50") double radius) {
+        List<Map<String, Object>> nearby = attractionService.getNearbyAttractions(id, radius);
+        return ResponseEntity.ok(nearby);
+    }
+
     // 查询所有景点
     @GetMapping
     public List<Attraction> getAllAttractions() {
@@ -152,6 +161,26 @@ public class AttractionController {
         int added = attractionService.importScenicSpotsDirect(spotArray);
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("added", added);
+        return ResponseEntity.ok(result);
+    }
+
+    // 重新对所有景点进行地理编码（带省份城市）
+    @GetMapping("/re-geocode")
+    public ResponseEntity<Map<String, Object>> reGeocode() {
+        int updated = attractionService.reGeocodeAll();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("updated", updated);
+        result.put("message", "成功重新编码 " + updated + " 个景点坐标");
+        return ResponseEntity.ok(result);
+    }
+
+    // 精确重编码：在所有结果中优先选择 level 为"景点""风景区"等的坐标
+    @GetMapping("/re-geocode-precise")
+    public ResponseEntity<Map<String, Object>> reGeocodePrecise() {
+        int updated = attractionService.reGeocodePrecise();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("updated", updated);
+        result.put("message", "精确重编码完成，更新 " + updated + " 个景点");
         return ResponseEntity.ok(result);
     }
 }

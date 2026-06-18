@@ -187,7 +187,8 @@ const _sfc_main = {
       common_vendor.index.request({
         url: `${BASE_URL}/api/attractions/${this.id}/nearby?radius=50`,
         success: (res) => {
-          this.nearbyList = res.data || [];
+          const data = Array.isArray(res.data) ? res.data : [];
+          this.nearbyList = data;
           this.nearbyMarkers = this.nearbyList.map((item, i) => ({
             id: i + 1,
             latitude: item.latitude,
@@ -205,6 +206,11 @@ const _sfc_main = {
             width: 24,
             height: 24
           }));
+          this.renderMarkers();
+        },
+        fail: () => {
+          this.nearbyList = [];
+          this.nearbyMarkers = [];
           this.renderMarkers();
         }
       });

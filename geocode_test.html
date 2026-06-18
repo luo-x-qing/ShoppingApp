@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>景点地理编码修复 - 调试工具</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f5ff; padding: 20px; }
+    h1 { font-size: 22px; margin-bottom: 16px; color: #1677ff; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 16px; margin-bottom: 12px; color: #333; border-left: 3px solid #1677ff; padding-left: 12px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    input { flex: 1; min-width: 150px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; }
+    .btn { background: #1677ff; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .btn:hover { background: #4096ff; }
+    .btn-warn { background: #ff6b35; }
+    .btn-warn:hover { background: #ff8a5c; }
+    .btn-green { background: #52c41a; }
+    .btn-green:hover { background: #73d13d; }
+    #map-container { width: 100%; height: 400px; border-radius: 8px; margin-top: 10px; }
+    .result-item { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; }
+    .result-item .name { font-weight: bold; font-size: 15px; color: #333; }
+    .result-item .coords { font-family: monospace; font-size: 13px; color: #666; margin-left: 10px; }
+    .result-item .level { font-size: 12px; padding: 2px 10px; border-radius: 10px; background: #e6f4ff; color: #1677ff; margin-left: 6px; }
+    .result-item .level-match { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; margin-left: 6px; }
+    .badge-pick { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .note { font-size: 13px; color: #666; margin-top: 10px; line-height: 1.8; background: #fafafa; padding: 12px; border-radius: 8px; }
+    .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+    .stats .stat { background: #fafafa; padding: 8px 16px; border-radius: 8px; }
+    .stats .num { font-size: 24px; font-weight: bold; color: #1677ff; }
+    .stats .num.red { color: #ff4d4f; }
+    .stats .num.green { color: #52c41a; }
+    textarea { width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 8px; font-family: monospace; font-size: 13px; }
+    .sub-result { padding-left: 30px; font-size: 12px; color: #999; background: #fafafa; border-radius: 6px; margin: 2px 0 8px 0; padding: 8px 14px; }
+    .selected { background: #f6ffed; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📍 景点坐标精确修复工具</h1>
+
+  <div class="card">
+    <h2>📋 测试景点</h2>
+    <p style="color:#999;font-size:14px;margin-bottom:12px;">
+      输入景点（每行：名称,省份,城市），查看高德返回的所有结果及最优选择
+    </p>
+    <div style="margin-bottom:12px;">
+      <button class="btn" onclick="loadDefaultSpots()">加载默认</button>
+      <button class="btn btn-green" onclick="runAllTests()">▶ 测试全部</button>
+      <button class="btn btn-warn" onclick="exportSql()">导出 SQL</button>
+    </div>
+    <textarea id="spotInput" rows="6">乐山大佛,四川省,乐山市
+重庆南川金佛山,重庆市,重庆市
+九寨沟,四川省,阿坝藏族羌族自治州
+黄山风景区,安徽省,黄山市
+故宫博物院,北京市,北京市
+西湖,浙江省,杭州市
+张家界国家森林公园,湖南省,张家界市
+桂林漓江,广西壮族自治区,桂林市
+大理古城,云南省,大理白族自治州
+鼓浪屿,福建省,厦门市
+泰山,山东省,泰安市
+华山,陕西省,渭南市
+峨眉山,四川省,乐山市
+都江堰,四川省,成都市</textarea>
+    <div id="testResults"></div>
+    <div id="stats" class="stats"></div>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ 地图</h2>
+    <div id="map-container"></div>
+    <p class="note">
+      <span class="badge badge-pick">✅ 最优选择</span> = 优先 level 含"景点""风景""名胜""景区""公园""山""峰"的<br>
+      点击<strong>导出 SQL</strong> 生成 UPDATE 语句直接修复数据库
+    </p>
+  </div>
+</div>
+
+<script src="https://webapi.amap.com/maps?v=2.0&key=dde14364ce2a51865aa1cdc5af1598cf"></script>
+<script>
+let map = null, allMarkers = [], allResults = [], spots = [];
+
+function initMap(lat, lng) {
+  if (!map) { map = new AMap.Map('map-container', { center: [lng||104.0668, lat||30.5728], zoom: 5, mapStyle: 'amap://styles/light' }); }
+  else if (lat && lng) map.setCenter([lng, lat]);
+}
+
+function clearMarkers() { allMarkers.forEach(m => map.remove(m)); allMarkers = []; }
+
+function addMarker(lat, lng, label, color) {
+  const url = 'https://a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-' + color + '.png';
+  const m = new AMap.Marker({ position: [lng, lat], title: label, label: { content: label, direction: 'top', offset: [0, -10] }, icon: new AMap.Icon({ size: new AMap.Size(28,28), image: url, imageSize: new AMap.Size(28,28) }) });
+  map.add(m); allMarkers.push(m);
+}
+
+function fitMap(points) {
+  if (!points.length) return;
+  let mLat=Infinity,xLat=-Infinity,mLng=Infinity,xLng=-Infinity;
+  points.forEach(([lt,ln])=>{ if(lt&&ln){mLat=Math.min(mLat,lt);xLat=Math.max(xLat,lt);mLng=Math.min(mLng,ln);xLng=Math.max(xLng,ln);} });
+  if (!isFinite(mLat)) return;
+  map.setBounds(new AMap.Bounds(new AMap.LngLat(mLng-0.1,mLat-0.1),new AMap.LngLat(xLng+0.1,xLat+0.1)));
+}
+
+function loadDefaultSpots() {
+  spots = document.getElementById('spotInput').value.split('\n').filter(l=>l.trim()).map(l=>{const p=l.split(',').map(s=>s.trim());return{name:p[0],province:p[1]||'',city:p[2]||''};}).filter(s=>s.name);
+  document.getElementById('testResults').innerHTML = '<span style="color:#999;">已加载 ' + spots.length + ' 个景点，点击"测试全部"查看结果</span>';
+}
+
+function runAllTests() {
+  if (!spots.length) { loadDefaultSpots(); }
+  allResults = [];
+  document.getElementById('testResults').innerHTML = '<p style="color:#666;">⏳ 测试中... <span id="progress">0/' + spots.length + '</span></p>';
+  document.getElementById('stats').innerHTML = '';
+  clearMarkers(); initMap(30.5728, 104.0668);
+
+  const geocoder = new AMap.Geocoder({ city: '', radius: 1000 });
+  let completed = 0;
+
+  spots.forEach((spot, idx) => {
+    const fullAddr = spot.city ? spot.name+','+spot.city : (spot.province ? spot.name+','+spot.province : spot.name);
+    geocoder.getLocation(fullAddr, (status, result) => {
+      completed++;
+      document.getElementById('progress').textContent = completed+'/'+spots.length;
+
+      let best = null, allGeos = [];
+      if (status === 'complete' && result.geocodes && result.geocodes.length) {
+        allGeos = result.geocodes.map(g => ({ address: g.getAddress()||'', lat: g.getLat(), lng: g.getLng(), level: g.getLevel()||'' }));
+        const kw = ['景点','风景','名胜','景区','公园','山','峰','峡谷'];
+        let bi = 0;
+        for (let i = 0; i < allGeos.length; i++) {
+          const lv = allGeos[i].level;
+          if (kw.some(k => lv.includes(k))) { bi = i; break; }
+          if (allGeos[i].address && allGeos[i].address.includes(spot.province||'')) bi = i;
+        }
+        best = allGeos[bi];
+      }
+      allResults.push({ spot, allGeos, best });
+
+      if (completed === spots.length) { renderResults(); updateMap(); updateStats(); }
+    });
+  });
+}
+
+function renderResults() {
+  const div = document.getElementById('testResults');
+  let html = '<div style="margin-top:10px;">';
+  allResults.forEach(r => {
+    const icon = r.best ? '✅' : '❌';
+    const color = r.best ? 'color:#52c41a;' : 'color:#ff4d4f;';
+    html += '<div class="result-item"><span class="name" style="'+color+'">'+icon+' '+r.spot.name+'</span>'
+      + '<span style="font-size:12px;color:#999;margin-left:8px;">'+r.spot.city+'</span>'
+      + (r.best ? '<span class="coords">'+r.best.lat.toFixed(5)+', '+r.best.lng.toFixed(5)+'</span>' : '<span class="coords">❌ 失败</span>')
+      + (r.best ? '<span class="level level-match">'+r.best.level+'</span>' : '')
+      + '<span style="font-size:11px;color:#999;margin-left:8px;">共'+r.allGeos.length+'个结果</span></div>';
+    if (r.allGeos.length > 1) {
+      html += '<div class="sub-result">';
+      r.allGeos.forEach((g,i) => {
+        const sel = g === r.best;
+        html += '<span'+(sel?' class="selected"':'')+'>'+(i+1)+'. '+g.address+' ('+g.lat.toFixed(5)+','+g.lng.toFixed(5)+') ['+g.level+']'+(sel?' ✅':'')+'</span>';
+        if (i < r.allGeos.length-1) html += ' | ';
+      });
+      html += '</div>';
+    }
+  });
+  html += '</div>';
+  div.innerHTML = html;
+}
+
+function updateMap() {
+  clearMarkers();
+  const pts = [];
+  allResults.forEach(r => { if (r.best) { addMarker(r.best.lat, r.best.lng, r.spot.name, 'green'); pts.push([r.best.lat, r.best.lng]); } });
+  fitMap(pts);
+}
+
+function updateStats() {
+  document.getElementById('stats').innerHTML = '<div class="stat">总计 <span class="num">'+allResults.length+'</span></div>'
+    +'<div class="stat">成功 <span class="num green">'+allResults.filter(r=>r.best).length+'</span></div>'
+    +'<div class="stat">失败 <span class="num red">'+allResults.filter(r=>!r.best).length+'</span></div>';
+}
+
+function exportSql() {
+  if (!allResults.length) { alert('请先运行测试'); return; }
+  let sql = '-- 景点坐标修复 SQL\n-- 执行前请备份数据\n\n';
+  let count = 0;
+  allResults.forEach(r => {
+    if (r.best) {
+      sql += "UPDATE attraction SET latitude = "+r.best.lat+", longitude = "+r.best.lng+" WHERE name = '"+r.spot.name.replace(/'/g,"\\'")+"';\n";
+      count++;
+    }
+  });
+  sql += '\n-- 共 '+count+' 条\n';
+  const blob = new Blob([sql], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fix_coords.sql'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+window.onload = function() { initMap(30.5728, 104.0668); loadDefaultSpots(); };
+</script>
+</body>
+</html>
