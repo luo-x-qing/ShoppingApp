@@ -166,3 +166,24 @@ page.data-v-4c1b26cf { background-color: #f5f5f5;
 }
 .send-btn.data-v-4c1b26cf::after { border: none;
 }
+.loading-dots.data-v-4c1b26cf {
+  display: inline-block;
+  position: relative;
+  min-width: 80rpx;
+}
+.loading-dots.data-v-4c1b26cf::after {
+  content: '...';
+  position: absolute;
+  width: 40rpx;
+  animation: dotPulse-4c1b26cf 1.5s infinite;
+}
+@keyframes dotPulse-4c1b26cf {
+0% { content: '.';
+}
+33% { content: '..';
+}
+66% { content: '...';
+}
+100% { content: '.';
+}
+}

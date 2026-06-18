@@ -1,7 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const BASE_URL = "http://localhost:8080";
-const AMAP_KEY = "91b34b28376cdf588bb43f354db27157";
+const AMAP_KEY = "dde14364ce2a51865aa1cdc5af1598cf";
 const PROVINCE_CENTERS = {
   "北京市": [39.9042, 116.4074],
   "上海市": [31.2304, 121.4737],

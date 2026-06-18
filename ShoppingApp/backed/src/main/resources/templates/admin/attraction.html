@@ -89,23 +89,17 @@
 
             <!-- 筛选栏 -->
             <div class="filter-bar">
-                <div class="row">
-                    <div class="col-md-3">
-                        <input type="text" id="searchKeyword" class="form-control" placeholder="景点名称">
-                    </div>
-                    <div class="col-md-2">
-                        <select id="filterProvince" class="form-control">
-                            <option value="all">全部省份</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-block" onclick="searchAttractions()">🔍 搜索</button>
-                    </div>
-                    <div class="col-md-5 text-right">
-                        <button class="btn btn-success" data-toggle="modal" data-target="#addModal">➕ 添加景点</button>
-                        <button class="btn btn-outline-secondary ml-2" onclick="refreshList()">🔄 刷新</button>
-                        <button class="btn btn-info ml-2" onclick="importAll()">📥 一键导入全国景点</button>
-                        <button class="btn btn-danger ml-2" onclick="resetAndRenumber()">🔄 重置并重新编号</button>
+                <div class="d-flex flex-wrap align-items-center">
+                    <input type="text" id="searchKeyword" class="form-control" placeholder="景点名称" style="width:200px;margin-right:8px;">
+                    <select id="filterProvince" class="form-control" style="width:150px;margin-right:8px;">
+                        <option value="all">全部省份</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="searchAttractions()" style="margin-right:12px;">🔍 搜索</button>
+                    <div class="ml-auto d-flex flex-wrap align-items-center gap-2">
+                        <button class="btn btn-success" data-toggle="modal" data-target="#addModal" style="margin-right:4px;">➕ 添加景点</button>
+                        <button class="btn btn-outline-secondary" onclick="refreshList()" style="margin-right:4px;">🔄 刷新</button>
+                        <button class="btn btn-info" onclick="importAll()" style="margin-right:4px;">📥 一键导入全国景点</button>
+                        <button class="btn btn-danger" onclick="resetAndRenumber()">🔄 重置并重新编号</button>
                     </div>
                 </div>
             </div>
@@ -539,27 +533,26 @@
         });
     }
 
-    function setButtonsLoading(loading){
-        $("button[onclick*='importAll'], button[onclick*='resetAndRenumber']").each(function(){
-            if(loading){
-                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> 处理中...');
-            } else {
-                let text = $(this).text().includes('导入') ? '📥 一键导入全国景点' : '🔄 重置并重新编号';
-                $(this).prop('disabled', false).text($(this).text().includes('导入') ? '📥 一键导入全国景点' : '🔄 重置并重新编号');
-            }
-        });
+    function setBtnLoading(btn, loading, text){
+        if(loading){
+            $(btn).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> 处理中...');
+        } else {
+            $(btn).prop('disabled', false).text(text);
+        }
     }
 
     function importAll(){
         if(!confirm('确定要一键导入全国景点数据吗？这将添加大量景点数据！')){
             return;
         }
-        setButtonsLoading(true);
+        let btn = $("button[onclick='importAll()']");
+        let origText = btn.text();
+        setBtnLoading(btn, true);
         $.ajax({
             url: API_BASE + "/api/attractions/import-all",
             type: "POST",
             success: function(res){
-                alert("导入成功！共导入 " + (res.data || res.count || 0) + " 个景点");
+                alert("导入成功！共导入 " + (res.added || 0) + " 个景点");
                 loadAttractions();
                 loadProvinces();
             },
@@ -572,7 +565,7 @@
                 alert(msg);
             },
             complete: function(){
-                setButtonsLoading(false);
+                setBtnLoading(btn, false, origText);
             }
         });
     }
@@ -581,7 +574,9 @@
         if(!confirm('确定要重置并重新编号吗？此操作将重置景点ID从1开始，同时保留所有数据！')){
             return;
         }
-        setButtonsLoading(true);
+        let btn = $("button[onclick='resetAndRenumber()']");
+        let origText = btn.text();
+        setBtnLoading(btn, true);
         $.ajax({
             url: API_BASE + "/api/attractions/reset-and-renumber",
             type: "POST",
@@ -599,7 +594,7 @@
                 alert(msg);
             },
             complete: function(){
-                setButtonsLoading(false);
+                setBtnLoading(btn, false, origText);
             }
         });
     }

@@ -17,6 +17,7 @@ if (!Math) {
   "./pages/route-detail/route-detail.js";
   "./pages/cart/cart.js";
   "./pages/ai-plan/ai-plan.js";
+  "./pages/ai-chat/ai-chat.js";
   "./pages/merchant/home.js";
   "./pages/merchant/hotel-list.js";
   "./pages/merchant/order-list.js";

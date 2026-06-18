@@ -99,6 +99,14 @@
                 "navigationBarTitleText": "AI路线规划"
             }
         },
+		{
+		  "path": "pages/ai-chat/ai-chat",
+		  "style": {
+		    "navigationStyle": "custom",
+		    "navigationBarTitleText": "AI 智能助手",
+		    "enablePullDownRefresh": false
+		  }
+		},
         {
             "path": "pages/merchant/home",
             "style": { 

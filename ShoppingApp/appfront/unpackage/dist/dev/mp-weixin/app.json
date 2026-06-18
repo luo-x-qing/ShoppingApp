@@ -15,6 +15,7 @@
     "pages/route-detail/route-detail",
     "pages/cart/cart",
     "pages/ai-plan/ai-plan",
+    "pages/ai-chat/ai-chat",
     "pages/merchant/home",
     "pages/merchant/hotel-list",
     "pages/merchant/order-list",

@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 public class ImageController {
 
     // 你的图片存储路径，和配置里的一致
-    private static final String UPLOAD_DIR = "C:/Users/HP/OneDrive/桌面/大学作业/小程序开发期末大作业/ShoppingApp/upload/";
+    private static final String UPLOAD_DIR = "D:/luo-x-qing/ShoppingApp/ShoppingApp/upload/";
 
     @GetMapping("/{fileName}")
     public ResponseEntity<byte[]> getImage(@PathVariable String fileName) {

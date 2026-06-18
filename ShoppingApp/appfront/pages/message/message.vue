@@ -89,10 +89,54 @@
           <text class="modal-title">AI 智能助手</text>
           <text class="modal-close" @click="closeAIChat">✕</text>
         </view>
-        <view class="coming-soon">
-          <text class="coming-icon">🤖</text>
-          <text class="coming-text">AI 智能助手功能即将上线</text>
-          <text class="coming-tip">敬请期待...</text>
+        <scroll-view class="chat-messages" scroll-y="true" scroll-into-view="ai-msg-bottom" :scroll-with-animation="true">
+          <view class="message-list-container">
+            <view class="message-item" v-for="(msg, idx) in aiMessages" :key="idx">
+              <!-- AI 回复（左边） -->
+              <view class="message-left" v-if="msg.role === 'assistant'">
+                <view class="message-avatar">
+                  <image class="small-avatar" src="/static/ai-avatar.png" mode="aspectFill"></image>
+                </view>
+                <view class="message-bubble merchant-bubble">
+                  <text>{{ msg.content }}</text>
+                </view>
+              </view>
+              <!-- 用户消息（右边） -->
+              <view class="message-right" v-else>
+                <view class="message-bubble user-bubble">
+                  <text>{{ msg.content }}</text>
+                </view>
+                <view class="message-avatar">
+                  <view class="user-avatar">👤</view>
+                </view>
+              </view>
+            </view>
+          </view>
+		  <!-- 在 </view class="message-list-container"> 之后，<view id="ai-msg-bottom"> 之前 -->
+		  <view class="message-item" v-if="aiLoading">
+		    <view class="message-left">
+		      <view class="message-avatar">
+		        <image class="small-avatar" src="/static/ai-avatar.png" mode="aspectFill"></image>
+		      </view>
+		      <view class="message-bubble merchant-bubble">
+		        <text class="loading-dots">AI 正在思考</text>
+		      </view>
+		    </view>
+		  </view>
+          <view id="ai-msg-bottom"></view>
+        </scroll-view>
+        
+        <!-- 底部输入区 -->
+        <view class="chat-input-area">
+          <input 
+            class="chat-input" 
+            v-model="aiInput" 
+            placeholder="输入你的旅行计划..." 
+            confirm-type="send"
+            @confirm="sendAIMessage"
+            @input="onAIInput"
+          />
+          <button class="send-btn" @click="sendAIMessage" :disabled="aiLoading">发送</button>
         </view>
       </view>
     </view>
@@ -173,7 +217,10 @@ export default {
       merchantInput: '',
       quickReplies: ['好的，谢谢', '请问有优惠吗？', '可以改期吗？', '退订政策是什么？', '酒店地址在哪？', '有停车场吗？'],
       hotelOrders: [],
-      flightOrders: []
+      flightOrders: [],
+	  aiMessages: [],      // 对话历史 [{role, content}]
+	  aiInput: '',         // 输入框绑定的内容
+	  aiLoading: false,    // 是否等待 AI 回复
     };
   },
   
@@ -364,11 +411,19 @@ export default {
       let totalUnread = this.aiUnreadCount;
       this.topNotices.forEach(notice => { if (!notice.read) totalUnread++; });
       this.merchantMessages.forEach(merchant => { totalUnread += merchant.unreadCount || 0; });
+    
+      // 只有当前页面是 tabBar 页面时才设置角标
+      const pages = getCurrentPages();
+      const currentPage = pages[pages.length - 1];
+      // 判断当前页面路径是否在 tabBar 列表中（根据你的实际 tabBar 页面路径修改）
+      const isTabBarPage = currentPage.route === 'pages/message/message';   // 消息页是 tabBar 页
       
-      if (totalUnread > 0) {
-        uni.setTabBarBadge({ index: 2, text: totalUnread > 99 ? '99+' : totalUnread.toString() });
-      } else {
-        uni.removeTabBarBadge({ index: 2 });
+      if (isTabBarPage) {
+        if (totalUnread > 0) {
+          uni.setTabBarBadge({ index: 2, text: totalUnread > 99 ? '99+' : totalUnread.toString() });
+        } else {
+          uni.removeTabBarBadge({ index: 2 });
+        }
       }
     },
     
@@ -394,12 +449,18 @@ export default {
     },
     
     goToAIChat() {
+      // 不再使用弹窗，直接跳转到独立页面
+      uni.navigateTo({
+        url: '/pages/ai-chat/ai-chat'
+      });
+      // 可选：清除未读标记（跳转后返回时，已读状态可单独处理）
       this.aiUnreadCount = 0;
       this.countTotalUnread();
-      this.showAIChat = true;
     },
     
-    closeAIChat() { this.showAIChat = false; },
+    closeAIChat() { this.showAIChat = false;
+	 uni.setStorageSync('ai_messages', this.aiMessages);
+	 },
     
     // ========== 修改后的 goToMerchantChat - 从服务器加载历史消息 ==========
     goToMerchantChat(merchant) {
@@ -588,9 +649,60 @@ export default {
       if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`;
       
       return `${d.getMonth() + 1}月${d.getDate()}日`;
-    }
-  }
-};
+    },
+	onAIInput(e) {
+	  this.aiInput = e.detail.value;
+	},
+	
+	sendAIMessage() {
+	  // 1. 校验输入和加载状态
+	  if (!this.aiInput.trim() || this.aiLoading) return;
+	
+	  // 2. 获取用户消息并添加到对话列表
+	  const userMsg = this.aiInput.trim();
+	  this.aiMessages.push({ role: 'user', content: userMsg });
+	  this.aiInput = '';               // 清空输入框
+	  this.aiLoading = true;           // 开启加载状态（显示"AI 正在思考..."）
+	
+	  // 3. 滚动到底部（让用户看到刚发送的消息）
+	  this.$nextTick(() => {
+	    uni.createSelectorQuery().select('#ai-msg-bottom').boundingClientRect().exec();
+	  });
+	
+	  // 4. 发起请求到后端 AI 接口
+	  uni.request({
+	    url: 'http://localhost:8080/api/ai/chat',   // 请替换为你的实际后端地址
+	    method: 'POST',
+	    timeout: 90000,       // 前端超时设置为 90 秒，避免过早断开
+	    data: {
+	      messages: this.aiMessages,   // 发送完整对话历史（含系统提示词）
+	      username: this.username      // 可选，用于日志
+	    },
+	    success: (res) => {
+	      // 成功收到回复
+	      if (res.data && res.data.reply) {
+	        this.aiMessages.push({ role: 'assistant', content: res.data.reply });
+	      } else {
+	        // 后端返回格式异常
+	        this.aiMessages.push({ role: 'assistant', content: '抱歉，AI 服务返回异常，请稍后再试。' });
+	      }
+	    },
+	    fail: (err) => {
+	      // 网络错误或超时
+	      console.error('AI请求失败', err);
+	      this.aiMessages.push({ role: 'assistant', content: '网络开小差了，请稍后再试。' });
+	    },
+	    complete: () => {
+	      // 无论成功或失败，关闭加载状态并滚动到底部
+	      this.aiLoading = false;
+	      this.$nextTick(() => {
+	        uni.createSelectorQuery().select('#ai-msg-bottom').boundingClientRect().exec();
+	      });
+	    }
+	  });
+	}
+	}
+	};
 </script>
 
 <style scoped>
@@ -709,4 +821,22 @@ page { background-color: #f5f5f5; }
 .chat-input { flex: 1; height: 70rpx; background: #f5f5f5; border-radius: 35rpx; padding: 0 25rpx; font-size: 28rpx; }
 .send-btn { width: 100rpx; height: 60rpx; background: linear-gradient(135deg, #1677ff, #0050b3); color: #fff; border-radius: 30rpx; font-size: 26rpx; display: flex; align-items: center; justify-content: center; border: none; line-height: 1; padding: 0; }
 .send-btn::after { border: none; }
+
+.loading-dots {
+  display: inline-block;
+  position: relative;
+  min-width: 80rpx;
+}
+.loading-dots::after {
+  content: '...';
+  position: absolute;
+  width: 40rpx;
+  animation: dotPulse 1.5s infinite;
+}
+@keyframes dotPulse {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+  100% { content: '.'; }
+}
 </style>

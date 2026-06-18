@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class FileUploadController {
 
-    private static final String UPLOAD_DIR = "C:/Users/HP/OneDrive/桌面/大学作业/小程序开发期末大作业/ShoppingApp/upload/";
+    private static final String UPLOAD_DIR = "D:/luo-x-qing/ShoppingApp/ShoppingApp/upload/";
 
     @PostMapping("/upload")
     public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file) {

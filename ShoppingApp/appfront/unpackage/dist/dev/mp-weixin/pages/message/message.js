@@ -17,19 +17,25 @@ const _sfc_main = {
       merchantInput: "",
       quickReplies: ["好的，谢谢", "请问有优惠吗？", "可以改期吗？", "退订政策是什么？", "酒店地址在哪？", "有停车场吗？"],
       hotelOrders: [],
-      flightOrders: []
+      flightOrders: [],
+      aiMessages: [],
+      // 对话历史 [{role, content}]
+      aiInput: "",
+      // 输入框绑定的内容
+      aiLoading: false
+      // 是否等待 AI 回复
     };
   },
   onLoad() {
     this.username = common_vendor.index.getStorageSync("loginUsername") || "";
-    common_vendor.index.__f__("log", "at pages/message/message.vue:182", "=== onLoad === 用户名:", this.username);
+    common_vendor.index.__f__("log", "at pages/message/message.vue:229", "=== onLoad === 用户名:", this.username);
     this.loadNotices();
     this.loadHotelOrders();
     this.loadFlightOrders();
   },
   onShow() {
     this.username = common_vendor.index.getStorageSync("loginUsername") || "";
-    common_vendor.index.__f__("log", "at pages/message/message.vue:190", "=== onShow === 用户名:", this.username);
+    common_vendor.index.__f__("log", "at pages/message/message.vue:237", "=== onShow === 用户名:", this.username);
     this.loadNotices();
     this.loadHotelOrders();
     this.loadFlightOrders();
@@ -64,36 +70,36 @@ const _sfc_main = {
     },
     loadHotelOrders() {
       if (!this.username) {
-        common_vendor.index.__f__("log", "at pages/message/message.vue:228", "用户名不存在，无法加载订单");
+        common_vendor.index.__f__("log", "at pages/message/message.vue:275", "用户名不存在，无法加载订单");
         this.generateMerchantMessages();
         return;
       }
-      common_vendor.index.__f__("log", "at pages/message/message.vue:233", "开始加载酒店订单，用户名：", this.username);
+      common_vendor.index.__f__("log", "at pages/message/message.vue:280", "开始加载酒店订单，用户名：", this.username);
       common_vendor.index.request({
         url: "http://localhost:8080/api/hotel-orders/user?username=" + this.username,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/message/message.vue:239", "酒店订单API返回数据：", res.data);
+          common_vendor.index.__f__("log", "at pages/message/message.vue:286", "酒店订单API返回数据：", res.data);
           let orders = [];
           if (res.data && res.data.code === 200) {
             orders = res.data.data || [];
-            common_vendor.index.__f__("log", "at pages/message/message.vue:244", "从data.data获取订单，数量：", orders.length);
+            common_vendor.index.__f__("log", "at pages/message/message.vue:291", "从data.data获取订单，数量：", orders.length);
           } else if (Array.isArray(res.data)) {
             orders = res.data;
-            common_vendor.index.__f__("log", "at pages/message/message.vue:247", "从数组获取订单，数量：", orders.length);
+            common_vendor.index.__f__("log", "at pages/message/message.vue:294", "从数组获取订单，数量：", orders.length);
           } else {
-            common_vendor.index.__f__("log", "at pages/message/message.vue:249", "无法解析订单数据");
+            common_vendor.index.__f__("log", "at pages/message/message.vue:296", "无法解析订单数据");
             orders = [];
           }
-          common_vendor.index.__f__("log", "at pages/message/message.vue:253", "订单详情：");
+          common_vendor.index.__f__("log", "at pages/message/message.vue:300", "订单详情：");
           orders.forEach((order, idx) => {
-            common_vendor.index.__f__("log", "at pages/message/message.vue:255", `订单${idx + 1}: ID=${order.id}, 状态="${order.status}", 酒店=${order.name || order.hotelName}, 客户=${order.username}`);
+            common_vendor.index.__f__("log", "at pages/message/message.vue:302", `订单${idx + 1}: ID=${order.id}, 状态="${order.status}", 酒店=${order.name || order.hotelName}, 客户=${order.username}`);
           });
           this.hotelOrders = orders;
           this.generateMerchantMessages();
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/message/message.vue:262", "获取酒店订单失败：", err);
+          common_vendor.index.__f__("error", "at pages/message/message.vue:309", "获取酒店订单失败：", err);
           this.hotelOrders = [];
           this.generateMerchantMessages();
         }
@@ -120,25 +126,25 @@ const _sfc_main = {
       });
     },
     generateMerchantMessages() {
-      common_vendor.index.__f__("log", "at pages/message/message.vue:290", "=== generateMerchantMessages 被调用 ===");
-      common_vendor.index.__f__("log", "at pages/message/message.vue:291", "hotelOrders数量：", this.hotelOrders.length);
+      common_vendor.index.__f__("log", "at pages/message/message.vue:337", "=== generateMerchantMessages 被调用 ===");
+      common_vendor.index.__f__("log", "at pages/message/message.vue:338", "hotelOrders数量：", this.hotelOrders.length);
       if (!this.hotelOrders || this.hotelOrders.length === 0) {
-        common_vendor.index.__f__("log", "at pages/message/message.vue:294", "没有订单数据，商家消息列表为空");
+        common_vendor.index.__f__("log", "at pages/message/message.vue:341", "没有订单数据，商家消息列表为空");
         this.merchantMessages = [];
         return;
       }
       common_vendor.index.getStorageSync("merchant_messages") || {};
       const merchants = {};
       this.hotelOrders.forEach((order) => {
-        common_vendor.index.__f__("log", "at pages/message/message.vue:303", `处理订单: ID=${order.id}, 状态="${order.status}"`);
+        common_vendor.index.__f__("log", "at pages/message/message.vue:350", `处理订单: ID=${order.id}, 状态="${order.status}"`);
         if (order.status === "待支付" || order.status === "已取消") {
-          common_vendor.index.__f__("log", "at pages/message/message.vue:307", `  -> 跳过订单 ${order.id}，状态为 ${order.status}`);
+          common_vendor.index.__f__("log", "at pages/message/message.vue:354", `  -> 跳过订单 ${order.id}，状态为 ${order.status}`);
           return;
         }
-        common_vendor.index.__f__("log", "at pages/message/message.vue:311", `  -> 为订单 ${order.id} 生成商家会话`);
+        common_vendor.index.__f__("log", "at pages/message/message.vue:358", `  -> 为订单 ${order.id} 生成商家会话`);
         const hotelId = order.hotelId || order.id;
         const hotelName = order.name || order.hotelName || `酒店${hotelId}`;
-        common_vendor.index.__f__("log", "at pages/message/message.vue:315", `  -> 酒店名称: ${hotelName}, 客户用户名: ${order.username}`);
+        common_vendor.index.__f__("log", "at pages/message/message.vue:362", `  -> 酒店名称: ${hotelName}, 客户用户名: ${order.username}`);
         if (!merchants[hotelId]) {
           merchants[hotelId] = {
             id: hotelId,
@@ -164,13 +170,13 @@ const _sfc_main = {
               }
             ]
           };
-          common_vendor.index.__f__("log", "at pages/message/message.vue:336", `  -> 成功添加商家: ${hotelName}`);
+          common_vendor.index.__f__("log", "at pages/message/message.vue:383", `  -> 成功添加商家: ${hotelName}`);
         }
       });
       this.merchantMessages = Object.values(merchants);
-      common_vendor.index.__f__("log", "at pages/message/message.vue:341", "最终生成的商家会话数量：", this.merchantMessages.length);
+      common_vendor.index.__f__("log", "at pages/message/message.vue:388", "最终生成的商家会话数量：", this.merchantMessages.length);
       if (this.merchantMessages.length > 0) {
-        common_vendor.index.__f__("log", "at pages/message/message.vue:344", "商家列表：", this.merchantMessages.map((m) => m.name));
+        common_vendor.index.__f__("log", "at pages/message/message.vue:391", "商家列表：", this.merchantMessages.map((m) => m.name));
       }
     },
     saveMerchantMessages(merchantId, messages, unreadCount, lastMessage, lastTime) {
@@ -196,10 +202,15 @@ const _sfc_main = {
       this.merchantMessages.forEach((merchant) => {
         totalUnread += merchant.unreadCount || 0;
       });
-      if (totalUnread > 0) {
-        common_vendor.index.setTabBarBadge({ index: 2, text: totalUnread > 99 ? "99+" : totalUnread.toString() });
-      } else {
-        common_vendor.index.removeTabBarBadge({ index: 2 });
+      const pages = getCurrentPages();
+      const currentPage = pages[pages.length - 1];
+      const isTabBarPage = currentPage.route === "pages/message/message";
+      if (isTabBarPage) {
+        if (totalUnread > 0) {
+          common_vendor.index.setTabBarBadge({ index: 2, text: totalUnread > 99 ? "99+" : totalUnread.toString() });
+        } else {
+          common_vendor.index.removeTabBarBadge({ index: 2 });
+        }
       }
     },
     clearAllUnread() {
@@ -222,12 +233,15 @@ const _sfc_main = {
       common_vendor.index.showModal({ title: notice.title, content: notice.preview, showCancel: false, confirmText: "知道了" });
     },
     goToAIChat() {
+      common_vendor.index.navigateTo({
+        url: "/pages/ai-chat/ai-chat"
+      });
       this.aiUnreadCount = 0;
       this.countTotalUnread();
-      this.showAIChat = true;
     },
     closeAIChat() {
       this.showAIChat = false;
+      common_vendor.index.setStorageSync("ai_messages", this.aiMessages);
     },
     // ========== 修改后的 goToMerchantChat - 从服务器加载历史消息 ==========
     goToMerchantChat(merchant) {
@@ -292,8 +306,8 @@ const _sfc_main = {
       if (!this.merchantInput.trim())
         return;
       const customerUsername = (_a = this.currentMerchant) == null ? void 0 : _a.userId;
-      common_vendor.index.__f__("log", "at pages/message/message.vue:473", "发送消息 - 订单中的客户用户名:", customerUsername);
-      common_vendor.index.__f__("log", "at pages/message/message.vue:474", "当前登录用户名:", this.username);
+      common_vendor.index.__f__("log", "at pages/message/message.vue:534", "发送消息 - 订单中的客户用户名:", customerUsername);
+      common_vendor.index.__f__("log", "at pages/message/message.vue:535", "当前登录用户名:", this.username);
       if (!customerUsername) {
         common_vendor.index.showToast({ title: "无法获取客户信息", icon: "none" });
         return;
@@ -327,10 +341,10 @@ const _sfc_main = {
           isRead: 0
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/message/message.vue:517", "消息发送成功", res.data);
+          common_vendor.index.__f__("log", "at pages/message/message.vue:578", "消息发送成功", res.data);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/message/message.vue:520", "消息发送失败", err);
+          common_vendor.index.__f__("error", "at pages/message/message.vue:581", "消息发送失败", err);
           common_vendor.index.showToast({ title: "发送失败", icon: "none" });
         }
       });
@@ -396,6 +410,50 @@ const _sfc_main = {
       if (diff < 6048e5)
         return `${Math.floor(diff / 864e5)}天前`;
       return `${d.getMonth() + 1}月${d.getDate()}日`;
+    },
+    onAIInput(e) {
+      this.aiInput = e.detail.value;
+    },
+    sendAIMessage() {
+      if (!this.aiInput.trim() || this.aiLoading)
+        return;
+      const userMsg = this.aiInput.trim();
+      this.aiMessages.push({ role: "user", content: userMsg });
+      this.aiInput = "";
+      this.aiLoading = true;
+      this.$nextTick(() => {
+        common_vendor.index.createSelectorQuery().select("#ai-msg-bottom").boundingClientRect().exec();
+      });
+      common_vendor.index.request({
+        url: "http://localhost:8080/api/ai/chat",
+        // 请替换为你的实际后端地址
+        method: "POST",
+        timeout: 9e4,
+        // 前端超时设置为 90 秒，避免过早断开
+        data: {
+          messages: this.aiMessages,
+          // 发送完整对话历史（含系统提示词）
+          username: this.username
+          // 可选，用于日志
+        },
+        success: (res) => {
+          if (res.data && res.data.reply) {
+            this.aiMessages.push({ role: "assistant", content: res.data.reply });
+          } else {
+            this.aiMessages.push({ role: "assistant", content: "抱歉，AI 服务返回异常，请稍后再试。" });
+          }
+        },
+        fail: (err) => {
+          common_vendor.index.__f__("error", "at pages/message/message.vue:692", "AI请求失败", err);
+          this.aiMessages.push({ role: "assistant", content: "网络开小差了，请稍后再试。" });
+        },
+        complete: () => {
+          this.aiLoading = false;
+          this.$nextTick(() => {
+            common_vendor.index.createSelectorQuery().select("#ai-msg-bottom").boundingClientRect().exec();
+          });
+        }
+      });
     }
   }
 };
@@ -439,17 +497,38 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     j: $data.merchantMessages.length === 0 && $data.topNotices.length === 0
   }, $data.merchantMessages.length === 0 && $data.topNotices.length === 0 ? {} : {}, {
     k: $data.showAIChat
-  }, $data.showAIChat ? {
+  }, $data.showAIChat ? common_vendor.e({
     l: common_vendor.o((...args) => $options.closeAIChat && $options.closeAIChat(...args)),
-    m: common_vendor.o(() => {
+    m: common_vendor.f($data.aiMessages, (msg, idx, i0) => {
+      return common_vendor.e({
+        a: msg.role === "assistant"
+      }, msg.role === "assistant" ? {
+        b: common_assets._imports_0$1,
+        c: common_vendor.t(msg.content)
+      } : {
+        d: common_vendor.t(msg.content)
+      }, {
+        e: idx
+      });
     }),
-    n: common_vendor.o((...args) => $options.closeAIChat && $options.closeAIChat(...args))
+    n: $data.aiLoading
+  }, $data.aiLoading ? {
+    o: common_assets._imports_0$1
   } : {}, {
-    o: $data.showMerchantChat
+    p: common_vendor.o((...args) => $options.sendAIMessage && $options.sendAIMessage(...args)),
+    q: common_vendor.o([($event) => $data.aiInput = $event.detail.value, (...args) => $options.onAIInput && $options.onAIInput(...args)]),
+    r: $data.aiInput,
+    s: common_vendor.o((...args) => $options.sendAIMessage && $options.sendAIMessage(...args)),
+    t: $data.aiLoading,
+    v: common_vendor.o(() => {
+    }),
+    w: common_vendor.o((...args) => $options.closeAIChat && $options.closeAIChat(...args))
+  }) : {}, {
+    x: $data.showMerchantChat
   }, $data.showMerchantChat ? common_vendor.e({
-    p: common_vendor.t($data.currentMerchant.name),
-    q: common_vendor.o((...args) => $options.closeMerchantChat && $options.closeMerchantChat(...args)),
-    r: common_vendor.f($data.currentMessages, (msg, idx, i0) => {
+    y: common_vendor.t($data.currentMerchant.name),
+    z: common_vendor.o((...args) => $options.closeMerchantChat && $options.closeMerchantChat(...args)),
+    A: common_vendor.f($data.currentMessages, (msg, idx, i0) => {
       return common_vendor.e({
         a: msg.role === "merchant"
       }, msg.role === "merchant" ? {
@@ -461,9 +540,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: idx
       });
     }),
-    s: $data.quickReplies.length > 0
+    B: $data.quickReplies.length > 0
   }, $data.quickReplies.length > 0 ? {
-    t: common_vendor.f($data.quickReplies, (reply, idx, i0) => {
+    C: common_vendor.f($data.quickReplies, (reply, idx, i0) => {
       return {
         a: common_vendor.t(reply),
         b: idx,
@@ -471,13 +550,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    v: common_vendor.o((...args) => $options.sendMerchantMessage && $options.sendMerchantMessage(...args)),
-    w: $data.merchantInput,
-    x: common_vendor.o(($event) => $data.merchantInput = $event.detail.value),
-    y: common_vendor.o((...args) => $options.sendMerchantMessage && $options.sendMerchantMessage(...args)),
-    z: common_vendor.o(() => {
+    D: common_vendor.o((...args) => $options.sendMerchantMessage && $options.sendMerchantMessage(...args)),
+    E: $data.merchantInput,
+    F: common_vendor.o(($event) => $data.merchantInput = $event.detail.value),
+    G: common_vendor.o((...args) => $options.sendMerchantMessage && $options.sendMerchantMessage(...args)),
+    H: common_vendor.o(() => {
     }),
-    A: common_vendor.o((...args) => $options.closeMerchantChat && $options.closeMerchantChat(...args))
+    I: common_vendor.o((...args) => $options.closeMerchantChat && $options.closeMerchantChat(...args))
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-4c1b26cf"]]);
