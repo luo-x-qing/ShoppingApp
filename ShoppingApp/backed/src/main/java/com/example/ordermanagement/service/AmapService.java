@@ -258,29 +258,43 @@ public class AmapService {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Double> geocodeWithPreference(String address) {
+    public Map<String, Double> geocodeWithPreference(String name, String province, String city) {
         try {
-            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
-            String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey + "&output=JSON";
+            String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
+            String url = "https://restapi.amap.com/v3/place/text?key=" + amapKey
+                    + "&keywords=" + encodedName
+                    + "&city=" + URLEncoder.encode(city != null ? city : "", StandardCharsets.UTF_8.toString())
+                    + "&offset=10&page=1&extensions=base&output=JSON";
+            System.out.println("[Place搜索] 请求: " + url);
             Map<String, Object> response = httpGetJson(url);
             if (response != null && "1".equals(response.get("status"))) {
-                List<Map<String, Object>> geocodes = (List<Map<String, Object>>) response.get("geocodes");
-                if (geocodes != null && !geocodes.isEmpty()) {
-                    String[] priorityKeywords = {"景点", "风景", "名胜", "景区", "公园", "山", "峰", "峡谷"};
-                    int bestIndex = 0;
-                    for (int i = 0; i < geocodes.size(); i++) {
-                        Object levelObj = geocodes.get(i).get("level");
-                        String level = levelObj instanceof String ? (String) levelObj : "";
+                List<Map<String, Object>> pois = (List<Map<String, Object>>) response.get("pois");
+                if (pois != null && !pois.isEmpty()) {
+                    String[] priorityKeywords = {"景点", "风景", "名胜", "景区", "公园", "山", "峰", "峡谷", "旅游"};
+                    int bestIndex = -1;
+                    for (int i = 0; i < pois.size(); i++) {
+                        String poiProvince = (String) pois.get(i).get("pname");
+                        boolean inProvince = province != null && !province.isEmpty()
+                                && poiProvince != null
+                                && poiProvince.contains(province.replace("省", "").replace("市", ""));
+                        if (!inProvince) continue;
+                        String poiCity = (String) pois.get(i).get("cityname");
+                        boolean inCity = city != null && !city.isEmpty()
+                                && poiCity != null
+                                && poiCity.contains(city.replace("省", "").replace("市", ""));
+                        if (!inCity) continue;
+                        if (bestIndex < 0) bestIndex = i;
+                        String type = (String) pois.get(i).getOrDefault("type", "");
                         for (String kw : priorityKeywords) {
-                            if (level.contains(kw)) {
+                            if (type.contains(kw)) {
                                 bestIndex = i;
                                 break;
                             }
                         }
                         if (bestIndex == i) break;
                     }
-                    Object locObj = geocodes.get(bestIndex).get("location");
-                    String location = locObj instanceof String ? (String) locObj : null;
+                    if (bestIndex < 0) bestIndex = 0;
+                    String location = (String) pois.get(bestIndex).get("location");
                     if (location != null && location.contains(",")) {
                         String[] parts = location.split(",");
                         Map<String, Double> result = new HashMap<>();
@@ -290,9 +304,10 @@ public class AmapService {
                     }
                 }
             }
+            System.err.println("[Place搜索] 无结果或失败: " + name + " in " + city);
             return null;
         } catch (Exception e) {
-            System.err.println("[精确编码] 失败: " + address + ", " + e.getMessage());
+            System.err.println("[Place搜索] 异常: " + name + ", " + e.getMessage());
             return null;
         }
     }

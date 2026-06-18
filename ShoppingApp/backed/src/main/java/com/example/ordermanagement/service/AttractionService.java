@@ -314,7 +314,7 @@ public class AttractionService {
             } else if (a.getProvince() != null && !a.getProvince().isEmpty()) {
                 fullAddress = a.getName() + "," + a.getProvince();
             }
-            Map<String, Double> bestCoord = amapService.geocodeWithPreference(fullAddress);
+            Map<String, Double> bestCoord = amapService.geocodeWithPreference(fullAddress, a.getProvince(), a.getCity());
             if (bestCoord != null) {
                 a.setLatitude(bestCoord.get("lat"));
                 a.setLongitude(bestCoord.get("lng"));
