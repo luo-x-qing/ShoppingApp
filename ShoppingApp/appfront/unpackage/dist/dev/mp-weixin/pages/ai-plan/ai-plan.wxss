@@ -136,57 +136,96 @@ page.data-v-f6c85b3a {
   font-size: 30rpx;
   border: none;
 }
-.result-city.data-v-f6c85b3a {
-  font-size: 28rpx;
-  color: #667eea;
-  font-weight: 500;
-  margin-bottom: 16rpx;
-}
-.route-info.data-v-f6c85b3a {
-  background: #f9f9ff;
+.plan-summary.data-v-f6c85b3a {
+  background: linear-gradient(135deg, #667eea15, #764ba215);
   border-radius: 12rpx;
   padding: 20rpx;
   margin-bottom: 20rpx;
 }
-.route-stat.data-v-f6c85b3a {
+.summary-line.data-v-f6c85b3a {
+  font-size: 26rpx;
+  color: #555;
   display: block;
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.8;
+  line-height: 1.7;
 }
-.spots-result.data-v-f6c85b3a {
-  margin-top: 16rpx;
+.day-card.data-v-f6c85b3a {
+  background: #fafafa;
+  border-radius: 14rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  border-left: 6rpx solid #667eea;
 }
-.spots-result-title.data-v-f6c85b3a {
-  font-size: 26rpx;
+.day-header.data-v-f6c85b3a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.day-num.data-v-f6c85b3a {
+  font-size: 30rpx;
   font-weight: bold;
-  display: block;
-  margin-bottom: 12rpx;
+  color: #333;
 }
-.result-spot-item.data-v-f6c85b3a {
+.day-count.data-v-f6c85b3a {
+  font-size: 22rpx;
+  color: #999;
+}
+.schedule-item.data-v-f6c85b3a {
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  position: relative;
+  padding-left: 30rpx;
+  border-left: 4rpx solid transparent;
+}
+.schedule-item.data-v-f6c85b3a:last-child {
+  border-bottom: none;
+}
+.schedule-item.type-scenic.data-v-f6c85b3a {
+  border-left-color: #ff6b35;
+}
+.schedule-item.type-breakfast.data-v-f6c85b3a,
+.schedule-item.type-lunch.data-v-f6c85b3a,
+.schedule-item.type-dinner.data-v-f6c85b3a {
+  border-left-color: #ff9800;
+}
+.schedule-item.type-transport.data-v-f6c85b3a {
+  border-left-color: #2196f3;
+}
+.schedule-item.type-hotel.data-v-f6c85b3a {
+  border-left-color: #4caf50;
+}
+.schedule-item.type-free.data-v-f6c85b3a {
+  border-left-color: #9e9e9e;
+}
+.schedule-line.data-v-f6c85b3a {
   display: flex;
   align-items: center;
-  padding: 12rpx 0;
+  gap: 12rpx;
+  margin-bottom: 6rpx;
 }
-.result-spot-index.data-v-f6c85b3a {
-  width: 36rpx;
-  height: 36rpx;
-  background: #ff9800;
-  color: #fff;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 36rpx;
-  font-size: 20rpx;
-  margin-right: 12rpx;
-  flex-shrink: 0;
+.schedule-time.data-v-f6c85b3a {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #667eea;
+  background: #f0f0ff;
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
 }
-.result-spot-name.data-v-f6c85b3a {
-  font-size: 26rpx;
-  flex: 1;
-}
-.result-spot-loc.data-v-f6c85b3a {
-  font-size: 20rpx;
+.schedule-type.data-v-f6c85b3a {
+  font-size: 22rpx;
   color: #999;
+}
+.schedule-content.data-v-f6c85b3a {
+  font-size: 26rpx;
+  color: #333;
+  display: block;
+  line-height: 1.5;
+}
+.schedule-loc.data-v-f6c85b3a {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+  display: block;
 }
 .action-row.data-v-f6c85b3a {
   display: flex;
@@ -195,15 +234,56 @@ page.data-v-f6c85b3a {
 }
 .action-btn.data-v-f6c85b3a {
   flex: 1;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff;
   border-radius: 12rpx;
   padding: 18rpx 0;
   font-size: 28rpx;
   border: none;
+  text-align: center;
+}
+.action-btn.primary.data-v-f6c85b3a {
+  background: #1677ff;
+  color: #fff;
 }
 .action-btn.secondary.data-v-f6c85b3a {
   background: #fff;
   color: #667eea;
   border: 1rpx solid #667eea;
+}
+.map-section.data-v-f6c85b3a {
+  margin-top: 24rpx;
+}
+.map-section-title.data-v-f6c85b3a {
+  font-size: 26rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 12rpx;
+}
+.map-wrapper.data-v-f6c85b3a {
+  width: 100%;
+  height: 500rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+.route-map.data-v-f6c85b3a {
+  width: 100%;
+  height: 500rpx;
+}
+.tips-box.data-v-f6c85b3a {
+  background: #fffbe6;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-top: 20rpx;
+}
+.tips-text.data-v-f6c85b3a {
+  font-size: 24rpx;
+  color: #b8860b;
+  line-height: 1.6;
+}
+.param-input.data-v-f6c85b3a {
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  padding: 8rpx 16rpx;
+  font-size: 26rpx;
+  width: 200rpx;
+  text-align: right;
 }

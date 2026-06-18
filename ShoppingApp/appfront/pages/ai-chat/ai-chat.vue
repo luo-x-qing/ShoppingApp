@@ -88,6 +88,40 @@ export default {
       ];
     }
   },
+  onShow() {
+    const pending = uni.getStorageSync('ai_pending_route')
+    if (pending) {
+      const context = uni.getStorageSync('ai_route_context')
+      uni.removeStorageSync('ai_pending_route')
+      uni.removeStorageSync('ai_route_context')
+      if (context) {
+        this.aiMessages.push({ role: 'user', content: context })
+        this.aiLoading = true
+        this.scrollToBottom()
+        uni.request({
+          url: 'http://localhost:8080/api/ai/chat',
+          method: 'POST',
+          timeout: 90000,
+          data: { messages: this.aiMessages, username: this.username },
+          success: (res) => {
+            if (res.data && res.data.reply) {
+              this.aiMessages.push({ role: 'assistant', content: res.data.reply })
+            } else {
+              this.aiMessages.push({ role: 'assistant', content: '抱歉，AI 服务暂时不可用。' })
+            }
+          },
+          fail: () => {
+            this.aiMessages.push({ role: 'assistant', content: '网络开小差了，请稍后再试。' })
+          },
+          complete: () => {
+            this.aiLoading = false
+            this.scrollToBottom()
+            uni.setStorageSync('ai_messages', this.aiMessages)
+          }
+        })
+      }
+    }
+  },
   onUnload() {
     uni.setStorageSync('ai_messages', this.aiMessages);
   },

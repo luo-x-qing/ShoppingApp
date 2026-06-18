@@ -6,7 +6,10 @@ const _sfc_main = {
     return {
       spots: [],
       days: 3,
+      budget: "",
+      travelers: 1,
       generating: false,
+      sending: false,
       planResult: null
     };
   },
@@ -17,6 +20,48 @@ const _sfc_main = {
     targetCity() {
       const cities = [...new Set(this.spots.map((s) => s.city).filter(Boolean))];
       return cities.length > 0 ? cities.join("、") : "";
+    },
+    allSpots() {
+      const r = this.planResult;
+      if (!r || !r.scenicSpots)
+        return [];
+      return r.scenicSpots.filter((s) => s.lat && s.lng);
+    },
+    mapMarkers() {
+      return this.allSpots.map((s, i) => ({
+        id: i,
+        latitude: s.lat,
+        longitude: s.lng,
+        title: s.name,
+        label: {
+          content: `${s.order}`,
+          color: "#fff",
+          fontSize: 13,
+          borderRadius: 8,
+          bgColor: "#ff6b35",
+          padding: 6,
+          textAlign: "center"
+        },
+        width: 30,
+        height: 30
+      }));
+    },
+    mapCenter() {
+      const arr = this.allSpots;
+      if (arr.length === 0)
+        return { lat: 0, lng: 0 };
+      const sum = arr.reduce((s, p) => ({ lat: s.lat + p.lat, lng: s.lng + p.lng }), { lat: 0, lng: 0 });
+      return { lat: sum.lat / arr.length, lng: sum.lng / arr.length };
+    },
+    mapPolyline() {
+      if (this.allSpots.length < 2)
+        return [];
+      const sorted = [...this.allSpots].sort((a, b) => a.order - b.order);
+      const points = sorted.map((s) => ({ latitude: s.lat, longitude: s.lng }));
+      return [{ points, color: "#ff6b35", width: 4 }];
+    },
+    mapIncludePoints() {
+      return this.allSpots.map((s) => ({ latitude: s.lat, longitude: s.lng }));
     }
   },
   onShow() {
@@ -52,9 +97,18 @@ const _sfc_main = {
       }
       this.generating = true;
       const city = this.targetCity.split("、")[0];
+      const spotsParam = this.spots.map((s) => s.name).join("，");
+      const budgetVal = parseInt(this.budget) || 0;
       common_vendor.index.request({
-        url: `${BASE_URL}/travel/plan?city=${encodeURIComponent(city)}&days=${this.days}`,
+        url: `${BASE_URL}/travel/plan`,
         method: "GET",
+        data: {
+          city,
+          days: this.days,
+          budget: budgetVal,
+          travelers: this.travelers,
+          spots: spotsParam
+        },
         success: (res) => {
           if (res.data.error) {
             common_vendor.index.showToast({ title: res.data.error, icon: "none" });
@@ -70,6 +124,50 @@ const _sfc_main = {
           this.generating = false;
         }
       });
+    },
+    resetPlan() {
+      this.planResult = null;
+    },
+    typeLabel(type) {
+      const map = {
+        breakfast: "🍳 早餐",
+        lunch: "🍜 午餐",
+        dinner: "🍽 晚餐",
+        scenic: "🏞 景点",
+        transport: "🚗 交通",
+        hotel: "🏨 住宿",
+        free: "🆓 自由活动"
+      };
+      return map[type] || type;
+    },
+    sendToAIChat() {
+      if (!this.planResult || this.sending)
+        return;
+      this.sending = true;
+      const r = this.planResult;
+      let text = `这是我规划的${r.city}${r.days}天行程（预算¥${r.budget || "不限"}，${r.travelers}人）：
+
+`;
+      (r.itinerary || []).forEach((day) => {
+        text += `【第${day.day}天】
+`;
+        (day.schedule || []).forEach((item) => {
+          text += `  ${item.time} ${this.typeLabel(item.type)} ${item.content}`;
+          if (item.location)
+            text += `（${item.location}）`;
+          text += "\n";
+        });
+        text += "\n";
+      });
+      if (r.tips)
+        text += `💡 ${r.tips}
+
+`;
+      text += "请帮我优化这个行程，给出改进建议！";
+      common_vendor.index.setStorageSync("ai_route_context", text);
+      common_vendor.index.setStorageSync("ai_pending_route", true);
+      this.sending = false;
+      common_vendor.index.navigateTo({ url: "/pages/ai-chat/ai-chat" });
     }
   }
 };
@@ -104,31 +202,62 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $data.days = d, d)
       };
     }),
-    h: common_vendor.t($data.generating ? "AI生成中..." : "🤖 AI 生成路线"),
-    i: common_vendor.o((...args) => $options.generatePlan && $options.generatePlan(...args)),
-    j: $data.generating
-  } : {}, {
-    k: $data.planResult
-  }, $data.planResult ? common_vendor.e({
-    l: common_vendor.t($data.planResult.city),
-    m: common_vendor.t($data.planResult.days),
-    n: $data.planResult.route && $data.planResult.route.distance
-  }, $data.planResult.route && $data.planResult.route.distance ? {
-    o: common_vendor.t(($data.planResult.route.distance / 1e3).toFixed(1)),
-    p: common_vendor.t(Math.round($data.planResult.route.duration / 60))
-  } : {}, {
-    q: common_vendor.f($data.planResult.spots, (spot, i, i0) => {
-      return common_vendor.e({
-        a: common_vendor.t(i + 1),
-        b: common_vendor.t(spot),
-        c: $data.planResult.locations && $data.planResult.locations[i]
-      }, $data.planResult.locations && $data.planResult.locations[i] ? {
-        d: common_vendor.t($data.planResult.locations[i].location)
-      } : {}, {
-        e: i
-      });
+    h: $data.budget,
+    i: common_vendor.o(($event) => $data.budget = $event.detail.value),
+    j: common_vendor.f([1, 2, 3, 4, 5, 6], (n, k0, i0) => {
+      return {
+        a: common_vendor.t(n),
+        b: $data.travelers === n ? 1 : "",
+        c: n,
+        d: common_vendor.o(($event) => $data.travelers = n, n)
+      };
     }),
-    r: common_vendor.o(($event) => $data.planResult = null)
+    k: common_vendor.t($data.generating ? "AI生成中..." : "🤖 AI 生成路线"),
+    l: common_vendor.o((...args) => $options.generatePlan && $options.generatePlan(...args)),
+    m: $data.generating
+  } : {}, {
+    n: $data.planResult
+  }, $data.planResult ? common_vendor.e({
+    o: common_vendor.t($data.planResult.city),
+    p: common_vendor.t($data.planResult.days),
+    q: common_vendor.t($data.planResult.travelers),
+    r: common_vendor.t($data.planResult.budget || "不限"),
+    s: common_vendor.t($data.planResult.totalBudget),
+    t: common_vendor.f($data.planResult.itinerary, (day, di, i0) => {
+      return {
+        a: common_vendor.t(day.day),
+        b: common_vendor.t(day.schedule.length),
+        c: common_vendor.f(day.schedule, (item, si, i1) => {
+          return common_vendor.e({
+            a: common_vendor.t(item.time),
+            b: common_vendor.t($options.typeLabel(item.type)),
+            c: common_vendor.t(item.content),
+            d: item.location
+          }, item.location ? {
+            e: common_vendor.t(item.location)
+          } : {}, {
+            f: si,
+            g: common_vendor.n("type-" + item.type)
+          });
+        }),
+        d: di
+      };
+    }),
+    v: $options.allSpots.length > 0
+  }, $options.allSpots.length > 0 ? {
+    w: $options.mapCenter.lat,
+    x: $options.mapCenter.lng,
+    y: $options.mapMarkers,
+    z: $options.mapPolyline,
+    A: $options.mapIncludePoints
+  } : {}, {
+    B: $data.planResult.tips
+  }, $data.planResult.tips ? {
+    C: common_vendor.t($data.planResult.tips)
+  } : {}, {
+    D: common_vendor.o((...args) => $options.sendToAIChat && $options.sendToAIChat(...args)),
+    E: $data.sending,
+    F: common_vendor.o((...args) => $options.resetPlan && $options.resetPlan(...args))
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-f6c85b3a"]]);
