@@ -1,16 +1,18 @@
 package com.example.ordermanagement.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AmapService {
@@ -19,14 +21,38 @@ public class AmapService {
     private String amapKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private String httpGet(String urlStr) throws Exception {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+        conn.setConnectTimeout(10000);
+        conn.setReadTimeout(10000);
+        BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) sb.append(line);
+        br.close();
+        conn.disconnect();
+        return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> httpGetJson(String urlStr) throws Exception {
+        String body = httpGet(urlStr);
+        return objectMapper.readValue(body, Map.class);
+    }
 
     @SuppressWarnings("unchecked")
     public String geo(String address) {
         try {
             String addr = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
             String url = "https://restapi.amap.com/v3/geocode/geo?address="
-                    + addr + "&key=" + amapKey;
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+                    + addr + "&key=" + amapKey + "&output=JSON";
+            Map<String, Object> response = httpGetJson(url);
             if (response != null && "1".equals(response.get("status"))) {
                 List<Map<String, Object>> geocodes = (List<Map<String, Object>>) response.get("geocodes");
                 if (geocodes != null && !geocodes.isEmpty()) {
@@ -44,14 +70,10 @@ public class AmapService {
     public String geocode(String address) {
         try {
             String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
-            String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey;
+            String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey + "&output=JSON";
             System.out.println("[地理编码] 请求: " + url);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            Map<String, Object> response = responseEntity.getBody();
+            Map<String, Object> response = httpGetJson(url);
             System.out.println("[地理编码] 响应: " + response);
 
             if (response != null && "1".equals(response.get("status"))) {
@@ -71,9 +93,6 @@ public class AmapService {
     public String geocodeWithRetry(String address, int maxRetries) {
         int retryCount = 0;
         long waitTime = 3000;
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-        HttpEntity<String> entity = new HttpEntity<>(headers);
         while (retryCount <= maxRetries) {
             if (retryCount > 0) {
                 System.out.println("[地理编码] 第" + retryCount + "次重试: " + address + ", 等待" + waitTime + "ms");
@@ -82,11 +101,10 @@ public class AmapService {
             }
             try {
                 String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
-                String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey;
+                String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey + "&output=JSON";
                 System.out.println("[地理编码] 请求: " + url);
 
-                ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-                Map<String, Object> response = responseEntity.getBody();
+                Map<String, Object> response = httpGetJson(url);
                 System.out.println("[地理编码] 响应: " + response);
 
                 if (response != null && "1".equals(response.get("status"))) {
@@ -111,19 +129,49 @@ public class AmapService {
         return null;
     }
 
+    public String testRawGeocode(String address) {
+        try {
+            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
+            String urlStr = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey + "&output=JSON";
+            System.out.println("[原始请求] " + urlStr);
+
+            java.net.URL url = new java.net.URL(urlStr);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+            conn.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
+
+            int code = conn.getResponseCode();
+            System.out.println("[原始响应] HTTP " + code);
+
+            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line);
+            br.close();
+            conn.disconnect();
+            String body = sb.toString();
+            System.out.println("[原始响应] Body: " + body);
+            return body;
+        } catch (Exception e) {
+            System.err.println("[原始请求] 异常: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public Map<String, String> geocodeDetail(String address) {
         Map<String, String> detail = new HashMap<>();
         try {
             String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
-            String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey;
+            String url = "https://restapi.amap.com/v3/geocode/geo?address=" + encodedAddress + "&key=" + amapKey + "&output=JSON";
             System.out.println("[地理编码] 请求: " + url);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            Map<String, Object> response = responseEntity.getBody();
+            Map<String, Object> response = httpGetJson(url);
             System.out.println("[地理编码] 响应: " + response);
 
             if (response != null && "1".equals(response.get("status"))) {

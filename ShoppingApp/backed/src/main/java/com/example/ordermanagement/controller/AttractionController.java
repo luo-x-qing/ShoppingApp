@@ -1,6 +1,7 @@
 package com.example.ordermanagement.controller;
 
 import com.example.ordermanagement.model.Attraction;
+import com.example.ordermanagement.service.AmapService;
 import com.example.ordermanagement.service.AttractionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,9 @@ public class AttractionController {
 
     @Autowired
     private AttractionService attractionService;
+
+    @Autowired
+    private AmapService amapService;
 
     // 查询所有景点
     @GetMapping
@@ -113,6 +117,20 @@ public class AttractionController {
         result.put("updated", count);
         result.put("message", "成功更新 " + count + " 个景点的城市信息");
         return ResponseEntity.ok(result);
+    }
+
+    // 测试地理编码
+    @GetMapping("/test-geo")
+    public ResponseEntity<Map<String, String>> testGeo(@RequestParam String address) {
+        Map<String, String> result = amapService.geoDetail(address);
+        return ResponseEntity.ok(result);
+    }
+
+    // 用 HttpURLConnection 测试
+    @GetMapping("/test-raw")
+    public ResponseEntity<String> testRaw(@RequestParam(defaultValue = "故宫博物院") String address) {
+        String result = amapService.testRawGeocode(address);
+        return ResponseEntity.ok(result != null ? result : "null");
     }
 
     // 从JSON文件导入全国景点（使用地理编码API）
