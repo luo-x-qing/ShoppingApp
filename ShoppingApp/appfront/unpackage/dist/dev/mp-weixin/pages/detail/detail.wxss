@@ -145,6 +145,77 @@ page.data-v-eca06f3c {
 .nearby-item.data-v-eca06f3c:last-child {
   border-bottom: none;
 }
+.nearby-item.active.data-v-eca06f3c {
+  background: #e8f0fe;
+  border-radius: 8rpx;
+  margin: 0 -8rpx;
+  padding: 16rpx 8rpx;
+}
+.nearby-item.active .nearby-name.data-v-eca06f3c {
+  color: #1677ff;
+  font-weight: bold;
+}
+.nearby-scroll.data-v-eca06f3c {
+  max-height: 400rpx;
+}
+.spot-card.data-v-eca06f3c {
+  position: fixed;
+  top: 100rpx;
+  left: 30rpx;
+  right: 30rpx;
+  z-index: 9;
+  background: rgba(255,255,255,0.95);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.15);
+  animation: slideDown-eca06f3c 0.25s ease;
+}
+@keyframes slideDown-eca06f3c {
+from { opacity: 0; transform: translateY(-20rpx);
+}
+to { opacity: 1; transform: translateY(0);
+}
+}
+.spot-card-info.data-v-eca06f3c {
+  flex: 1;
+}
+.spot-card-name.data-v-eca06f3c {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+}
+.spot-card-meta.data-v-eca06f3c {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 8rpx;
+}
+.spot-card-score.data-v-eca06f3c {
+  font-size: 24rpx;
+  color: #ff6b35;
+}
+.spot-card-dist.data-v-eca06f3c {
+  font-size: 24rpx;
+  color: #999;
+}
+.spot-card-action.data-v-eca06f3c {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+.spot-card-btn.data-v-eca06f3c {
+  font-size: 26rpx;
+  color: #1677ff;
+  font-weight: bold;
+}
+.spot-card-arrow.data-v-eca06f3c {
+  font-size: 32rpx;
+  color: #1677ff;
+}
 .nearby-name.data-v-eca06f3c {
   flex: 1;
   font-size: 28rpx;

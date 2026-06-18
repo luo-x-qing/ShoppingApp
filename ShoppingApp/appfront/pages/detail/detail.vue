@@ -6,10 +6,12 @@
       :latitude="centerLat"
       :longitude="centerLng"
       :markers="markers"
+      :include-points="includePoints"
       :enable-zoom="true"
       :enable-scroll="true"
       :show-location="true"
       @markertap="onMarkerTap"
+      @callouttap="onCalloutTap"
     />
 
     <view
@@ -53,17 +55,21 @@
 
         <view class="section">
           <text class="section-title">附近景点 ({{ nearbyList.length }})</text>
+          <scroll-view v-if="nearbyList.length > 0" scroll-y class="nearby-scroll" :scroll-into-view="scrollToId" scroll-with-animation>
+            <view
+              v-for="(item, i) in nearbyList"
+              :key="item.id"
+              :id="'nearby-' + i"
+              class="nearby-item"
+              :class="{ active: selectedNearby && selectedNearby.id === item.id }"
+              @click="goNearby(item)"
+            >
+              <text class="nearby-name">{{ item.name }}</text>
+              <text class="nearby-dist">{{ item.distance }}km</text>
+              <text class="nearby-score">⭐ {{ item.score || '暂无' }}</text>
+            </view>
+          </scroll-view>
           <view v-if="nearbyList.length === 0" class="empty-text">暂无附近景点</view>
-          <view
-            v-for="item in nearbyList"
-            :key="item.id"
-            class="nearby-item"
-            @click="goNearby(item)"
-          >
-            <text class="nearby-name">{{ item.name }}</text>
-            <text class="nearby-dist">{{ item.distance }}km</text>
-            <text class="nearby-score">⭐ {{ item.score || '暂无' }}</text>
-          </view>
         </view>
 
         <view class="section">
@@ -92,6 +98,21 @@
 
         <view style="height:60rpx" />
       </scroll-view>
+    </view>
+
+    <!-- Selected spot card -->
+    <view v-if="selectedNearby" class="spot-card" @click="goToSelectedSpot">
+      <view class="spot-card-info">
+        <text class="spot-card-name">{{ selectedNearby.name }}</text>
+        <view class="spot-card-meta">
+          <text class="spot-card-score">⭐ {{ selectedNearby.score || '暂无' }}</text>
+          <text class="spot-card-dist">📍 {{ selectedNearby.distance }}km</text>
+        </view>
+      </view>
+      <view class="spot-card-action">
+        <text class="spot-card-btn">查看详情</text>
+        <text class="spot-card-arrow">›</text>
+      </view>
     </view>
 
     <RouteFloat />
@@ -142,7 +163,11 @@ export default {
       maxOffset: 0,
       dragStartY: 0,
       dragBaseOffset: 0,
-      isDragging: false
+      isDragging: false,
+
+      selectedNearby: null,
+      includePoints: [],
+      scrollToId: ''
     }
   },
 
@@ -271,10 +296,31 @@ export default {
           padding: 6,
           textAlign: 'center'
         },
+        callout: {
+          content: `${this.detail.name}\n⭐ ${(this.detail.score || 0).toFixed(1)}分`,
+          fontSize: 13,
+          borderRadius: 8,
+          bgColor: '#ffffff',
+          padding: 10,
+          display: 'BYCLICK',
+          textAlign: 'center'
+        },
         width: 36,
         height: 36
       } : null
       this.markers = currentMarker ? [currentMarker, ...this.nearbyMarkers] : this.nearbyMarkers
+      this.updateIncludePoints()
+    },
+
+    updateIncludePoints() {
+      const points = []
+      if (this.currentLat && this.currentLng) {
+        points.push({ latitude: this.currentLat, longitude: this.currentLng })
+      }
+      this.nearbyMarkers.forEach(m => {
+        points.push({ latitude: m.latitude, longitude: m.longitude })
+      })
+      this.includePoints = points
     },
 
     getNearby() {
@@ -289,12 +335,21 @@ export default {
             longitude: item.longitude,
             title: item.name,
             label: {
-              content: `${item.name} (${item.distance}km)`,
+              content: item.name,
               color: '#333',
               fontSize: 11,
               borderRadius: 4,
               bgColor: 'rgba(255,255,255,0.9)',
               padding: 4,
+              textAlign: 'center'
+            },
+            callout: {
+              content: `${item.name}\n⭐ ${item.score || '暂无'}  📍 ${item.distance}km`,
+              fontSize: 13,
+              borderRadius: 8,
+              bgColor: '#ffffff',
+              padding: 10,
+              display: 'BYCLICK',
               textAlign: 'center'
             },
             width: 24,
@@ -314,11 +369,36 @@ export default {
       const markerId = e.detail.markerId
       if (markerId === 0) return
       const item = this.nearbyList[markerId - 1]
-      if (item) this.goNearby(item)
+      if (item) {
+        this.selectedNearby = item
+        this.centerLat = item.latitude
+        this.centerLng = item.longitude
+        this.scrollToId = 'nearby-' + (markerId - 1)
+      }
+    },
+
+    onCalloutTap(e) {
+      const markerId = e.detail.markerId
+      if (markerId === 0) {
+        this.sheetOffset = 0
+        return
+      }
+      const item = this.nearbyList[markerId - 1]
+      if (item) uni.navigateTo({ url: `/pages/detail/detail?id=${item.id}` })
     },
 
     goNearby(item) {
-      uni.navigateTo({ url: `/pages/detail/detail?id=${item.id}` })
+      this.selectedNearby = item
+      this.centerLat = item.latitude
+      this.centerLng = item.longitude
+      const idx = this.nearbyList.findIndex(n => n.id === item.id)
+      if (idx >= 0) this.scrollToId = 'nearby-' + idx
+    },
+
+    goToSelectedSpot() {
+      if (this.selectedNearby) {
+        uni.navigateTo({ url: `/pages/detail/detail?id=${this.selectedNearby.id}` })
+      }
     },
 
     getComments() {
@@ -569,6 +649,88 @@ page {
 
 .nearby-item:last-child {
   border-bottom: none;
+}
+
+.nearby-item.active {
+  background: #e8f0fe;
+  border-radius: 8rpx;
+  margin: 0 -8rpx;
+  padding: 16rpx 8rpx;
+}
+
+.nearby-item.active .nearby-name {
+  color: #1677ff;
+  font-weight: bold;
+}
+
+.nearby-scroll {
+  max-height: 400rpx;
+}
+
+.spot-card {
+  position: fixed;
+  top: 100rpx;
+  left: 30rpx;
+  right: 30rpx;
+  z-index: 9;
+  background: rgba(255,255,255,0.95);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.15);
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.spot-card-info {
+  flex: 1;
+}
+
+.spot-card-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+}
+
+.spot-card-meta {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 8rpx;
+}
+
+.spot-card-score {
+  font-size: 24rpx;
+  color: #ff6b35;
+}
+
+.spot-card-dist {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.spot-card-action {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.spot-card-btn {
+  font-size: 26rpx;
+  color: #1677ff;
+  font-weight: bold;
+}
+
+.spot-card-arrow {
+  font-size: 32rpx;
+  color: #1677ff;
 }
 
 .nearby-name {

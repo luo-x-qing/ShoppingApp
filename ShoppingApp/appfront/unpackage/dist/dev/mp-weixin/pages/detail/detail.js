@@ -38,7 +38,10 @@ const _sfc_main = {
       maxOffset: 0,
       dragStartY: 0,
       dragBaseOffset: 0,
-      isDragging: false
+      isDragging: false,
+      selectedNearby: null,
+      includePoints: [],
+      scrollToId: ""
     };
   },
   onLoad(options) {
@@ -154,10 +157,31 @@ const _sfc_main = {
           padding: 6,
           textAlign: "center"
         },
+        callout: {
+          content: `${this.detail.name}
+⭐ ${(this.detail.score || 0).toFixed(1)}分`,
+          fontSize: 13,
+          borderRadius: 8,
+          bgColor: "#ffffff",
+          padding: 10,
+          display: "BYCLICK",
+          textAlign: "center"
+        },
         width: 36,
         height: 36
       } : null;
       this.markers = currentMarker ? [currentMarker, ...this.nearbyMarkers] : this.nearbyMarkers;
+      this.updateIncludePoints();
+    },
+    updateIncludePoints() {
+      const points = [];
+      if (this.currentLat && this.currentLng) {
+        points.push({ latitude: this.currentLat, longitude: this.currentLng });
+      }
+      this.nearbyMarkers.forEach((m) => {
+        points.push({ latitude: m.latitude, longitude: m.longitude });
+      });
+      this.includePoints = points;
     },
     getNearby() {
       common_vendor.index.request({
@@ -171,12 +195,22 @@ const _sfc_main = {
             longitude: item.longitude,
             title: item.name,
             label: {
-              content: `${item.name} (${item.distance}km)`,
+              content: item.name,
               color: "#333",
               fontSize: 11,
               borderRadius: 4,
               bgColor: "rgba(255,255,255,0.9)",
               padding: 4,
+              textAlign: "center"
+            },
+            callout: {
+              content: `${item.name}
+⭐ ${item.score || "暂无"}  📍 ${item.distance}km`,
+              fontSize: 13,
+              borderRadius: 8,
+              bgColor: "#ffffff",
+              padding: 10,
+              display: "BYCLICK",
               textAlign: "center"
             },
             width: 24,
@@ -196,11 +230,35 @@ const _sfc_main = {
       if (markerId === 0)
         return;
       const item = this.nearbyList[markerId - 1];
+      if (item) {
+        this.selectedNearby = item;
+        this.centerLat = item.latitude;
+        this.centerLng = item.longitude;
+        this.scrollToId = "nearby-" + (markerId - 1);
+      }
+    },
+    onCalloutTap(e) {
+      const markerId = e.detail.markerId;
+      if (markerId === 0) {
+        this.sheetOffset = 0;
+        return;
+      }
+      const item = this.nearbyList[markerId - 1];
       if (item)
-        this.goNearby(item);
+        common_vendor.index.navigateTo({ url: `/pages/detail/detail?id=${item.id}` });
     },
     goNearby(item) {
-      common_vendor.index.navigateTo({ url: `/pages/detail/detail?id=${item.id}` });
+      this.selectedNearby = item;
+      this.centerLat = item.latitude;
+      this.centerLng = item.longitude;
+      const idx = this.nearbyList.findIndex((n) => n.id === item.id);
+      if (idx >= 0)
+        this.scrollToId = "nearby-" + idx;
+    },
+    goToSelectedSpot() {
+      if (this.selectedNearby) {
+        common_vendor.index.navigateTo({ url: `/pages/detail/detail?id=${this.selectedNearby.id}` });
+      }
     },
     getComments() {
       common_vendor.index.request({
@@ -285,50 +343,58 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     a: $data.centerLat,
     b: $data.centerLng,
     c: $data.markers,
-    d: common_vendor.o((...args) => $options.onMarkerTap && $options.onMarkerTap(...args)),
-    e: common_vendor.o((...args) => $options.toggleSheet && $options.toggleSheet(...args)),
-    f: common_vendor.t($data.detail.name || "景点详情"),
-    g: common_vendor.t(($data.detail.score || 0).toFixed(1)),
-    h: common_vendor.o((...args) => $options.addToRoutePlan && $options.addToRoutePlan(...args)),
-    i: common_vendor.f($data.images, (img, i, i0) => {
+    d: $data.includePoints,
+    e: common_vendor.o((...args) => $options.onMarkerTap && $options.onMarkerTap(...args)),
+    f: common_vendor.o((...args) => $options.onCalloutTap && $options.onCalloutTap(...args)),
+    g: common_vendor.o((...args) => $options.toggleSheet && $options.toggleSheet(...args)),
+    h: common_vendor.t($data.detail.name || "景点详情"),
+    i: common_vendor.t(($data.detail.score || 0).toFixed(1)),
+    j: common_vendor.o((...args) => $options.addToRoutePlan && $options.addToRoutePlan(...args)),
+    k: common_vendor.f($data.images, (img, i, i0) => {
       return {
         a: img,
         b: i
       };
     }),
-    j: common_vendor.t($data.detail.province),
-    k: common_vendor.t($data.detail.city),
-    l: common_vendor.t($data.detail.type || "未分类"),
-    m: common_vendor.t($data.detail.level || "未评级"),
-    n: common_vendor.t($data.detail.openTime || "待确认"),
-    o: common_vendor.t($data.detail.ticketPrice != null ? $data.detail.ticketPrice : "待确认"),
-    p: common_vendor.t($data.detail.description || "暂无介绍"),
-    q: common_vendor.o((...args) => $options.addToRoutePlan && $options.addToRoutePlan(...args)),
-    r: common_vendor.t($data.nearbyList.length),
-    s: $data.nearbyList.length === 0
-  }, $data.nearbyList.length === 0 ? {} : {}, {
-    t: common_vendor.f($data.nearbyList, (item, k0, i0) => {
+    l: common_vendor.t($data.detail.province),
+    m: common_vendor.t($data.detail.city),
+    n: common_vendor.t($data.detail.type || "未分类"),
+    o: common_vendor.t($data.detail.level || "未评级"),
+    p: common_vendor.t($data.detail.openTime || "待确认"),
+    q: common_vendor.t($data.detail.ticketPrice != null ? $data.detail.ticketPrice : "待确认"),
+    r: common_vendor.t($data.detail.description || "暂无介绍"),
+    s: common_vendor.o((...args) => $options.addToRoutePlan && $options.addToRoutePlan(...args)),
+    t: common_vendor.t($data.nearbyList.length),
+    v: $data.nearbyList.length > 0
+  }, $data.nearbyList.length > 0 ? {
+    w: common_vendor.f($data.nearbyList, (item, i, i0) => {
       return {
         a: common_vendor.t(item.name),
         b: common_vendor.t(item.distance),
         c: common_vendor.t(item.score || "暂无"),
         d: item.id,
-        e: common_vendor.o(($event) => $options.goNearby(item), item.id)
+        e: "nearby-" + i,
+        f: $data.selectedNearby && $data.selectedNearby.id === item.id ? 1 : "",
+        g: common_vendor.o(($event) => $options.goNearby(item), item.id)
       };
     }),
-    v: common_vendor.f(5, (n, k0, i0) => {
+    x: $data.scrollToId
+  } : {}, {
+    y: $data.nearbyList.length === 0
+  }, $data.nearbyList.length === 0 ? {} : {}, {
+    z: common_vendor.f(5, (n, k0, i0) => {
       return {
         a: common_vendor.t(n <= $data.userScore ? "⭐" : "☆"),
         b: n,
         c: common_vendor.o(($event) => $options.selectStar(n), n)
       };
     }),
-    w: $data.commentContent,
-    x: common_vendor.o(($event) => $data.commentContent = $event.detail.value),
-    y: common_vendor.o((...args) => $options.submitComment && $options.submitComment(...args)),
-    z: $data.comments.length === 0
+    A: $data.commentContent,
+    B: common_vendor.o(($event) => $data.commentContent = $event.detail.value),
+    C: common_vendor.o((...args) => $options.submitComment && $options.submitComment(...args)),
+    D: $data.comments.length === 0
   }, $data.comments.length === 0 ? {} : {}, {
-    A: common_vendor.f($data.comments, (item, k0, i0) => {
+    E: common_vendor.f($data.comments, (item, k0, i0) => {
       return {
         a: common_vendor.t(item.userName || "匿名游客"),
         b: common_vendor.f(5, (n, k1, i1) => {
@@ -342,12 +408,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: item.id
       };
     }),
-    B: $data.isDragging ? 1 : "",
-    C: common_vendor.s(`transform: translateY(${$data.sheetOffset}px)`),
-    D: common_vendor.o((...args) => $options.onTouchStart && $options.onTouchStart(...args)),
-    E: common_vendor.o((...args) => $options.onTouchMove && $options.onTouchMove(...args)),
-    F: common_vendor.o((...args) => $options.onTouchEnd && $options.onTouchEnd(...args))
-  });
+    F: $data.isDragging ? 1 : "",
+    G: common_vendor.s(`transform: translateY(${$data.sheetOffset}px)`),
+    H: common_vendor.o((...args) => $options.onTouchStart && $options.onTouchStart(...args)),
+    I: common_vendor.o((...args) => $options.onTouchMove && $options.onTouchMove(...args)),
+    J: common_vendor.o((...args) => $options.onTouchEnd && $options.onTouchEnd(...args)),
+    K: $data.selectedNearby
+  }, $data.selectedNearby ? {
+    L: common_vendor.t($data.selectedNearby.name),
+    M: common_vendor.t($data.selectedNearby.score || "暂无"),
+    N: common_vendor.t($data.selectedNearby.distance),
+    O: common_vendor.o((...args) => $options.goToSelectedSpot && $options.goToSelectedSpot(...args))
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-eca06f3c"]]);
 wx.createPage(MiniProgramPage);
