@@ -303,6 +303,28 @@ public class AttractionService {
         return updated;
     }
 
+    public Map<String, Double> geocodeAttraction(Long id) {
+        Attraction a = getAttractionById(id);
+        if (a == null) return null;
+        String fullAddress = a.getName();
+        if (a.getCity() != null && !a.getCity().isEmpty()) {
+            fullAddress = a.getName() + "," + a.getCity();
+        } else if (a.getProvince() != null && !a.getProvince().isEmpty()) {
+            fullAddress = a.getName() + "," + a.getProvince();
+        }
+        Map<String, Double> coord = amapService.geocodeWithPreference(a.getName(), a.getProvince(), a.getCity());
+        if (coord == null) {
+            String loc = amapService.geocodeWithRetry(fullAddress, 3);
+            if (loc != null && loc.contains(",")) {
+                String[] parts = loc.split(",");
+                coord = new HashMap<>();
+                coord.put("lng", Double.parseDouble(parts[0]));
+                coord.put("lat", Double.parseDouble(parts[1]));
+            }
+        }
+        return coord;
+    }
+
     @Transactional
     public int reGeocodePrecise() {
         List<Attraction> all = attractionRepository.findAll();

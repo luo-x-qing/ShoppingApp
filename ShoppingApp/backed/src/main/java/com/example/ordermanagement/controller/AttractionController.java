@@ -165,6 +165,19 @@ public class AttractionController {
     }
 
     // 重新对所有景点进行地理编码（带省份城市）
+    // 单景点地理编码（前端 fallback 使用 Place API）
+    @GetMapping("/{id}/geocode")
+    public ResponseEntity<Map<String, Object>> geocodeAttraction(@PathVariable Long id) {
+        Map<String, Double> coord = attractionService.geocodeAttraction(id);
+        if (coord != null) {
+            Map<String, Object> result = new java.util.HashMap<>();
+            result.put("latitude", coord.get("lat"));
+            result.put("longitude", coord.get("lng"));
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @GetMapping("/re-geocode")
     public ResponseEntity<Map<String, Object>> reGeocode() {
         int updated = attractionService.reGeocodeAll();

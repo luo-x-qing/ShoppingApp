@@ -1,7 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const BASE_URL = "http://localhost:8080";
-const AMAP_KEY = "dde14364ce2a51865aa1cdc5af1598cf";
 const PROVINCE_CENTERS = {
   "北京市": [39.9042, 116.4074],
   "上海市": [31.2304, 121.4737],
@@ -99,53 +98,30 @@ const _sfc_main = {
     },
     setupMap() {
       const d = this.detail;
-      if (d.latitude && d.longitude) {
-        this.centerLat = d.latitude;
-        this.centerLng = d.longitude;
-        this.setCurrentCoords(d.latitude, d.longitude);
+      const lat = parseFloat(d.latitude);
+      const lng = parseFloat(d.longitude);
+      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+        this.centerLat = lat;
+        this.centerLng = lng;
+        this.setCurrentCoords(lat, lng);
       } else {
         this.geocodeAndSetup(d);
       }
     },
     geocodeAndSetup(d) {
-      const address = d.city ? d.city + d.name : d.province ? d.province + d.name : d.name;
-      common_vendor.index.__f__("log", "at pages/detail/detail.vue:225", "[高德] 开始地理编码:", address);
+      d.city ? d.name + "," + d.city : d.province ? d.name + "," + d.province : d.name;
       common_vendor.index.request({
-        url: "https://restapi.amap.com/v3/geocode/geo",
-        data: {
-          key: AMAP_KEY,
-          address,
-          city: d.city || "",
-          extensions: "all",
-          s: "rsx",
-          platform: "WXJS",
-          appname: AMAP_KEY,
-          sdkversion: "1.2.0",
-          logversion: "2.0"
-        },
+        url: `${BASE_URL}/api/attractions/${this.id}/geocode`,
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/detail/detail.vue:240", "[高德] 返回:", JSON.stringify(res.data));
-          const data = res.data;
-          if (data && data.status === "1" && data.geocodes && data.geocodes.length > 0) {
-            const loc = data.geocodes[0].location.split(",");
-            const lng = parseFloat(loc[0]);
-            const lat = parseFloat(loc[1]);
-            common_vendor.index.__f__("log", "at pages/detail/detail.vue:246", "[高德] 成功获取坐标:", lat, lng);
-            this.centerLat = lat;
-            this.centerLng = lng;
-            this.setCurrentCoords(lat, lng);
-            common_vendor.index.request({
-              url: `${BASE_URL}/api/attractions/${this.id}`,
-              method: "PUT",
-              data: { ...this.detail, latitude: lat, longitude: lng }
-            });
+          if (res.data && res.data.latitude && res.data.longitude) {
+            this.centerLat = res.data.latitude;
+            this.centerLng = res.data.longitude;
+            this.setCurrentCoords(res.data.latitude, res.data.longitude);
           } else {
-            common_vendor.index.__f__("warn", "at pages/detail/detail.vue:256", "[高德] 地理编码无结果:", data);
             this.useProvinceFallback(d);
           }
         },
-        fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/detail/detail.vue:261", "[高德] 请求失败:", err);
+        fail: () => {
           this.useProvinceFallback(d);
         }
       });

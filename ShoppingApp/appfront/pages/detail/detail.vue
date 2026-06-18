@@ -211,54 +211,31 @@ export default {
 
     setupMap() {
       const d = this.detail
-      if (d.latitude && d.longitude) {
-        this.centerLat = d.latitude
-        this.centerLng = d.longitude
-        this.setCurrentCoords(d.latitude, d.longitude)
+      const lat = parseFloat(d.latitude)
+      const lng = parseFloat(d.longitude)
+      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+        this.centerLat = lat
+        this.centerLng = lng
+        this.setCurrentCoords(lat, lng)
       } else {
         this.geocodeAndSetup(d)
       }
     },
 
     geocodeAndSetup(d) {
-      const address = d.city ? d.city + d.name : (d.province ? d.province + d.name : d.name)
-      console.log('[高德] 开始地理编码:', address)
+      const address = d.city ? d.name + ',' + d.city : (d.province ? d.name + ',' + d.province : d.name)
       uni.request({
-        url: 'https://restapi.amap.com/v3/geocode/geo',
-        data: {
-          key: AMAP_KEY,
-          address,
-          city: d.city || '',
-          extensions: 'all',
-          s: 'rsx',
-          platform: 'WXJS',
-          appname: AMAP_KEY,
-          sdkversion: '1.2.0',
-          logversion: '2.0'
-        },
+        url: `${BASE_URL}/api/attractions/${this.id}/geocode`,
         success: (res) => {
-          console.log('[高德] 返回:', JSON.stringify(res.data))
-          const data = res.data
-          if (data && data.status === '1' && data.geocodes && data.geocodes.length > 0) {
-            const loc = data.geocodes[0].location.split(',')
-            const lng = parseFloat(loc[0])
-            const lat = parseFloat(loc[1])
-            console.log('[高德] 成功获取坐标:', lat, lng)
-            this.centerLat = lat
-            this.centerLng = lng
-            this.setCurrentCoords(lat, lng)
-            uni.request({
-              url: `${BASE_URL}/api/attractions/${this.id}`,
-              method: 'PUT',
-              data: { ...this.detail, latitude: lat, longitude: lng }
-            })
+          if (res.data && res.data.latitude && res.data.longitude) {
+            this.centerLat = res.data.latitude
+            this.centerLng = res.data.longitude
+            this.setCurrentCoords(res.data.latitude, res.data.longitude)
           } else {
-            console.warn('[高德] 地理编码无结果:', data)
             this.useProvinceFallback(d)
           }
         },
-        fail: (err) => {
-          console.error('[高德] 请求失败:', err)
+        fail: () => {
           this.useProvinceFallback(d)
         }
       })

@@ -113,6 +113,11 @@
     "h5" : {
         "devServer" : {
             "port" : 8081
+        },
+        "sdkConfigMaps": {
+            "amap": {
+                "key": "dde14364ce2a51865aa1cdc5af1598cf"
+            }
         }
     }
 }
