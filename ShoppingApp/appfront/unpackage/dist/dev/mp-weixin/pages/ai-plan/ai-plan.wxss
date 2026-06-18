@@ -221,6 +221,13 @@ page.data-v-f6c85b3a {
   display: block;
   line-height: 1.5;
 }
+.schedule-spot.data-v-f6c85b3a {
+  font-size: 24rpx;
+  color: #1677ff;
+  font-weight: bold;
+  margin-top: 6rpx;
+  display: block;
+}
 .schedule-loc.data-v-f6c85b3a {
   font-size: 22rpx;
   color: #999;

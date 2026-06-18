@@ -48,11 +48,19 @@ public class AmapService {
 
     @SuppressWarnings("unchecked")
     public String geo(String address) {
+        return geo(address, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public String geo(String address, String city) {
         try {
             String addr = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
-            String url = "https://restapi.amap.com/v3/geocode/geo?address="
-                    + addr + "&key=" + amapKey + "&output=JSON";
-            Map<String, Object> response = httpGetJson(url);
+            StringBuilder url = new StringBuilder("https://restapi.amap.com/v3/geocode/geo?address=")
+                    .append(addr).append("&key=").append(amapKey).append("&output=JSON");
+            if (city != null && !city.isEmpty()) {
+                url.append("&city=").append(URLEncoder.encode(city, StandardCharsets.UTF_8.toString()));
+            }
+            Map<String, Object> response = httpGetJson(url.toString());
             if (response != null && "1".equals(response.get("status"))) {
                 List<Map<String, Object>> geocodes = (List<Map<String, Object>>) response.get("geocodes");
                 if (geocodes != null && !geocodes.isEmpty()) {

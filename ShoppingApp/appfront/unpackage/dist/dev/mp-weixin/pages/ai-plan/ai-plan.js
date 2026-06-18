@@ -231,13 +231,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
           return common_vendor.e({
             a: common_vendor.t(item.time),
             b: common_vendor.t($options.typeLabel(item.type)),
-            c: common_vendor.t(item.content),
-            d: item.location
-          }, item.location ? {
-            e: common_vendor.t(item.location)
+            c: item.type === "scenic" && item.spotName
+          }, item.type === "scenic" && item.spotName ? {
+            d: common_vendor.t(item.spotName)
           } : {}, {
-            f: si,
-            g: common_vendor.n("type-" + item.type)
+            e: common_vendor.t(item.content),
+            f: item.location
+          }, item.location ? {
+            g: common_vendor.t(item.location)
+          } : {}, {
+            h: si,
+            i: common_vendor.n("type-" + item.type)
           });
         }),
         d: di

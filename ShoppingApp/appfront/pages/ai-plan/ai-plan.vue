@@ -76,6 +76,7 @@
             <text class="schedule-time">{{ item.time }}</text>
             <text class="schedule-type">{{ typeLabel(item.type) }}</text>
           </view>
+          <text v-if="item.type === 'scenic' && item.spotName" class="schedule-spot">{{ item.spotName }}</text>
           <text class="schedule-content">{{ item.content }}</text>
           <text v-if="item.location" class="schedule-loc">📍 {{ item.location }}</text>
         </view>
@@ -505,6 +506,13 @@ page {
   color: #333;
   display: block;
   line-height: 1.5;
+}
+.schedule-spot {
+  font-size: 24rpx;
+  color: #1677ff;
+  font-weight: bold;
+  margin-top: 6rpx;
+  display: block;
 }
 .schedule-loc {
   font-size: 22rpx;
