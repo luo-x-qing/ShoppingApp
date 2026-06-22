@@ -18,6 +18,12 @@ public class HotelImage {
     @JsonIgnore // 序列化时忽略，避免循环引用
     private Hotel hotel;
 
+    public HotelImage() {}
+
+    public HotelImage(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

@@ -53,14 +53,15 @@ const _sfc_main = {
       },
       markers: [],
       selectedLocation: null,
-      nearbyPois: []
+      nearbyPois: [],
+      showSuggest: false
     };
   },
   onShow() {
     const userInfo = common_vendor.index.getStorageSync("userInfo");
     if (userInfo && userInfo.id) {
       this.merchantId = userInfo.id;
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:383", "商家ID:", this.merchantId);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:384", "商家ID:", this.merchantId);
       this.loadHotels();
     } else {
       common_vendor.index.showToast({ title: "请先登录", icon: "none" });
@@ -70,6 +71,20 @@ const _sfc_main = {
     }
   },
   methods: {
+    checkMerchantStatus(showToast = true) {
+      const userInfo = common_vendor.index.getStorageSync("userInfo");
+      if (!userInfo || !userInfo.id) {
+        if (showToast)
+          common_vendor.index.showToast({ title: "请先登录", icon: "none" });
+        return false;
+      }
+      if (userInfo.status && userInfo.status !== "NORMAL") {
+        if (showToast)
+          common_vendor.index.showToast({ title: "账号状态异常，无法操作", icon: "none" });
+        return false;
+      }
+      return true;
+    },
     getStarText(level) {
       if (!level)
         return "☆☆☆☆☆";
@@ -86,7 +101,7 @@ const _sfc_main = {
     },
     loadHotels() {
       if (!this.merchantId) {
-        common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:408", "未获取到商家ID");
+        common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:422", "未获取到商家ID");
         return;
       }
       this.loading = true;
@@ -94,7 +109,7 @@ const _sfc_main = {
         url: `http://localhost:8080/api/hotels/merchant/${this.merchantId}`,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:417", "酒店列表返回:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:431", "酒店列表返回:", res.data);
           if (res.data && res.data.code === 200) {
             this.hotelList = res.data.data || [];
           } else if (Array.isArray(res.data)) {
@@ -104,7 +119,7 @@ const _sfc_main = {
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:427", "获取酒店列表失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:441", "获取酒店列表失败", err);
           this.hotelList = [];
         },
         complete: () => {
@@ -163,14 +178,14 @@ const _sfc_main = {
             },
             fail: (err) => {
               common_vendor.index.hideLoading();
-              common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:495", "更新状态失败", err);
+              common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:509", "更新状态失败", err);
               common_vendor.index.showToast({ title: "网络错误", icon: "none" });
             }
           });
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:502", "获取酒店信息失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:516", "获取酒店信息失败", err);
           common_vendor.index.showToast({ title: "获取酒店信息失败", icon: "none" });
         }
       });
@@ -195,7 +210,7 @@ const _sfc_main = {
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:529", "获取房型失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:543", "获取房型失败", err);
           this.roomList = [];
         }
       });
@@ -281,7 +296,7 @@ const _sfc_main = {
         url = "http://localhost:8080/api/room-types";
         method = "POST";
       }
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:624", "提交的房型数据：", submitData);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:638", "提交的房型数据：", submitData);
       common_vendor.index.showLoading({ title: "保存中..." });
       common_vendor.index.request({
         url,
@@ -290,7 +305,7 @@ const _sfc_main = {
         data: submitData,
         success: (res) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:635", "房型提交结果：", res);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:649", "房型提交结果：", res);
           if (res.statusCode === 200 && res.data && res.data.code === 200) {
             common_vendor.index.showToast({ title: this.isEditRoom ? "修改成功" : "添加成功", icon: "success" });
             this.closeRoomFormModal();
@@ -301,7 +316,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:647", "提交失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:661", "提交失败", err);
           common_vendor.index.showToast({ title: "网络错误，请重试", icon: "none" });
         }
       });
@@ -322,7 +337,7 @@ const _sfc_main = {
                 this.loadRooms(this.currentHotel.id);
               },
               fail: (err) => {
-                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:669", "删除失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:683", "删除失败", err);
                 common_vendor.index.showToast({ title: "删除失败", icon: "none" });
               },
               complete: () => {
@@ -343,6 +358,8 @@ const _sfc_main = {
     },
     // ========== 酒店管理方法 ==========
     openAddModal() {
+      if (!this.checkMerchantStatus())
+        return;
       this.isEdit = false;
       this.form = {
         id: null,
@@ -360,7 +377,21 @@ const _sfc_main = {
       this.showModal = true;
     },
     openEditModal(hotel) {
+      if (!this.checkMerchantStatus())
+        return;
       this.isEdit = true;
+      let detailImages = [];
+      if (hotel.detailImages && hotel.detailImages.length > 0) {
+        detailImages = hotel.detailImages.map((img) => {
+          if (typeof img === "object" && img.imageUrl) {
+            return { imageUrl: img.imageUrl };
+          } else if (typeof img === "string") {
+            return { imageUrl: img };
+          } else {
+            return { imageUrl: img };
+          }
+        });
+      }
       this.form = {
         id: hotel.id,
         name: hotel.name,
@@ -370,7 +401,7 @@ const _sfc_main = {
         price: hotel.price,
         totalRooms: hotel.totalRooms || "",
         coverImage: hotel.coverImage || "",
-        detailImages: hotel.detailImages || [],
+        detailImages,
         latitude: hotel.latitude || null,
         longitude: hotel.longitude || null
       };
@@ -384,6 +415,8 @@ const _sfc_main = {
     },
     // ========== 百度地图选点方法 ==========
     openMapPicker() {
+      if (!this.checkMerchantStatus(false))
+        return;
       this.showMapPicker = true;
       this.searchKeyword = "";
       this.suggestList = [];
@@ -428,13 +461,18 @@ const _sfc_main = {
       common_vendor.index.request({
         url: "http://localhost:8080/api/map/search",
         method: "GET",
-        data: { keyword, region: keyword },
+        data: {
+          keyword,
+          region: "福州"
+        },
         success: (res) => {
-          if (res.statusCode === 200 && res.data.success) {
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:825", "搜索建议返回:", res.data);
+          if (res.statusCode === 200 && res.data && res.data.success) {
             this.suggestList = res.data.data || [];
           } else {
             this.suggestList = [];
           }
+          this.showSuggest = this.suggestList.length > 0;
         },
         fail: () => {
           this.suggestList = [];
@@ -477,17 +515,18 @@ const _sfc_main = {
     },
     searchLocationDirect(address) {
       common_vendor.index.showLoading({ title: "搜索中..." });
+      const encodedAddress = encodeURIComponent(address);
       common_vendor.index.request({
-        url: "http://localhost:8080/api/map/geocode",
+        url: `http://localhost:8080/api/map/geocode?address=${encodedAddress}`,
         method: "GET",
-        data: { address },
         success: (res) => {
           var _a;
           common_vendor.index.hideLoading();
-          if (res.statusCode === 200 && res.data.success) {
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:886", "地理编码返回:", res.data);
+          if (res.statusCode === 200 && res.data && res.data.success) {
             const lat = res.data.latitude;
             const lng = res.data.longitude;
-            const addr = res.data.address;
+            const addr = res.data.address || address;
             this.mapCenter = { latitude: lat, longitude: lng };
             this.markers = [{
               id: Date.now(),
@@ -503,9 +542,10 @@ const _sfc_main = {
             common_vendor.index.showToast({ title: ((_a = res.data) == null ? void 0 : _a.message) || "未找到该地点", icon: "none" });
           }
         },
-        fail: () => {
+        fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.showToast({ title: "搜索失败", icon: "none" });
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:910", "地理编码失败:", err);
+          common_vendor.index.showToast({ title: "搜索失败，请重试", icon: "none" });
         }
       });
     },
@@ -526,13 +566,13 @@ const _sfc_main = {
     getNearbyAddresses(lat, lng) {
       common_vendor.index.showLoading({ title: "获取地址列表..." });
       common_vendor.index.request({
-        url: "http://localhost:8080/api/map/reverse-geocode",
+        url: `http://localhost:8080/api/map/reverse-geocode?lat=${lat}&lng=${lng}`,
         method: "GET",
-        data: { lat, lng },
         success: (res) => {
           var _a;
           common_vendor.index.hideLoading();
-          if (res.statusCode === 200 && res.data.success) {
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:940", "逆地理编码返回:", res.data);
+          if (res.statusCode === 200 && res.data && res.data.success) {
             this.nearbyPois = res.data.nearbyPois || [];
             if (res.data.address) {
               this.selectedLocation = {
@@ -548,8 +588,9 @@ const _sfc_main = {
             common_vendor.index.showToast({ title: ((_a = res.data) == null ? void 0 : _a.message) || "获取地址失败", icon: "none" });
           }
         },
-        fail: () => {
+        fail: (err) => {
           common_vendor.index.hideLoading();
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:960", "逆地理编码失败:", err);
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });
@@ -575,25 +616,40 @@ const _sfc_main = {
       }
     },
     uploadCover() {
+      if (!this.checkMerchantStatus(false))
+        return;
       common_vendor.index.chooseImage({
         count: 1,
         success: (res) => {
           const tempFile = res.tempFilePaths[0];
           common_vendor.index.showLoading({ title: "上传中..." });
           this.uploadImageToServer(tempFile, (url) => {
-            this.form.coverImage = url;
+            if (url) {
+              this.form.coverImage = url;
+              common_vendor.index.showToast({ title: "封面上传成功", icon: "success" });
+              common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1000", "封面上传成功，URL:", url);
+            } else {
+              common_vendor.index.showToast({ title: "封面上传失败", icon: "none" });
+            }
             common_vendor.index.hideLoading();
           });
         }
       });
     },
     uploadDetailImage() {
+      if (!this.checkMerchantStatus(false))
+        return;
       common_vendor.index.chooseImage({
-        count: 9,
+        count: 9 - this.form.detailImages.length,
         success: (res) => {
+          if (this.form.detailImages.length + res.tempFilePaths.length > 9) {
+            common_vendor.index.showToast({ title: "最多只能上传9张图片", icon: "none" });
+            return;
+          }
           common_vendor.index.showLoading({ title: "上传中..." });
           const tempFiles = res.tempFilePaths;
           let completed = 0;
+          let uploadedUrls = [];
           if (tempFiles.length === 0) {
             common_vendor.index.hideLoading();
             return;
@@ -601,10 +657,23 @@ const _sfc_main = {
           tempFiles.forEach((file) => {
             this.uploadImageToServer(file, (url) => {
               if (url) {
-                this.form.detailImages.push({ imageUrl: url });
+                uploadedUrls.push({ imageUrl: url });
+                common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1035", "图片上传成功，当前已上传数量:", uploadedUrls.length);
+              } else {
+                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1037", "图片上传失败:", file);
               }
               completed++;
               if (completed === tempFiles.length) {
+                if (uploadedUrls.length > 0) {
+                  this.form.detailImages = [...this.form.detailImages, ...uploadedUrls];
+                  common_vendor.index.showToast({
+                    title: `成功上传 ${uploadedUrls.length} 张图片`,
+                    icon: "success"
+                  });
+                  common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1047", "更新后的详情图列表:", JSON.stringify(this.form.detailImages));
+                } else {
+                  common_vendor.index.showToast({ title: "上传失败，请重试", icon: "none" });
+                }
                 common_vendor.index.hideLoading();
               }
             });
@@ -621,24 +690,44 @@ const _sfc_main = {
         filePath,
         name: "file",
         success: (res) => {
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1069", "上传原始响应:", res.data);
+          let imageUrl = null;
           try {
             const data = JSON.parse(res.data);
-            callback(data.url || data);
+            imageUrl = data.url || data.data || data;
+            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1076", "JSON解析成功");
           } catch (e) {
-            callback(res.data);
+            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1078", "不是JSON格式，直接使用字符串");
+            imageUrl = res.data;
+            if (imageUrl.startsWith('"') && imageUrl.endsWith('"')) {
+              imageUrl = imageUrl.slice(1, -1);
+            }
+          }
+          if (imageUrl) {
+            if (!imageUrl.startsWith("http") && !imageUrl.startsWith("/file")) {
+              imageUrl = "/file/" + imageUrl;
+            }
+            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1089", "图片上传成功，最终URL:", imageUrl);
+            callback(imageUrl);
+          } else {
+            common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1092", "获取图片URL失败");
+            callback(null);
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1002", "上传失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1097", "上传失败", err);
           callback(null);
         }
       });
     },
     submitHotel() {
+      if (!this.checkMerchantStatus(false))
+        return;
       const userInfo = common_vendor.index.getStorageSync("userInfo");
       const merchantId = userInfo && userInfo.id ? userInfo.id : null;
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1012", "=== 提交酒店 ===");
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1013", "商家ID:", merchantId);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1109", "=== 提交酒店 ===");
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1110", "商家ID:", merchantId);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1111", "详情图原始数据:", this.form.detailImages);
       if (!this.form.name || this.form.name.trim() === "") {
         common_vendor.index.showToast({ title: "请输入酒店名称", icon: "none" });
         return;
@@ -659,6 +748,18 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "未获取到商家信息，请重新登录", icon: "none" });
         return;
       }
+      let detailImagesData = [];
+      if (this.form.detailImages && this.form.detailImages.length > 0) {
+        detailImagesData = this.form.detailImages.map((img) => {
+          if (typeof img === "object" && img.imageUrl) {
+            return { imageUrl: img.imageUrl };
+          } else if (typeof img === "string") {
+            return { imageUrl: img };
+          } else {
+            return { imageUrl: img };
+          }
+        });
+      }
       const submitData = {
         name: this.form.name,
         category: this.form.category,
@@ -667,12 +768,14 @@ const _sfc_main = {
         price: parseFloat(this.form.price),
         totalRooms: this.form.totalRooms ? parseInt(this.form.totalRooms) : 0,
         coverImage: this.form.coverImage || "",
+        detailImages: detailImagesData,
         latitude: this.form.latitude,
         longitude: this.form.longitude,
         merchantId,
         status: "营业中"
       };
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1051", "提交数据:", JSON.stringify(submitData));
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1163", "提交的详情图数据:", JSON.stringify(detailImagesData));
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1164", "完整提交数据:", JSON.stringify(submitData));
       let url = "";
       let method = "";
       if (this.isEdit) {
@@ -690,7 +793,7 @@ const _sfc_main = {
         data: submitData,
         success: (res) => {
           var _a;
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1071", "提交结果:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1184", "提交结果:", res.data);
           common_vendor.index.hideLoading();
           if (res.data && res.data.code === 200) {
             common_vendor.index.showToast({ title: this.isEdit ? "修改成功" : "添加成功", icon: "success" });
@@ -702,14 +805,16 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1084", "提交失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1197", "提交失败:", err);
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });
     },
     deleteHotel(id) {
+      if (!this.checkMerchantStatus())
+        return;
       if (!id) {
-        common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1092", "删除失败：酒店ID为空");
+        common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1207", "删除失败：酒店ID为空");
         common_vendor.index.showToast({ title: "删除失败", icon: "none" });
         return;
       }
@@ -728,7 +833,7 @@ const _sfc_main = {
                 this.loadHotels();
               },
               fail: (err) => {
-                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1112", "删除失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1227", "删除失败", err);
                 common_vendor.index.showToast({ title: "删除失败", icon: "none" });
               },
               complete: () => {

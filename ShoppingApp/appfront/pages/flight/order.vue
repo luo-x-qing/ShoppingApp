@@ -55,37 +55,6 @@
       <view class="card-title">乘机人信息</view>
       
       <view class="form-item">
-        <text class="label">乘客姓名</text>
-        <input 
-          class="input-box" 
-          v-model="orderData.userName" 
-          placeholder="请输入真实姓名" 
-          maxlength="20"
-        />
-      </view>
-      
-      <view class="form-item">
-        <text class="label">身份证号</text>
-        <input 
-          class="input-box" 
-          v-model="orderData.idCard" 
-          placeholder="请输入身份证号" 
-          maxlength="18"
-        />
-      </view>
-      
-      <view class="form-item">
-        <text class="label">联系电话</text>
-        <input 
-          class="input-box" 
-          v-model="orderData.userPhone" 
-          placeholder="请输入11位手机号" 
-          type="number" 
-          maxlength="11"
-        />
-      </view>
-      
-      <view class="form-item">
         <text class="label">乘机人数</text>
         <picker mode="selector" :range="passengerCounts" @change="onPassengerCountChange">
           <view class="input-box">
@@ -93,6 +62,42 @@
             <text class="arrow">›</text>
           </view>
         </picker>
+      </view>
+      
+      <!-- 动态乘机人表单 -->
+      <view v-for="(passenger, index) in passengerList" :key="index" class="passenger-section">
+        <view class="passenger-title">乘机人{{ index + 1 }}</view>
+        
+        <view class="form-item">
+          <text class="label">乘客姓名</text>
+          <input 
+            class="input-box" 
+            v-model="passenger.userName" 
+            placeholder="请输入真实姓名" 
+            maxlength="20"
+          />
+        </view>
+        
+        <view class="form-item">
+          <text class="label">身份证号</text>
+          <input 
+            class="input-box" 
+            v-model="passenger.idCard" 
+            placeholder="请输入身份证号" 
+            maxlength="18"
+          />
+        </view>
+        
+        <view class="form-item">
+          <text class="label">联系电话</text>
+          <input 
+            class="input-box" 
+            v-model="passenger.userPhone" 
+            placeholder="请输入11位手机号" 
+            type="number" 
+            maxlength="11"
+          />
+        </view>
       </view>
       
       <view class="form-item total-row">
@@ -113,12 +118,16 @@ export default {
     return {
       flightInfo: {},
       orderData: {
-        userName: '',
-        idCard: '',
-        userPhone: '',
         passengerCount: 1,
         loginUsername: ''
       },
+      passengerList: [
+        {
+          userName: '',
+          idCard: '',
+          userPhone: ''
+        }
+      ],
       passengerCounts: [1, 2, 3, 4, 5],
       isSubmitting: false
     };
@@ -185,13 +194,27 @@ export default {
   methods: {
     // 乘机人数变化
     onPassengerCountChange(e) {
-      this.orderData.passengerCount = this.passengerCounts[e.detail.value];
+      const newCount = this.passengerCounts[e.detail.value];
+      this.orderData.passengerCount = newCount;
+      
+      // 动态调整乘机人列表
+      const currentCount = this.passengerList.length;
+      if (newCount > currentCount) {
+        for (let i = currentCount; i < newCount; i++) {
+          this.passengerList.push({
+            userName: '',
+            idCard: '',
+            userPhone: ''
+          });
+        }
+      } else if (newCount < currentCount) {
+        this.passengerList = this.passengerList.slice(0, newCount);
+      }
     },
     
     // 格式化显示日期时间（用于页面展示）
     formatDisplayDateTime(dateTimeStr) {
       if (!dateTimeStr) return '--';
-      // 如果是 "2026-06-15 08:00" 格式，直接返回
       if (dateTimeStr.includes(' ')) {
         return dateTimeStr;
       }
@@ -202,13 +225,11 @@ export default {
     formatDateTimeForSubmit(dateTimeStr) {
       if (!dateTimeStr) return null;
       try {
-        // 如果是 "2026-06-15 08:00" 格式，转换为 "2026-06-15T08:00:00"
         if (dateTimeStr.includes(' ') && !dateTimeStr.includes('T')) {
           const [date, time] = dateTimeStr.split(' ');
           const timeWithSeconds = time.split(':').length === 2 ? time + ':00' : time;
           return `${date}T${timeWithSeconds}`;
         }
-        // 如果已经是 ISO 格式
         if (dateTimeStr.includes('T')) {
           return dateTimeStr;
         }
@@ -219,9 +240,10 @@ export default {
       }
     },
     
-    // 提交订单
-    submitOrder() {
+    // 提交订单 - 为每个乘客单独创建订单
+    async submitOrder() {
       console.log('提交订单', this.orderData);
+      console.log('乘机人列表', this.passengerList);
       
       // 校验登录
       if (!this.orderData.loginUsername) {
@@ -234,99 +256,143 @@ export default {
         return;
       }
       
-      // 校验姓名
-      if (!this.orderData.userName || this.orderData.userName.trim() === '') {
-        uni.showToast({ title: '请输入乘客姓名', icon: 'none' });
-        return;
+      // 校验所有乘机人信息
+      for (let i = 0; i < this.passengerList.length; i++) {
+        const passenger = this.passengerList[i];
+        const passengerNum = i + 1;
+        
+        if (!passenger.userName || passenger.userName.trim() === '') {
+          uni.showToast({ title: `请输入乘机人${passengerNum}的姓名`, icon: 'none' });
+          return;
+        }
+        if (passenger.userName.length < 2) {
+          uni.showToast({ title: `请输入乘机人${passengerNum}的真实姓名`, icon: 'none' });
+          return;
+        }
+        
+        if (!passenger.idCard || passenger.idCard.trim() === '') {
+          uni.showToast({ title: `请输入乘机人${passengerNum}的身份证号`, icon: 'none' });
+          return;
+        }
+        const idCardRegex = /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/;
+        if (!idCardRegex.test(passenger.idCard)) {
+          uni.showToast({ title: `乘机人${passengerNum}身份证号格式不正确`, icon: 'none' });
+          return;
+        }
+        
+        if (!passenger.userPhone) {
+          uni.showToast({ title: `请输入乘机人${passengerNum}的联系电话`, icon: 'none' });
+          return;
+        }
+        if (!/^1[3-9]\d{9}$/.test(passenger.userPhone)) {
+          uni.showToast({ title: `乘机人${passengerNum}手机号格式不正确`, icon: 'none' });
+          return;
+        }
       }
-      if (this.orderData.userName.length < 2) {
-        uni.showToast({ title: '请输入真实姓名', icon: 'none' });
-        return;
-      }
-      
-      // 校验身份证号
-      if (!this.orderData.idCard || this.orderData.idCard.trim() === '') {
-        uni.showToast({ title: '请输入身份证号', icon: 'none' });
-        return;
-      }
-      const idCardRegex = /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/;
-      if (!idCardRegex.test(this.orderData.idCard)) {
-        uni.showToast({ title: '身份证号格式不正确', icon: 'none' });
-        return;
-      }
-      
-      // 校验手机号
-      if (!this.orderData.userPhone) {
-        uni.showToast({ title: '请输入联系电话', icon: 'none' });
-        return;
-      }
-      if (!/^1[3-9]\d{9}$/.test(this.orderData.userPhone)) {
-        uni.showToast({ title: '手机号格式不正确', icon: 'none' });
-        return;
-      }
-      
-      // 构建提交数据
-      const submitData = {
-        flightNumber: this.flightInfo.flightNumber,
-        departCity: this.departureCity,
-        arriveCity: this.arrivalCity,
-        departTime: this.formatDateTimeForSubmit(this.flightInfo.departureTime),
-        arriveTime: this.formatDateTimeForSubmit(this.flightInfo.arrivalTime),
-        price: this.totalPrice,
-        username: this.orderData.loginUsername,
-        passengerName: this.orderData.userName,
-        passengerIdCard: this.orderData.idCard,
-        contactPhone: this.orderData.userPhone,
-        status: '待支付'
-      };
-      
-      console.log('提交的订单数据：', submitData);
       
       this.isSubmitting = true;
-      uni.showLoading({ title: '提交中...' });
+      uni.showLoading({ title: '正在提交订单...', mask: true });
       
-      // 调用后端接口
-      uni.request({
-        url: 'http://localhost:8080/api/flight-orders',
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json'
-        },
-        data: submitData,
-        success: (res) => {
-          uni.hideLoading();
-          console.log('提交成功', res);
-          
-          if (res.statusCode === 200 && res.data.code === 200) {
-            uni.showToast({ title: '预订成功！', icon: 'success' });
-            
-            // 清除选中的航班缓存
-            uni.removeStorageSync('selectedFlight');
-            
-            // 跳转到订单页面
-            setTimeout(() => {
-              uni.switchTab({
-                url: '/pages/profile/profile'
-              });
-            }, 1500);
+      const price = parseFloat(this.flightInfo.price) || 0;
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (let i = 0; i < this.passengerList.length; i++) {
+        const passenger = this.passengerList[i];
+        const passengerNum = i + 1;
+        
+        const submitData = {
+          flightNumber: this.flightInfo.flightNumber,
+          departCity: this.departureCity,
+          arriveCity: this.arrivalCity,
+          departTime: this.formatDateTimeForSubmit(this.flightInfo.departureTime),
+          arriveTime: this.formatDateTimeForSubmit(this.flightInfo.arrivalTime),
+          price: price,
+          username: this.orderData.loginUsername,
+          passengerName: passenger.userName,
+          passengerIdCard: passenger.idCard,
+          contactPhone: passenger.userPhone,
+          status: '待支付'
+        };
+        
+        console.log(`提交第${passengerNum}个订单：`, submitData);
+        
+        try {
+          const result = await this.createOrder(submitData);
+          if (result.success) {
+            successCount++;
           } else {
-            uni.showToast({ 
-              title: res.data.message || '提交失败，请重试', 
-              icon: 'none' 
-            });
+            failCount++;
           }
-        },
-        fail: (err) => {
-          uni.hideLoading();
-          console.error('提交订单失败：', err);
-          uni.showToast({ 
-            title: '网络错误，请检查网络连接', 
-            icon: 'none' 
-          });
-        },
-        complete: () => {
-          this.isSubmitting = false;
+        } catch (error) {
+          console.error(`第${passengerNum}个订单提交失败：`, error);
+          failCount++;
         }
+      }
+      
+      uni.hideLoading();
+      
+      if (successCount === this.passengerList.length) {
+        uni.showToast({ 
+          title: `成功预订${successCount}个订单！`, 
+          icon: 'success' 
+        });
+        
+        uni.removeStorageSync('selectedFlight');
+        
+        setTimeout(() => {
+          uni.switchTab({
+            url: '/pages/profile/profile'
+          });
+        }, 1500);
+      } else if (successCount > 0) {
+        uni.showModal({
+          title: '提交结果',
+          content: `成功提交${successCount}个订单，失败${failCount}个，请检查后重试`,
+          showCancel: false,
+          success: () => {
+            if (successCount > 0) {
+              uni.removeStorageSync('selectedFlight');
+              setTimeout(() => {
+                uni.switchTab({
+                  url: '/pages/profile/profile'
+                });
+              }, 500);
+            }
+          }
+        });
+      } else {
+        uni.showToast({ 
+          title: '订单提交失败，请重试', 
+          icon: 'none' 
+        });
+      }
+      
+      this.isSubmitting = false;
+    },
+    
+    createOrder(submitData) {
+      return new Promise((resolve, reject) => {
+        uni.request({
+          url: 'http://localhost:8080/api/flight-orders',
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json'
+          },
+          data: submitData,
+          success: (res) => {
+            console.log('单个订单提交结果：', res);
+            if (res.statusCode === 200 && res.data.code === 200) {
+              resolve({ success: true, data: res.data });
+            } else {
+              resolve({ success: false, message: res.data.message || '提交失败' });
+            }
+          },
+          fail: (err) => {
+            console.error('订单提交失败：', err);
+            reject(err);
+          }
+        });
       });
     }
   }
@@ -452,5 +518,26 @@ page {
 
 .submit-btn[disabled] {
   opacity: 0.6;
+}
+
+.passenger-section {
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.passenger-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.passenger-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #1677ff;
+  margin: 20rpx 0 10rpx 0;
+  padding-left: 10rpx;
+  border-left: 4rpx solid #1677ff;
 }
 </style>

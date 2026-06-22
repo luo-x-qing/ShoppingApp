@@ -24,6 +24,8 @@ public class MessageController {
     @PostMapping("/send")
     public Result<Message> sendMessage(@RequestBody Message message) {
         try {
+            System.out.println("收到消息: " + message.getContent());
+            System.out.println("发送者: " + message.getSenderRole());
             Message saved = messageService.sendMessage(message);
             return Result.success(saved);
         } catch (Exception e) {
@@ -136,6 +138,17 @@ public class MessageController {
             return Result.success(result);
         } catch (Exception e) {
             return Result.error("操作失败：" + e.getMessage());
+        }
+    }
+
+    // 获取商家总未读消息数
+    @GetMapping("/merchant/total-unread")
+    public Result<Integer> getMerchantTotalUnread(@RequestParam String merchantId) {
+        try {
+            Integer totalUnread = messageService.getMerchantTotalUnreadCount(merchantId);
+            return Result.success(totalUnread != null ? totalUnread : 0);
+        } catch (Exception e) {
+            return Result.error("获取失败：" + e.getMessage());
         }
     }
 

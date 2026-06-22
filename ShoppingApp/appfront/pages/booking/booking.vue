@@ -115,16 +115,39 @@ export default {
       selectedRoom: null,
       roomTypeId: null,
       roomTypeName: "",
-      showRoomPicker: false
+      showRoomPicker: false,
+
+      // 日期限制
+      minCheckInDate: "",
+      minCheckOutDate: ""
     };
   },
 
   onLoad(options) {
     console.log("预订页面接收参数：", options);
     
+    // 获取当前日期
     const today = new Date();
-    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-    const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${year}-${month}-${day}`;
+    
+    // 计算明天的日期
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tYear = tomorrow.getFullYear();
+    const tMonth = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const tDay = String(tomorrow.getDate()).padStart(2, "0");
+    const tomorrowStr = `${tYear}-${tMonth}-${tDay}`;
+    
+    // 计算后天的日期
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+    const dYear = dayAfterTomorrow.getFullYear();
+    const dMonth = String(dayAfterTomorrow.getMonth() + 1).padStart(2, "0");
+    const dDay = String(dayAfterTomorrow.getDate()).padStart(2, "0");
+    const dayAfterTomorrowStr = `${dYear}-${dMonth}-${dDay}`;
 
     this.id = options.id;
     this.hotelName = decodeURIComponent(options.name || '酒店');
@@ -137,8 +160,15 @@ export default {
       this.selectedRoom = { id: this.roomTypeId, typeName: this.roomTypeName, price: this.price };
     }
     
-    this.checkInDate = formatDate(tomorrow);
-    this.checkOutDate = formatDate(new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000));
+    // 设置日期限制：入住日期最早为明天（不能选择今天及以前）
+    // 使用今天作为起始，这样用户可以看到今天之前的日期是灰色的不可选状态
+    this.minCheckInDate = todayStr;
+    this.checkInDate = tomorrowStr;
+    
+    // 退房日期最早为明天的日期
+    this.minCheckOutDate = tomorrowStr;
+    this.checkOutDate = dayAfterTomorrowStr;
+    
     this.days = 1;
     this.totalPrice = this.price;
     this.roomCount = 1;
@@ -187,14 +217,72 @@ export default {
       uni.showToast({ title: `已选择${room.typeName}`, icon: "success" });
     },
     
+    // 入住日期变化
     bindCheckInChange(e) {
-      this.checkInDate = e.detail.value;
+      const newCheckIn = e.detail.value;
+      
+      // 验证入住日期是否在今天之前
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(newCheckIn);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        uni.showToast({
+          title: '不能选择今天之前的日期',
+          icon: 'none'
+        });
+        // 重置为明天
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        this.checkInDate = this.formatDateStr(tomorrow);
+        return;
+      }
+      
+      this.checkInDate = newCheckIn;
+      
+      // 更新退房日期的最小值：至少为入住日期的下一天
+      const checkInDateObj = new Date(newCheckIn);
+      const minOutDate = new Date(checkInDateObj);
+      minOutDate.setDate(minOutDate.getDate() + 1);
+      this.minCheckOutDate = this.formatDateStr(minOutDate);
+      
+      // 如果当前退房日期早于新的最小退房日期，自动调整
+      if (this.checkOutDate < this.minCheckOutDate) {
+        this.checkOutDate = this.minCheckOutDate;
+      }
+      
       this.calcDays();
     },
 
+    // 退房日期变化
     bindCheckOutChange(e) {
-      this.checkOutDate = e.detail.value;
+      const newCheckOut = e.detail.value;
+      
+      // 验证退房日期是否晚于入住日期
+      if (newCheckOut <= this.checkInDate) {
+        uni.showToast({
+          title: '退房日期必须晚于入住日期',
+          icon: 'none'
+        });
+        // 重置为最小有效日期（入住日期的下一天）
+        const checkInDateObj = new Date(this.checkInDate);
+        const minOutDate = new Date(checkInDateObj);
+        minOutDate.setDate(minOutDate.getDate() + 1);
+        this.checkOutDate = this.formatDateStr(minOutDate);
+        return;
+      }
+      
+      this.checkOutDate = newCheckOut;
       this.calcDays();
+    },
+
+    // 格式化日期
+    formatDateStr(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     },
     
     decreaseCount() {
@@ -234,6 +322,22 @@ export default {
       }
       if (!/^1[3-9]\d{9}$/.test(this.contactPhone)) {
         uni.showToast({ title: "手机号格式不正确", icon: "none" });
+        return;
+      }
+      
+      // 验证日期
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const checkIn = new Date(this.checkInDate);
+      checkIn.setHours(0, 0, 0, 0);
+      
+      if (checkIn < today) {
+        uni.showToast({ title: "入住日期不能是今天之前", icon: "none" });
+        return;
+      }
+      
+      if (this.checkOutDate <= this.checkInDate) {
+        uni.showToast({ title: "退房日期必须晚于入住日期", icon: "none" });
         return;
       }
       

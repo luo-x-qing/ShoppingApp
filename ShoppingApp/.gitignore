@@ -1,0 +1,17 @@
+target/ 
+.idea/ 
+*.iml 
+node_modules/ 
+.DS_Store 
+*.log 
+upload/ 
+file/ 
+.vscode/ 
+unpackage/ 
+dist/ 
+.sass-cache/ 
+*.suo 
+*.ntvs* 
+*.njsproj 
+*.sln 
+*.sw? 

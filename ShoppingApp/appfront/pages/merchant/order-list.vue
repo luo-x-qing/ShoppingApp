@@ -166,7 +166,10 @@ export default {
       
       // 入住时间校验相关
       showDateWarning: false,
-      warningMessage: ''
+      warningMessage: '',
+      
+      // 商家名称
+      merchantName: ''
     };
   },
   
@@ -197,6 +200,7 @@ export default {
         const userInfo = uni.getStorageSync('userInfo');
         if (userInfo && userInfo.id) {
           this.merchantId = userInfo.id;
+          this.merchantName = userInfo.shopName || userInfo.name || '商家';
           this.loadOrdersByMerchant();
         } else {
           uni.showToast({ title: '请先登录', icon: 'none' });
@@ -227,6 +231,7 @@ export default {
           
           if (res.data && res.data.code === 200) {
             let orders = res.data.data || [];
+            this.checkAndCancelExpiredOrders(orders);
             this.processOrders(orders);
           } else {
             this.loadAllOrders();
@@ -250,6 +255,7 @@ export default {
           
           if (res.data && res.data.code === 200) {
             let orders = res.data.data || [];
+            this.checkAndCancelExpiredOrders(orders);
             this.processOrders(orders);
           } else {
             this.orderList = [];
@@ -260,6 +266,72 @@ export default {
           console.error('获取订单失败', err);
           uni.showToast({ title: '获取订单失败', icon: 'none' });
           this.orderList = [];
+        }
+      });
+    },
+    
+    // 检查并自动取消过期订单
+    checkAndCancelExpiredOrders(orders) {
+      if (!orders || orders.length === 0) return;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const autoCancelStatuses = ['待确认', '已支付'];
+      
+      const expiredOrders = orders.filter(order => {
+        if (!autoCancelStatuses.includes(order.status)) return false;
+        if (!order.checkIn) return false;
+        
+        const checkIn = new Date(order.checkIn);
+        checkIn.setHours(0, 0, 0, 0);
+        
+        return checkIn <= today;
+      });
+      
+      if (expiredOrders.length === 0) return;
+      
+      console.log(`发现 ${expiredOrders.length} 个订单已过入住日期未确认，自动取消`);
+      
+      expiredOrders.forEach(order => {
+        this.cancelExpiredOrder(order);
+      });
+    },
+    
+    cancelExpiredOrder(order) {
+      console.log(`自动取消订单 ${order.id}，入住日期：${order.checkIn}，状态：${order.status}`);
+      
+      const cancelReason = `商家未在入住日期(${order.checkIn})前确认订单，系统自动取消`;
+      
+      uni.request({
+        url: `http://localhost:8080/api/hotel-orders/${order.id}/auto-cancel`,
+        method: 'POST',
+        data: {
+          reason: cancelReason
+        },
+        success: (res) => {
+          console.log(`订单 ${order.id} 自动取消结果`, res.data);
+        },
+        fail: (err) => {
+          console.error(`订单 ${order.id} 自动取消失败`, err);
+          this.updateOrderStatus(order.id, '已取消', cancelReason);
+        }
+      });
+    },
+    
+    updateOrderStatus(orderId, status, reason) {
+      uni.request({
+        url: `http://localhost:8080/api/hotel-orders/${orderId}`,
+        method: 'PUT',
+        data: {
+          status: status,
+          cancelReason: reason || '订单过期自动取消'
+        },
+        success: (res) => {
+          console.log(`订单 ${orderId} 状态已更新为 ${status}`, res.data);
+        },
+        fail: (err) => {
+          console.error(`更新订单 ${orderId} 状态失败`, err);
         }
       });
     },
@@ -303,11 +375,6 @@ export default {
     },
     
     // ========== 入住时间校验 ==========
-    /**
-     * 检查是否可以确认入住
-     * @param {string} checkInDate - 入住日期 (格式: YYYY-MM-DD)
-     * @returns {boolean} - 是否可以入住
-     */
     canCheckIn(checkInDate) {
       if (!checkInDate) return false;
       
@@ -317,15 +384,9 @@ export default {
       const checkIn = new Date(checkInDate);
       checkIn.setHours(0, 0, 0, 0);
       
-      // 入住日期 <= 今天 才能办理入住
       return checkIn <= today;
     },
     
-    /**
-     * 获取入住校验失败的原因
-     * @param {string} checkInDate - 入住日期
-     * @returns {string} - 失败原因
-     */
     getCheckInFailReason(checkInDate) {
       if (!checkInDate) return '订单缺少入住日期信息';
       
@@ -344,16 +405,13 @@ export default {
       return '未知原因';
     },
     
-    // 处理确认入住（带校验）
     handleCheckIn(order) {
-      // 校验入住时间
       if (!this.canCheckIn(order.checkIn)) {
         this.warningMessage = this.getCheckInFailReason(order.checkIn);
         this.showDateWarning = true;
         return;
       }
       
-      // 校验通过，弹出确认框
       uni.showModal({
         title: '确认入住',
         content: `确认订单 ${order.id} 的客人已入住吗？`,
@@ -369,7 +427,7 @@ export default {
     confirmOrder(order) {
       uni.showModal({
         title: '确认订单',
-        content: `确认订单 ${order.id} 吗？确认后订单状态将变为"已确认"。`,
+        content: `确认订单 ${order.id} 吗？确认后订单状态将变为"已确认"，并自动发送欢迎消息给客户。`,
         success: (res) => {
           if (res.confirm) {
             uni.showLoading({ title: '处理中...' });
@@ -381,6 +439,9 @@ export default {
                 uni.hideLoading();
                 if (res.data && res.data.code === 200) {
                   uni.showToast({ title: '确认成功', icon: 'success' });
+                  
+                  this.sendConfirmedMessage(order);
+                  
                   this.loadOrdersByMerchant();
                 } else {
                   uni.showToast({ title: res.data.message || '确认失败', icon: 'none' });
@@ -397,7 +458,83 @@ export default {
       });
     },
     
-    // 确认入住（实际请求）
+    sendConfirmedMessage(order) {
+      const hotelId = order.hotelId || order.id;
+      const hotelName = order.name || order.hotelName || `酒店${hotelId}`;
+      const merchantId = this.merchantId;
+      const customerUsername = order.username;
+      const orderId = order.id;
+      
+      if (!customerUsername) {
+        console.error('缺少客户用户名，无法发送确认消息');
+        return;
+      }
+      
+      const confirmedMessage = `🎉 欢迎预订${hotelName}！\n\n📅 入住日期：${order.checkIn || '待确认'}\n📅 退房日期：${order.checkOut || '待确认'}\n💰 订单金额：¥${order.price || 0}\n\n如有任何问题，请随时联系我们，欢迎您的入住~`;
+      
+      console.log(`发送确认消息，订单ID: ${orderId}, 用户: ${customerUsername}`);
+      
+      this.saveConfirmedMessageToLocal(order, hotelId, hotelName, confirmedMessage);
+      
+      uni.request({
+        url: 'http://localhost:8080/api/messages/send',
+        method: 'POST',
+        data: {
+          orderId: orderId,
+          hotelId: hotelId,
+          merchantId: merchantId.toString(),
+          username: customerUsername,
+          content: confirmedMessage,
+          senderRole: 'merchant',
+          isRead: 0
+        },
+        success: (res) => {
+          console.log('确认消息发送成功', res.data);
+        },
+        fail: (err) => {
+          console.error('确认消息发送失败：', err);
+        }
+      });
+    },
+    
+    saveConfirmedMessageToLocal(order, hotelId, hotelName, message) {
+      const userId = order.username;
+      if (!userId) return;
+      
+      const key = `chat_${this.merchantId}_${userId}`;
+      const saved = uni.getStorageSync(key) || {};
+      
+      const messages = saved.messages || [];
+      const hasSameMessage = messages.some(msg => msg.content === message);
+      if (!hasSameMessage) {
+        messages.push({ role: 'merchant', content: message });
+      }
+      
+      const data = {
+        messages: messages,
+        lastMessage: message,
+        lastSender: 'merchant',
+        lastTime: this.formatTime(new Date()),
+        unreadCount: (saved.unreadCount || 0) + 1,
+        name: userId,
+        hotelName: hotelName
+      };
+      
+      uni.setStorageSync(key, data);
+      
+      const merchantMessages = uni.getStorageSync('merchant_messages') || {};
+      merchantMessages[userId] = {
+        name: userId,
+        hotelName: hotelName,
+        messages: messages,
+        lastMessage: message,
+        lastTime: this.formatTime(new Date()),
+        unreadCount: (saved.unreadCount || 0) + 1
+      };
+      uni.setStorageSync('merchant_messages', merchantMessages);
+    },
+    
+    // 确认入住
     confirmCheckIn(order) {
       uni.showLoading({ title: '处理中...' });
       
@@ -577,6 +714,21 @@ export default {
       } catch (e) {
         return dateStr;
       }
+    },
+    
+    // 格式化时间
+    formatTime(date) {
+      if (!date) return '刚刚';
+      const d = new Date(date);
+      const now = new Date();
+      const diff = now - d;
+      
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+      if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`;
+      
+      return `${d.getMonth() + 1}月${d.getDate()}日`;
     }
   }
 };

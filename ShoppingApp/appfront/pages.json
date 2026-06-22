@@ -154,6 +154,22 @@
             }
         },
         {
+            "path" : "pages/merchant/banned",
+            "style" : 
+            {
+                "navigationBarTitleText" : "",
+                "enablePullDownRefresh" : false
+            }
+        },
+        {
+            "path" : "pages/merchant/analysis",
+            "style" : 
+            {
+                "navigationBarTitleText" : "",
+                "enablePullDownRefresh" : false
+            }
+        },
+        {
             "path": "pages/message/message",
             "style": {
                 "navigationBarTitleText": "消息中心",

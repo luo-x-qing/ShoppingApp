@@ -23,6 +23,8 @@
     "pages/merchant/messages",
     "pages/merchant/notifications",
     "pages/merchant/setting",
+    "pages/merchant/banned",
+    "pages/merchant/analysis",
     "pages/message/message",
     "pages/profile/setting",
     "pages/profile/notifications"

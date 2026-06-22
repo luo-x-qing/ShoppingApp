@@ -61,6 +61,21 @@
 
       <view class="form-item">
         <view class="icon-box">
+          <text class="icon">📅</text>
+        </view>
+        <view class="form-content">
+          <text class="label">出发日期</text>
+          <picker mode="date" :value="searchParams.fromDate" @change="onDateChange">
+            <view class="input-box">
+              <text :class="searchParams.fromDate ? 'selected' : 'placeholder'">{{ searchParams.fromDate || '请选择日期' }}</text>
+              <text class="arrow-right">›</text>
+            </view>
+          </picker>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <view class="icon-box">
           <text class="icon">👤</text>
         </view>
         <view class="form-content">
@@ -316,7 +331,10 @@ export default {
       this.closeCityPicker();
     },
     
-    onDateChange(e) { this.searchParams.fromDate = e.detail.value; },
+    onDateChange(e) { 
+      this.searchParams.fromDate = e.detail.value; 
+    },
+    onAdultCountChange(e) { this.searchParams.adultCount = this.adultCounts[e.detail.value]; },
     onAdultCountChange(e) { this.searchParams.adultCount = this.adultCounts[e.detail.value]; },
     
     formatTimeDisplay(dateTimeStr) {

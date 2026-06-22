@@ -15,10 +15,10 @@
     <!-- 用户信息卡片 -->
     <view class="user-card">
       <view class="user-info" @click="showEditModal = true">
-        <image class="avatar" :src="userInfo.avatar" mode="aspectFill" />
+        <image class="avatar" :src="avatarUrl" mode="aspectFill" />
         <view class="info">
-          <text class="name">{{ userInfo.name }}</text>
-          <text class="desc">{{ userInfo.desc }}</text>
+          <text class="name">{{ userInfo.name || userInfo.username || '用户' }}</text>
+          <text class="desc">{{ userInfo.desc || userInfo.bio || '这家伙很懒，什么都没留下' }}</text>
         </view>
         <view class="edit-icon">✎</view>
       </view>
@@ -129,8 +129,19 @@ export default {
       editForm: { name: "", desc: "" },
       orderCount: 0,
       collectionCount: 0,
-      unreadCount: 0
+      unreadCount: 0,
+      token: ''
     };
+  },
+
+  computed: {
+    avatarUrl() {
+      const avatar = this.userInfo.avatar;
+      if (!avatar) return '/static/default-avatar.png';
+      if (avatar.startsWith('http')) return avatar;
+      if (avatar.startsWith('/file')) return 'http://localhost:8080' + avatar;
+      return avatar;
+    }
   },
 
   onShow() {
@@ -143,8 +154,10 @@ export default {
       return;
     }
 
+    this.token = token;
+
     // 加载用户资料
-    this.loadUserProfile(username);
+    this.loadUserProfile();
     // 加载统计数据
     this.loadStats();
     // 加载未读通知数量
@@ -152,17 +165,55 @@ export default {
   },
 
   methods: {
-    loadUserProfile(username) {
+    loadUserProfile() {
+      const username = uni.getStorageSync('loginUsername');
       const key = `userProfile_${username}`;
       const saved = uni.getStorageSync(key);
       
       if (saved) {
         this.userInfo = saved;
       } else {
-        this.userInfo = { ...defaultUser };
+        // 尝试从通用 userInfo 缓存读取
+        const storedUserInfo = uni.getStorageSync('userInfo');
+        if (storedUserInfo && Object.keys(storedUserInfo).length > 0) {
+          this.userInfo = {
+            name: storedUserInfo.username || storedUserInfo.name,
+            desc: storedUserInfo.bio || storedUserInfo.desc,
+            avatar: storedUserInfo.avatar
+          };
+        } else {
+          this.userInfo = { ...defaultUser };
+          this.fetchUserInfoFromServer();
+        }
       }
     },
-    
+
+    fetchUserInfoFromServer() {
+      uni.request({
+        url: 'http://localhost:8080/api/users/userinfo',
+        method: 'GET',
+        header: {
+          'Authorization': 'Bearer ' + this.token
+        },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data) {
+            const userData = res.data;
+            this.userInfo = {
+              name: userData.username,
+              desc: userData.bio || '',
+              avatar: userData.avatar || ''
+            };
+            const username = uni.getStorageSync('loginUsername');
+            const key = `userProfile_${username}`;
+            uni.setStorageSync(key, this.userInfo);
+          }
+        },
+        fail: (err) => {
+          console.error('获取用户信息失败', err);
+        }
+      });
+    },
+
     loadStats() {
       // 获取订单数量
       const username = uni.getStorageSync('loginUsername');
@@ -185,16 +236,15 @@ export default {
       const collections = uni.getStorageSync(key) || [];
       this.collectionCount = collections.length;
     },
-    
+
     loadUnreadCount() {
-      const token = uni.getStorageSync('token');
-      if (!token) return;
-      
+      if (!this.token) return;
+
       uni.request({
         url: 'http://localhost:8080/api/user/notifications/unread-count',
         method: 'GET',
         header: {
-          'Authorization': 'Bearer ' + token
+          'Authorization': 'Bearer ' + this.token
         },
         success: (res) => {
           if (res.data && res.data.code === 200) {
@@ -210,23 +260,23 @@ export default {
     goToOrders() {
       uni.navigateTo({ url: "/pages/my-orders/my-orders" });
     },
-    
+
     goToCollection() {
       uni.navigateTo({ url: "/pages/collection/collection" });
     },
-    
+
     goToSetting() {
       uni.navigateTo({ url: "/pages/profile/setting" });
     },
-    
+
     goToNotifications() {
       uni.navigateTo({ url: "/pages/profile/notifications" });
     },
-    
+
     showAbout() {
       this.showAboutModal = true;
     },
-    
+
     showFeedback() {
       uni.showModal({
         title: '意见反馈',

@@ -372,7 +372,8 @@ export default {
       },
       markers: [],
       selectedLocation: null,
-      nearbyPois: []
+      nearbyPois: [],
+      showSuggest: false
     };
   },
   
@@ -391,6 +392,19 @@ export default {
   },
   
   methods: {
+    checkMerchantStatus(showToast = true) {
+      const userInfo = uni.getStorageSync('userInfo');
+      if (!userInfo || !userInfo.id) {
+        if (showToast) uni.showToast({ title: '请先登录', icon: 'none' });
+        return false;
+      }
+      if (userInfo.status && userInfo.status !== 'NORMAL') {
+        if (showToast) uni.showToast({ title: '账号状态异常，无法操作', icon: 'none' });
+        return false;
+      }
+      return true;
+    },
+    
     getStarText(level) {
       if (!level) return '☆☆☆☆☆';
       return '★'.repeat(level) + '☆'.repeat(5 - level);
@@ -690,6 +704,8 @@ export default {
     
     // ========== 酒店管理方法 ==========
     openAddModal() {
+      if (!this.checkMerchantStatus()) return;
+      
       this.isEdit = false;
       this.form = {
         id: null,
@@ -708,7 +724,22 @@ export default {
     },
     
     openEditModal(hotel) {
+      if (!this.checkMerchantStatus()) return;
+      
       this.isEdit = true;
+      let detailImages = [];
+      if (hotel.detailImages && hotel.detailImages.length > 0) {
+        detailImages = hotel.detailImages.map(img => {
+          if (typeof img === 'object' && img.imageUrl) {
+            return { imageUrl: img.imageUrl };
+          } else if (typeof img === 'string') {
+            return { imageUrl: img };
+          } else {
+            return { imageUrl: img };
+          }
+        });
+      }
+      
       this.form = {
         id: hotel.id,
         name: hotel.name,
@@ -718,7 +749,7 @@ export default {
         price: hotel.price,
         totalRooms: hotel.totalRooms || '',
         coverImage: hotel.coverImage || '',
-        detailImages: hotel.detailImages || [],
+        detailImages: detailImages,
         latitude: hotel.latitude || null,
         longitude: hotel.longitude || null
       };
@@ -735,6 +766,8 @@ export default {
     
     // ========== 百度地图选点方法 ==========
     openMapPicker() {
+      if (!this.checkMerchantStatus(false)) return;
+      
       this.showMapPicker = true;
       this.searchKeyword = '';
       this.suggestList = [];
@@ -784,13 +817,18 @@ export default {
       uni.request({
         url: 'http://localhost:8080/api/map/search',
         method: 'GET',
-        data: { keyword: keyword, region: keyword },
+        data: { 
+          keyword: keyword, 
+          region: '福州'
+        },
         success: (res) => {
-          if (res.statusCode === 200 && res.data.success) {
+          console.log('搜索建议返回:', res.data);
+          if (res.statusCode === 200 && res.data && res.data.success) {
             this.suggestList = res.data.data || [];
           } else {
             this.suggestList = [];
           }
+          this.showSuggest = this.suggestList.length > 0;
         },
         fail: () => {
           this.suggestList = [];
@@ -838,16 +876,19 @@ export default {
     searchLocationDirect(address) {
       uni.showLoading({ title: '搜索中...' });
       
+      const encodedAddress = encodeURIComponent(address);
+      
       uni.request({
-        url: 'http://localhost:8080/api/map/geocode',
+        url: `http://localhost:8080/api/map/geocode?address=${encodedAddress}`,
         method: 'GET',
-        data: { address: address },
         success: (res) => {
           uni.hideLoading();
-          if (res.statusCode === 200 && res.data.success) {
+          console.log('地理编码返回:', res.data);
+          
+          if (res.statusCode === 200 && res.data && res.data.success) {
             const lat = res.data.latitude;
             const lng = res.data.longitude;
-            const addr = res.data.address;
+            const addr = res.data.address || address;
             
             this.mapCenter = { latitude: lat, longitude: lng };
             this.markers = [{
@@ -864,9 +905,10 @@ export default {
             uni.showToast({ title: res.data?.message || '未找到该地点', icon: 'none' });
           }
         },
-        fail: () => {
+        fail: (err) => {
           uni.hideLoading();
-          uni.showToast({ title: '搜索失败', icon: 'none' });
+          console.error('地理编码失败:', err);
+          uni.showToast({ title: '搜索失败，请重试', icon: 'none' });
         }
       });
     },
@@ -891,12 +933,13 @@ export default {
       uni.showLoading({ title: '获取地址列表...' });
       
       uni.request({
-        url: 'http://localhost:8080/api/map/reverse-geocode',
+        url: `http://localhost:8080/api/map/reverse-geocode?lat=${lat}&lng=${lng}`,
         method: 'GET',
-        data: { lat: lat, lng: lng },
         success: (res) => {
           uni.hideLoading();
-          if (res.statusCode === 200 && res.data.success) {
+          console.log('逆地理编码返回:', res.data);
+          
+          if (res.statusCode === 200 && res.data && res.data.success) {
             this.nearbyPois = res.data.nearbyPois || [];
             if (res.data.address) {
               this.selectedLocation = {
@@ -912,8 +955,9 @@ export default {
             uni.showToast({ title: res.data?.message || '获取地址失败', icon: 'none' });
           }
         },
-        fail: () => {
+        fail: (err) => {
           uni.hideLoading();
+          console.error('逆地理编码失败:', err);
           uni.showToast({ title: '网络错误', icon: 'none' });
         }
       });
@@ -942,13 +986,21 @@ export default {
     },
     
     uploadCover() {
+      if (!this.checkMerchantStatus(false)) return;
+      
       uni.chooseImage({
         count: 1,
         success: (res) => {
           const tempFile = res.tempFilePaths[0];
           uni.showLoading({ title: '上传中...' });
           this.uploadImageToServer(tempFile, (url) => {
-            this.form.coverImage = url;
+            if (url) {
+              this.form.coverImage = url;
+              uni.showToast({ title: '封面上传成功', icon: 'success' });
+              console.log('封面上传成功，URL:', url);
+            } else {
+              uni.showToast({ title: '封面上传失败', icon: 'none' });
+            }
             uni.hideLoading();
           });
         }
@@ -956,23 +1008,46 @@ export default {
     },
     
     uploadDetailImage() {
+      if (!this.checkMerchantStatus(false)) return;
+      
       uni.chooseImage({
-        count: 9,
+        count: 9 - this.form.detailImages.length,
         success: (res) => {
+          if (this.form.detailImages.length + res.tempFilePaths.length > 9) {
+            uni.showToast({ title: '最多只能上传9张图片', icon: 'none' });
+            return;
+          }
+          
           uni.showLoading({ title: '上传中...' });
           const tempFiles = res.tempFilePaths;
           let completed = 0;
+          let uploadedUrls = [];
+          
           if (tempFiles.length === 0) {
             uni.hideLoading();
             return;
           }
+          
           tempFiles.forEach(file => {
             this.uploadImageToServer(file, (url) => {
               if (url) {
-                this.form.detailImages.push({ imageUrl: url });
+                uploadedUrls.push({ imageUrl: url });
+                console.log('图片上传成功，当前已上传数量:', uploadedUrls.length);
+              } else {
+                console.error('图片上传失败:', file);
               }
               completed++;
               if (completed === tempFiles.length) {
+                if (uploadedUrls.length > 0) {
+                  this.form.detailImages = [...this.form.detailImages, ...uploadedUrls];
+                  uni.showToast({ 
+                    title: `成功上传 ${uploadedUrls.length} 张图片`, 
+                    icon: 'success' 
+                  });
+                  console.log('更新后的详情图列表:', JSON.stringify(this.form.detailImages));
+                } else {
+                  uni.showToast({ title: '上传失败，请重试', icon: 'none' });
+                }
                 uni.hideLoading();
               }
             });
@@ -991,11 +1066,31 @@ export default {
         filePath: filePath,
         name: 'file',
         success: (res) => {
+          console.log('上传原始响应:', res.data);
+          
+          let imageUrl = null;
+          
           try {
             const data = JSON.parse(res.data);
-            callback(data.url || data);
+            imageUrl = data.url || data.data || data;
+            console.log('JSON解析成功');
           } catch (e) {
-            callback(res.data);
+            console.log('不是JSON格式，直接使用字符串');
+            imageUrl = res.data;
+            if (imageUrl.startsWith('"') && imageUrl.endsWith('"')) {
+              imageUrl = imageUrl.slice(1, -1);
+            }
+          }
+          
+          if (imageUrl) {
+            if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/file')) {
+              imageUrl = '/file/' + imageUrl;
+            }
+            console.log('图片上传成功，最终URL:', imageUrl);
+            callback(imageUrl);
+          } else {
+            console.error('获取图片URL失败');
+            callback(null);
           }
         },
         fail: (err) => {
@@ -1006,11 +1101,14 @@ export default {
     },
     
     submitHotel() {
+      if (!this.checkMerchantStatus(false)) return;
+      
       const userInfo = uni.getStorageSync('userInfo');
       const merchantId = userInfo && userInfo.id ? userInfo.id : null;
       
       console.log('=== 提交酒店 ===');
       console.log('商家ID:', merchantId);
+      console.log('详情图原始数据:', this.form.detailImages);
       
       if (!this.form.name || this.form.name.trim() === '') {
         uni.showToast({ title: '请输入酒店名称', icon: 'none' });
@@ -1034,6 +1132,19 @@ export default {
         return;
       }
       
+      let detailImagesData = [];
+      if (this.form.detailImages && this.form.detailImages.length > 0) {
+        detailImagesData = this.form.detailImages.map(img => {
+          if (typeof img === 'object' && img.imageUrl) {
+            return { imageUrl: img.imageUrl };
+          } else if (typeof img === 'string') {
+            return { imageUrl: img };
+          } else {
+            return { imageUrl: img };
+          }
+        });
+      }
+      
       const submitData = {
         name: this.form.name,
         category: this.form.category,
@@ -1042,13 +1153,15 @@ export default {
         price: parseFloat(this.form.price),
         totalRooms: this.form.totalRooms ? parseInt(this.form.totalRooms) : 0,
         coverImage: this.form.coverImage || '',
+        detailImages: detailImagesData,
         latitude: this.form.latitude,
         longitude: this.form.longitude,
         merchantId: merchantId,
         status: "营业中"
       };
       
-      console.log('提交数据:', JSON.stringify(submitData));
+      console.log('提交的详情图数据:', JSON.stringify(detailImagesData));
+      console.log('完整提交数据:', JSON.stringify(submitData));
       
       let url = '';
       let method = '';
@@ -1088,6 +1201,8 @@ export default {
     },
     
     deleteHotel(id) {
+      if (!this.checkMerchantStatus()) return;
+      
       if (!id) {
         console.error('删除失败：酒店ID为空');
         uni.showToast({ title: '删除失败', icon: 'none' });
@@ -1386,7 +1501,6 @@ export default {
   overflow: hidden;
 }
 
-/* 编辑房型弹窗容器 - 修复溢出问题 */
 .room-form-container {
   width: 90%;
   max-width: 650rpx;
@@ -1402,7 +1516,6 @@ export default {
   transform: translateY(-50%);
 }
 
-/* 弹窗主体滚动区域 - 确保内容不溢出 */
 .room-form-container .modal-body {
   flex: 1;
   padding: 30rpx;
@@ -1410,7 +1523,6 @@ export default {
   box-sizing: border-box;
 }
 
-/* 所有表单输入框确保不溢出父容器 */
 .room-form-container .form-item {
   margin-bottom: 30rpx;
   width: 100%;
@@ -1648,6 +1760,13 @@ export default {
   font-size: 28rpx;
 }
 
+.upload-tip {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 10rpx;
+  display: block;
+}
+
 /* 百度地图弹窗样式 */
 .map-modal-container {
   width: 100%;
@@ -1843,5 +1962,26 @@ export default {
 .map-confirm-btn {
   background-color: #f0e68c;
   color: #333;
+}
+.map-tip {
+  padding: 20rpx 30rpx;
+  background-color: #f0e68c;
+  border-bottom: 1px solid #e6d058;
+  text-align: center;
+}
+
+.map-tip-text {
+  font-size: 26rpx;
+  color: #8B6914;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.map-tip-text::before {
+  content: "📍";
+  font-size: 30rpx;
 }
 </style>

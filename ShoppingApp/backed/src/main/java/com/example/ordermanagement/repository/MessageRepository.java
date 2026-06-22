@@ -36,4 +36,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Transactional
     @Query("UPDATE Message m SET m.isRead = 1 WHERE m.username = :username AND m.merchantId = :merchantId AND m.senderRole = 'merchant'")
     void markAsReadForUser(@Param("username") String username, @Param("merchantId") String merchantId);
+
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.merchantId = :merchantId AND m.senderRole = 'user' AND m.isRead = 0")
+    Integer countTotalUnreadForMerchant(@Param("merchantId") String merchantId);
 }

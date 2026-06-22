@@ -24,6 +24,8 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 
     List<Flight> findByStatusOrderByDepartTimeAsc(String status);
 
+    List<Flight> findByStatusOrderByDepartTimeAscPriceAsc(String status);
+
     @Modifying
     @Transactional
     @Query("UPDATE Flight f SET f.remainingSeats = f.remainingSeats - 1 WHERE f.id = :id AND f.remainingSeats > 0")

@@ -5,12 +5,16 @@ const _sfc_main = {
     return {
       flightInfo: {},
       orderData: {
-        userName: "",
-        idCard: "",
-        userPhone: "",
         passengerCount: 1,
         loginUsername: ""
       },
+      passengerList: [
+        {
+          userName: "",
+          idCard: "",
+          userPhone: ""
+        }
+      ],
       passengerCounts: [1, 2, 3, 4, 5],
       isSubmitting: false
     };
@@ -30,9 +34,9 @@ const _sfc_main = {
     }
   },
   onLoad() {
-    common_vendor.index.__f__("log", "at pages/flight/order.vue:145", "订单页面加载");
+    common_vendor.index.__f__("log", "at pages/flight/order.vue:154", "订单页面加载");
     const flight = common_vendor.index.getStorageSync("selectedFlight");
-    common_vendor.index.__f__("log", "at pages/flight/order.vue:149", "获取到的航班信息：", flight);
+    common_vendor.index.__f__("log", "at pages/flight/order.vue:158", "获取到的航班信息：", flight);
     if (flight && Object.keys(flight).length > 0) {
       this.flightInfo = flight;
     } else {
@@ -59,12 +63,25 @@ const _sfc_main = {
         });
       }, 2e3);
     }
-    common_vendor.index.__f__("log", "at pages/flight/order.vue:182", "订单数据初始化完成", this.flightInfo);
+    common_vendor.index.__f__("log", "at pages/flight/order.vue:191", "订单数据初始化完成", this.flightInfo);
   },
   methods: {
     // 乘机人数变化
     onPassengerCountChange(e) {
-      this.orderData.passengerCount = this.passengerCounts[e.detail.value];
+      const newCount = this.passengerCounts[e.detail.value];
+      this.orderData.passengerCount = newCount;
+      const currentCount = this.passengerList.length;
+      if (newCount > currentCount) {
+        for (let i = currentCount; i < newCount; i++) {
+          this.passengerList.push({
+            userName: "",
+            idCard: "",
+            userPhone: ""
+          });
+        }
+      } else if (newCount < currentCount) {
+        this.passengerList = this.passengerList.slice(0, newCount);
+      }
     },
     // 格式化显示日期时间（用于页面展示）
     formatDisplayDateTime(dateTimeStr) {
@@ -90,13 +107,14 @@ const _sfc_main = {
         }
         return dateTimeStr;
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/flight/order.vue:217", "日期解析错误：", e);
+        common_vendor.index.__f__("error", "at pages/flight/order.vue:238", "日期解析错误：", e);
         return null;
       }
     },
-    // 提交订单
-    submitOrder() {
-      common_vendor.index.__f__("log", "at pages/flight/order.vue:224", "提交订单", this.orderData);
+    // 提交订单 - 为每个乘客单独创建订单
+    async submitOrder() {
+      common_vendor.index.__f__("log", "at pages/flight/order.vue:245", "提交订单", this.orderData);
+      common_vendor.index.__f__("log", "at pages/flight/order.vue:246", "乘机人列表", this.passengerList);
       if (!this.orderData.loginUsername) {
         common_vendor.index.showToast({ title: "请先登录", icon: "none" });
         setTimeout(() => {
@@ -106,83 +124,127 @@ const _sfc_main = {
         }, 1500);
         return;
       }
-      if (!this.orderData.userName || this.orderData.userName.trim() === "") {
-        common_vendor.index.showToast({ title: "请输入乘客姓名", icon: "none" });
-        return;
-      }
-      if (this.orderData.userName.length < 2) {
-        common_vendor.index.showToast({ title: "请输入真实姓名", icon: "none" });
-        return;
-      }
-      if (!this.orderData.idCard || this.orderData.idCard.trim() === "") {
-        common_vendor.index.showToast({ title: "请输入身份证号", icon: "none" });
-        return;
-      }
-      const idCardRegex = /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/;
-      if (!idCardRegex.test(this.orderData.idCard)) {
-        common_vendor.index.showToast({ title: "身份证号格式不正确", icon: "none" });
-        return;
-      }
-      if (!this.orderData.userPhone) {
-        common_vendor.index.showToast({ title: "请输入联系电话", icon: "none" });
-        return;
-      }
-      if (!/^1[3-9]\d{9}$/.test(this.orderData.userPhone)) {
-        common_vendor.index.showToast({ title: "手机号格式不正确", icon: "none" });
-        return;
-      }
-      const submitData = {
-        flightNumber: this.flightInfo.flightNumber,
-        departCity: this.departureCity,
-        arriveCity: this.arrivalCity,
-        departTime: this.formatDateTimeForSubmit(this.flightInfo.departureTime),
-        arriveTime: this.formatDateTimeForSubmit(this.flightInfo.arrivalTime),
-        price: this.totalPrice,
-        username: this.orderData.loginUsername,
-        passengerName: this.orderData.userName,
-        passengerIdCard: this.orderData.idCard,
-        contactPhone: this.orderData.userPhone,
-        status: "待支付"
-      };
-      common_vendor.index.__f__("log", "at pages/flight/order.vue:283", "提交的订单数据：", submitData);
-      this.isSubmitting = true;
-      common_vendor.index.showLoading({ title: "提交中..." });
-      common_vendor.index.request({
-        url: "http://localhost:8080/api/flight-orders",
-        method: "POST",
-        header: {
-          "Content-Type": "application/json"
-        },
-        data: submitData,
-        success: (res) => {
-          common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/flight/order.vue:298", "提交成功", res);
-          if (res.statusCode === 200 && res.data.code === 200) {
-            common_vendor.index.showToast({ title: "预订成功！", icon: "success" });
-            common_vendor.index.removeStorageSync("selectedFlight");
-            setTimeout(() => {
-              common_vendor.index.switchTab({
-                url: "/pages/profile/profile"
-              });
-            }, 1500);
-          } else {
-            common_vendor.index.showToast({
-              title: res.data.message || "提交失败，请重试",
-              icon: "none"
-            });
-          }
-        },
-        fail: (err) => {
-          common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/flight/order.vue:321", "提交订单失败：", err);
-          common_vendor.index.showToast({
-            title: "网络错误，请检查网络连接",
-            icon: "none"
-          });
-        },
-        complete: () => {
-          this.isSubmitting = false;
+      for (let i = 0; i < this.passengerList.length; i++) {
+        const passenger = this.passengerList[i];
+        const passengerNum = i + 1;
+        if (!passenger.userName || passenger.userName.trim() === "") {
+          common_vendor.index.showToast({ title: `请输入乘机人${passengerNum}的姓名`, icon: "none" });
+          return;
         }
+        if (passenger.userName.length < 2) {
+          common_vendor.index.showToast({ title: `请输入乘机人${passengerNum}的真实姓名`, icon: "none" });
+          return;
+        }
+        if (!passenger.idCard || passenger.idCard.trim() === "") {
+          common_vendor.index.showToast({ title: `请输入乘机人${passengerNum}的身份证号`, icon: "none" });
+          return;
+        }
+        const idCardRegex = /^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/;
+        if (!idCardRegex.test(passenger.idCard)) {
+          common_vendor.index.showToast({ title: `乘机人${passengerNum}身份证号格式不正确`, icon: "none" });
+          return;
+        }
+        if (!passenger.userPhone) {
+          common_vendor.index.showToast({ title: `请输入乘机人${passengerNum}的联系电话`, icon: "none" });
+          return;
+        }
+        if (!/^1[3-9]\d{9}$/.test(passenger.userPhone)) {
+          common_vendor.index.showToast({ title: `乘机人${passengerNum}手机号格式不正确`, icon: "none" });
+          return;
+        }
+      }
+      this.isSubmitting = true;
+      common_vendor.index.showLoading({ title: "正在提交订单...", mask: true });
+      const price = parseFloat(this.flightInfo.price) || 0;
+      let successCount = 0;
+      let failCount = 0;
+      for (let i = 0; i < this.passengerList.length; i++) {
+        const passenger = this.passengerList[i];
+        const passengerNum = i + 1;
+        const submitData = {
+          flightNumber: this.flightInfo.flightNumber,
+          departCity: this.departureCity,
+          arriveCity: this.arrivalCity,
+          departTime: this.formatDateTimeForSubmit(this.flightInfo.departureTime),
+          arriveTime: this.formatDateTimeForSubmit(this.flightInfo.arrivalTime),
+          price,
+          username: this.orderData.loginUsername,
+          passengerName: passenger.userName,
+          passengerIdCard: passenger.idCard,
+          contactPhone: passenger.userPhone,
+          status: "待支付"
+        };
+        common_vendor.index.__f__("log", "at pages/flight/order.vue:318", `提交第${passengerNum}个订单：`, submitData);
+        try {
+          const result = await this.createOrder(submitData);
+          if (result.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          common_vendor.index.__f__("error", "at pages/flight/order.vue:328", `第${passengerNum}个订单提交失败：`, error);
+          failCount++;
+        }
+      }
+      common_vendor.index.hideLoading();
+      if (successCount === this.passengerList.length) {
+        common_vendor.index.showToast({
+          title: `成功预订${successCount}个订单！`,
+          icon: "success"
+        });
+        common_vendor.index.removeStorageSync("selectedFlight");
+        setTimeout(() => {
+          common_vendor.index.switchTab({
+            url: "/pages/profile/profile"
+          });
+        }, 1500);
+      } else if (successCount > 0) {
+        common_vendor.index.showModal({
+          title: "提交结果",
+          content: `成功提交${successCount}个订单，失败${failCount}个，请检查后重试`,
+          showCancel: false,
+          success: () => {
+            if (successCount > 0) {
+              common_vendor.index.removeStorageSync("selectedFlight");
+              setTimeout(() => {
+                common_vendor.index.switchTab({
+                  url: "/pages/profile/profile"
+                });
+              }, 500);
+            }
+          }
+        });
+      } else {
+        common_vendor.index.showToast({
+          title: "订单提交失败，请重试",
+          icon: "none"
+        });
+      }
+      this.isSubmitting = false;
+    },
+    createOrder(submitData) {
+      return new Promise((resolve, reject) => {
+        common_vendor.index.request({
+          url: "http://localhost:8080/api/flight-orders",
+          method: "POST",
+          header: {
+            "Content-Type": "application/json"
+          },
+          data: submitData,
+          success: (res) => {
+            common_vendor.index.__f__("log", "at pages/flight/order.vue:384", "单个订单提交结果：", res);
+            if (res.statusCode === 200 && res.data.code === 200) {
+              resolve({ success: true, data: res.data });
+            } else {
+              resolve({ success: false, message: res.data.message || "提交失败" });
+            }
+          },
+          fail: (err) => {
+            common_vendor.index.__f__("error", "at pages/flight/order.vue:392", "订单提交失败：", err);
+            reject(err);
+          }
+        });
       });
     }
   }
@@ -197,19 +259,25 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($options.formatDisplayDateTime($data.flightInfo.arrivalTime)),
     g: common_vendor.t($data.flightInfo.duration || "--"),
     h: common_vendor.t($data.flightInfo.price || "--"),
-    i: $data.orderData.userName,
-    j: common_vendor.o(($event) => $data.orderData.userName = $event.detail.value),
-    k: $data.orderData.idCard,
-    l: common_vendor.o(($event) => $data.orderData.idCard = $event.detail.value),
-    m: $data.orderData.userPhone,
-    n: common_vendor.o(($event) => $data.orderData.userPhone = $event.detail.value),
-    o: common_vendor.t($data.orderData.passengerCount),
-    p: $data.passengerCounts,
-    q: common_vendor.o((...args) => $options.onPassengerCountChange && $options.onPassengerCountChange(...args)),
-    r: common_vendor.t($options.totalPrice),
-    s: common_vendor.t($data.isSubmitting ? "提交中..." : "提交订单"),
-    t: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args)),
-    v: $data.isSubmitting
+    i: common_vendor.t($data.orderData.passengerCount),
+    j: $data.passengerCounts,
+    k: common_vendor.o((...args) => $options.onPassengerCountChange && $options.onPassengerCountChange(...args)),
+    l: common_vendor.f($data.passengerList, (passenger, index, i0) => {
+      return {
+        a: common_vendor.t(index + 1),
+        b: passenger.userName,
+        c: common_vendor.o(($event) => passenger.userName = $event.detail.value, index),
+        d: passenger.idCard,
+        e: common_vendor.o(($event) => passenger.idCard = $event.detail.value, index),
+        f: passenger.userPhone,
+        g: common_vendor.o(($event) => passenger.userPhone = $event.detail.value, index),
+        h: index
+      };
+    }),
+    m: common_vendor.t($options.totalPrice),
+    n: common_vendor.t($data.isSubmitting ? "提交中..." : "提交订单"),
+    o: common_vendor.o((...args) => $options.submitOrder && $options.submitOrder(...args)),
+    p: $data.isSubmitting
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-197ccafb"]]);

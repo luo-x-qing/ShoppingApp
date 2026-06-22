@@ -97,7 +97,8 @@ const _sfc_main = {
           } else {
             hotelData = [];
           }
-          this.originalHotelList = hotelData.map((item) => {
+          const availableHotels = hotelData.filter((item) => item.status !== "已停业");
+          this.originalHotelList = availableHotels.map((item) => {
             const distanceValue = this.calculateDistanceValue(item.latitude, item.longitude);
             return {
               id: item.id,
@@ -117,7 +118,7 @@ const _sfc_main = {
           this.applySort();
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/category/category.vue:341", "请求失败:", err);
+          common_vendor.index.__f__("error", "at pages/category/category.vue:344", "请求失败:", err);
           common_vendor.index.showToast({ title: "加载失败", icon: "none" });
         },
         complete: () => {
@@ -145,7 +146,8 @@ const _sfc_main = {
           } else if (Array.isArray(res.data)) {
             hotelData = res.data;
           }
-          this.suggestList = hotelData.slice(0, 5).map((item) => ({
+          const availableHotels = hotelData.filter((item) => item.status !== "已停业");
+          this.suggestList = availableHotels.slice(0, 5).map((item) => ({
             id: item.id,
             name: item.name,
             category: item.category,
@@ -156,7 +158,7 @@ const _sfc_main = {
           this.showSuggest = this.suggestList.length > 0;
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/category/category.vue:386", "获取搜索建议失败:", err);
+          common_vendor.index.__f__("error", "at pages/category/category.vue:392", "获取搜索建议失败:", err);
         }
       });
     },

@@ -253,7 +253,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  transform: translateX(-40rpx);  /* 整体往左移动20rpx */
+  transform: translateX(-40rpx);
 }
 .message-right .message-bubble.data-v-d4a6fad9 {
   margin-right: 16rpx;

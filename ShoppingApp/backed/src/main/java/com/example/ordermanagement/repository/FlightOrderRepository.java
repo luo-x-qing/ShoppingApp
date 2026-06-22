@@ -10,9 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
+@Repository
 public interface FlightOrderRepository extends JpaRepository<FlightOrder, Long> {
     List<FlightOrder> findAllByOrderByIdDesc();
     List<FlightOrder> findByUsernameOrderByCreateTimeDesc(String username);
+    List<FlightOrder> findByStatus(String status);
+    List<FlightOrder> findByUsernameAndStatus(String username, String status);
 
     @Modifying
     @Transactional
