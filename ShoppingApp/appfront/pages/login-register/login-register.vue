@@ -1,5 +1,19 @@
 <template>
   <view class="container">
+    <!-- 背景装饰 -->
+    <view class="bg-decoration">
+      <view class="circle circle-1"></view>
+      <view class="circle circle-2"></view>
+      <view class="circle circle-3"></view>
+    </view>
+
+    <!-- Logo 区域 -->
+    <view class="logo-area">
+      <view class="logo-icon">🏨</view>
+      <text class="logo-text">旅游资源管理系统</text>
+      <text class="logo-slogan">探索世界，从心开始</text>
+    </view>
+
     <!-- 角色选择标签页 -->
     <view class="role-tabs">
       <view 
@@ -7,45 +21,106 @@
         :class="{ active: userRole === 'user' }" 
         @click="switchRole('user')"
       >
-        用户登录
+        <text class="tab-icon">👤</text>
+        <text>用户登录</text>
       </view>
       <view 
         class="tab-item" 
         :class="{ active: userRole === 'merchant' }" 
         @click="switchRole('merchant')"
       >
-        商家登录
+        <text class="tab-icon">🏪</text>
+        <text>商家登录</text>
       </view>
     </view>
 
     <!-- 登录表单 -->
-    <view class="form" v-if="isLogin">
-      <input class="input" placeholder="用户名" v-model="username" />
-      <input class="input" placeholder="密码" password="true" v-model="password" />
+    <view class="form-card" v-if="isLogin">
+      <view class="form-header">
+        <text class="form-title">欢迎回来</text>
+        <text class="form-subtitle">请登录您的账号</text>
+      </view>
       
-      <view class="button-group">
-        <button class="button" @click="login">登录</button>
-        <button class="button" @click="toggleForm">{{ isLogin ? '注册' : '返回登录' }}</button>
+      <view class="form-body">
+        <view class="input-group">
+          <view class="input-icon">👤</view>
+          <input class="input" placeholder="用户名" v-model="username" />
+        </view>
+        
+        <view class="input-group">
+          <view class="input-icon">🔒</view>
+          <input class="input" placeholder="密码" password="true" v-model="password" />
+        </view>
+        
+        <view class="options-row">
+          <label class="checkbox">
+            <checkbox value="remember" :checked="rememberPwd" @click="rememberPwd = !rememberPwd" />
+            <text>记住密码</text>
+          </label>
+          <text class="forgot-pwd">忘记密码？</text>
+        </view>
+        
+        <button class="login-btn" @click="login">登录</button>
+        
+        <view class="register-tip">
+          <text>还没有账号？</text>
+          <text class="register-link" @click="toggleForm">立即注册</text>
+        </view>
       </view>
     </view>
 
     <!-- 注册表单 -->
-    <view class="form" v-else>
-      <input class="input" placeholder="用户名" v-model="username" />
-      <input class="input" placeholder="密码" password="true" v-model="password" />
-      <input class="input" placeholder="确认密码" password="true" v-model="confirmPassword" />
-      
-      <!-- 商家注册时额外填写的信息 -->
-      <view v-if="userRole === 'merchant'">
-        <input class="input" placeholder="商家名称" v-model="shopName" />
-        <input class="input" placeholder="联系电话" v-model="phone" />
-        <input class="input" placeholder="电子邮箱" v-model="email" />
-        <input class="input" placeholder="商家简介" v-model="shopDescription" />
+    <view class="form-card" v-else>
+      <view class="form-header">
+        <text class="form-title">创建账号</text>
+        <text class="form-subtitle">{{ userRole === 'merchant' ? '加入商家平台' : '开启旅游之旅' }}</text>
       </view>
       
-      <view class="button-group">
-        <button class="button" @click="register">注册</button>
-        <button class="button" @click="toggleForm">返回登录</button>
+      <view class="form-body">
+        <view class="input-group">
+          <view class="input-icon">👤</view>
+          <input class="input" placeholder="用户名" v-model="username" />
+        </view>
+        
+        <view class="input-group">
+          <view class="input-icon">🔒</view>
+          <input class="input" placeholder="密码" password="true" v-model="password" />
+        </view>
+        
+        <view class="input-group">
+          <view class="input-icon">✓</view>
+          <input class="input" placeholder="确认密码" password="true" v-model="confirmPassword" />
+        </view>
+        
+        <!-- 商家注册时额外填写的信息 -->
+        <view v-if="userRole === 'merchant'">
+          <view class="input-group">
+            <view class="input-icon">🏢</view>
+            <input class="input" placeholder="商家名称" v-model="shopName" />
+          </view>
+          
+          <view class="input-group">
+            <view class="input-icon">📞</view>
+            <input class="input" placeholder="联系电话" v-model="phone" type="number" />
+          </view>
+          
+          <view class="input-group">
+            <view class="input-icon">📧</view>
+            <input class="input" placeholder="电子邮箱" v-model="email" type="email" />
+          </view>
+          
+          <view class="input-group textarea-group">
+            <view class="input-icon">📝</view>
+            <textarea class="input textarea" placeholder="商家简介（选填）" v-model="shopDescription" maxlength="200" />
+          </view>
+        </view>
+        
+        <button class="register-btn" @click="register">注册</button>
+        
+        <view class="register-tip">
+          <text>已有账号？</text>
+          <text class="register-link" @click="toggleForm">返回登录</text>
+        </view>
       </view>
     </view>
 
@@ -53,7 +128,7 @@
     <view class="modal-mask" v-if="showAppealModal" @click="closeAppealModal">
       <view class="modal-container" @click.stop>
         <view class="modal-header">
-          <text class="modal-title">联系管理员</text>
+          <text class="modal-title">📢 联系管理员</text>
           <text class="modal-close" @click="closeAppealModal">×</text>
         </view>
         <scroll-view class="modal-body" scroll-y>
@@ -66,21 +141,24 @@
               <text class="info-label">用户名：</text>
               <text class="info-value">{{ appealUsername }}</text>
             </view>
-            <view class="info-item">
+            <view class="info-item" v-if="appealShopName">
               <text class="info-label">商家名称：</text>
-              <text class="info-value">{{ appealShopName || '无' }}</text>
+              <text class="info-value">{{ appealShopName }}</text>
             </view>
           </view>
           
           <view class="form-item">
-            <text class="label">申诉类型</text>
+            <text class="label">申诉类型 <text class="required">*</text></text>
             <picker :range="appealTypes" @change="onAppealTypeChange">
-              <view class="picker">{{ appealType || '请选择申诉类型' }}</view>
+              <view class="picker">
+                {{ appealType || '请选择申诉类型' }}
+                <text class="picker-arrow">›</text>
+              </view>
             </picker>
           </view>
           
           <view class="form-item">
-            <text class="label">申诉内容</text>
+            <text class="label">申诉内容 <text class="required">*</text></text>
             <textarea 
               class="appeal-textarea" 
               v-model="appealContent" 
@@ -92,12 +170,12 @@
           </view>
           
           <view class="form-item">
-            <text class="label">联系方式</text>
+            <text class="label">联系方式 <text class="required">*</text></text>
             <input class="input" v-model="contactInfo" placeholder="请输入您的联系电话或邮箱" />
           </view>
           
           <view class="contact-tips">
-            <text class="tips-icon">📞</text>
+            <text class="tips-icon">💡</text>
             <text class="tips-text">也可直接联系管理员：admin@example.com | 客服电话：400-123-4567</text>
           </view>
         </scroll-view>
@@ -122,6 +200,7 @@ export default {
       phone: '',
       email: '',
       shopDescription: '',
+      rememberPwd: false,
       
       // 界面状态
       isLogin: true,
@@ -154,6 +233,16 @@ export default {
       return '';
     }
   },
+  onLoad() {
+    // 检查是否有记住的密码
+    const savedUsername = uni.getStorageSync('savedUsername');
+    const savedPassword = uni.getStorageSync('savedPassword');
+    if (savedUsername && savedPassword) {
+      this.username = savedUsername;
+      this.password = savedPassword;
+      this.rememberPwd = true;
+    }
+  },
   methods: {
     switchRole(role) {
       this.userRole = role;
@@ -180,7 +269,6 @@ export default {
     },
     
     openAppealModal(username, shopName, status) {
-      console.log('打开申诉弹窗:', {username, shopName, status});
       this.appealUsername = username;
       this.appealShopName = shopName || '';
       this.appealStatus = status;
@@ -256,6 +344,15 @@ export default {
         return;
       }
       
+      // 记住密码
+      if (this.rememberPwd) {
+        uni.setStorageSync('savedUsername', this.username);
+        uni.setStorageSync('savedPassword', this.password);
+      } else {
+        uni.removeStorageSync('savedUsername');
+        uni.removeStorageSync('savedPassword');
+      }
+      
       const loginUrl = 'http://localhost:8080/api/users/login';
       
       uni.showLoading({ title: '登录中...' });
@@ -269,15 +366,11 @@ export default {
         },
         success: (res) => {
           uni.hideLoading();
-          console.log('登录返回完整数据:', JSON.stringify(res.data));
           
           if (res.statusCode === 200 && res.data) {
             const userData = res.data;
             
-            console.log('用户数据字段:', Object.keys(userData));
-            console.log('status值:', userData.status);
-            console.log('role值:', userData.role);
-            
+            // 角色验证
             if (this.userRole === 'merchant' && userData.role !== 'MERCHANT') {
               uni.showToast({ title: '该账号不是商家账号', icon: 'none' });
               return;
@@ -289,69 +382,51 @@ export default {
             
             // 商家状态检查
             if (this.userRole === 'merchant') {
-              const status = userData.status || 'NORMAL';
-              const statusUpper = status.toUpperCase();
-              console.log('处理后的状态:', statusUpper);
+              const status = (userData.status || 'NORMAL').toUpperCase();
               
-              if (statusUpper === 'PENDING') {
-                console.log('弹出待审核提示');
+              if (status === 'PENDING') {
                 uni.showModal({
                   title: '账号待审核',
                   content: '您的商家账号正在审核中，请等待管理员审核。如需联系管理员，请点击申诉。',
                   confirmText: '申诉',
                   cancelText: '知道了',
                   success: (modalRes) => {
-                    console.log('弹窗结果:', modalRes);
                     if (modalRes.confirm) {
                       this.openAppealModal(userData.username, userData.shopName, 'PENDING');
                     }
                   }
                 });
                 return;
-              } else if (statusUpper === 'REJECTED') {
-                console.log('弹出已拒绝提示');
+              } else if (status === 'REJECTED') {
                 uni.showModal({
                   title: '审核未通过',
                   content: '您的商家账号审核未通过。如需申诉或了解详情，请联系管理员。',
                   confirmText: '申诉',
                   cancelText: '知道了',
                   success: (modalRes) => {
-                    console.log('弹窗结果:', modalRes);
                     if (modalRes.confirm) {
                       this.openAppealModal(userData.username, userData.shopName, 'REJECTED');
                     }
                   }
                 });
                 return;
-              } else if (statusUpper === 'BANNED') {
-                console.log('=== 进入 BANNED 分支，准备弹窗 ===');
+              } else if (status === 'BANNED') {
                 uni.showModal({
                   title: '账号已禁用',
                   content: '您的商家账号已被禁用。如需申诉，请联系管理员。',
                   confirmText: '申诉',
                   cancelText: '知道了',
                   success: (modalRes) => {
-                    console.log('BANNED弹窗点击结果:', modalRes);
                     if (modalRes.confirm) {
-                      console.log('用户点击了申诉，打开申诉弹窗');
                       this.openAppealModal(userData.username, userData.shopName, 'BANNED');
                     }
-                  },
-                  fail: (err) => {
-                    console.error('showModal 失败:', err);
-                    uni.showToast({
-                      title: '账号已禁用，请联系管理员',
-                      icon: 'none',
-                      duration: 3000
-                    });
                   }
                 });
                 return;
-              } else if (statusUpper !== 'NORMAL') {
+              } else if (status !== 'NORMAL') {
                 uni.showToast({ 
-                  title: '账号状态异常(' + statusUpper + ')，请联系管理员', 
-                  icon: 'none',
-                  duration: 2000
+                  title: '账号状态异常(' + status + ')，请联系管理员', 
+                  icon: 'none'
                 });
                 return;
               }
@@ -387,15 +462,14 @@ export default {
             });
           } else {
             uni.showToast({
-              title: res.data?.message || '登录失败',
+              title: res.data?.message || '用户名或密码错误',
               icon: 'none'
             });
           }
         },
-        fail: (err) => {
+        fail: () => {
           uni.hideLoading();
-          console.error('登录请求失败:', err);
-          uni.showToast({ title: '网络异常', icon: 'none' });
+          uni.showToast({ title: '网络异常，请稍后重试', icon: 'none' });
         }
       });
     },
@@ -408,6 +482,10 @@ export default {
       }
       if (this.password !== this.confirmPassword) {
         uni.showToast({ title: '两次密码不一致', icon: 'none' });
+        return;
+      }
+      if (this.password.length < 6) {
+        uni.showToast({ title: '密码至少6位', icon: 'none' });
         return;
       }
       
@@ -446,7 +524,6 @@ export default {
         data: requestData,
         success: (res) => {
           uni.hideLoading();
-          console.log('注册返回:', res.data);
           
           if (res.statusCode === 200 && res.data.success) {
             if (this.userRole === 'merchant') {
@@ -457,10 +534,7 @@ export default {
                 showCancel: false
               });
             } else {
-              uni.showToast({ 
-                title: '注册成功', 
-                icon: 'success' 
-              });
+              uni.showToast({ title: '注册成功', icon: 'success' });
             }
             this.isLogin = true;
             this.clearForm();
@@ -481,77 +555,258 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
-  background-color: #fffde7;
-  padding: 20px;
+  justify-content: center;
+  padding: 40rpx;
 }
 
+/* 背景装饰 */
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.circle-1 {
+  width: 600rpx;
+  height: 600rpx;
+  top: -200rpx;
+  right: -200rpx;
+}
+
+.circle-2 {
+  width: 400rpx;
+  height: 400rpx;
+  bottom: -100rpx;
+  left: -100rpx;
+}
+
+.circle-3 {
+  width: 300rpx;
+  height: 300rpx;
+  top: 40%;
+  left: -100rpx;
+}
+
+/* Logo 区域 */
+.logo-area {
+  text-align: center;
+  margin-bottom: 60rpx;
+  z-index: 1;
+}
+
+.logo-icon {
+  font-size: 80rpx;
+  width: 140rpx;
+  height: 140rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 70rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20rpx;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+
+.logo-text {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 12rpx;
+}
+
+.logo-slogan {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 角色选择标签页 */
 .role-tabs {
   display: flex;
-  width: 80%;
-  margin-bottom: 30rpx;
-  background-color: #fff9e6;
-  border-radius: 16rpx;
-  overflow: hidden;
-  border: 1px solid #f0e68c;
+  width: 100%;
+  max-width: 600rpx;
+  margin-bottom: 40rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 60rpx;
+  padding: 8rpx;
+  backdrop-filter: blur(10px);
+  z-index: 1;
 }
 
 .tab-item {
   flex: 1;
-  text-align: center;
-  padding: 20rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx 0;
   font-size: 28rpx;
-  color: #666;
-  background-color: #fff9e6;
-  transition: all 0.3s;
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 56rpx;
+  transition: all 0.3s ease;
 }
 
 .tab-item.active {
-  background-color: #f0e68c;
-  color: #333;
-  font-weight: bold;
+  background: #fff;
+  color: #667eea;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
-.form {
-  width: 80%;
-  background-color: #fff9e6;
-  padding: 30rpx;
-  border-radius: 10px;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+.tab-icon {
+  font-size: 32rpx;
+}
+
+/* 表单卡片 */
+.form-card {
+  width: 100%;
+  max-width: 600rpx;
+  background: #fff;
+  border-radius: 48rpx;
+  overflow: hidden;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.form-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 48rpx 40rpx;
+  text-align: center;
+}
+
+.form-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 12rpx;
+}
+
+.form-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.form-body {
+  padding: 48rpx 40rpx;
+}
+
+/* 输入框组 */
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #f5f7fa;
+  border-radius: 60rpx;
+  margin-bottom: 24rpx;
+  padding: 8rpx 24rpx;
+  transition: all 0.3s ease;
+}
+
+.input-group:focus-within {
+  background: #fff;
+  box-shadow: 0 0 0 2rpx #667eea;
+}
+
+.input-icon {
+  font-size: 36rpx;
+  margin-right: 16rpx;
+  color: #999;
 }
 
 .input {
-  margin-bottom: 20rpx;
-  padding: 20rpx;
-  border: 1px solid #f0e68c;
-  border-radius: 8rpx;
-  background-color: #fff;
+  flex: 1;
+  padding: 24rpx 0;
   font-size: 28rpx;
+  background: transparent;
 }
 
-.button-group {
+.textarea-group {
+  align-items: flex-start;
+  padding-top: 20rpx;
+}
+
+.textarea {
+  min-height: 120rpx;
+  line-height: 1.5;
+}
+
+/* 选项行 */
+.options-row {
   display: flex;
   justify-content: space-between;
-  margin-top: 20rpx;
+  align-items: center;
+  margin-bottom: 40rpx;
+  padding: 0 8rpx;
 }
 
-.button {
-  padding: 20rpx;
-  background-color: #f0e68c;
-  color: #333;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  flex: 1;
-  margin: 0 6rpx;
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 24rpx;
+  color: #666;
 }
 
-/* 申诉弹窗样式 */
+.checkbox checkbox {
+  transform: scale(0.8);
+}
+
+.forgot-pwd {
+  font-size: 24rpx;
+  color: #667eea;
+}
+
+/* 按钮 */
+.login-btn, .register-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 60rpx;
+  padding: 28rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.3);
+}
+
+.login-btn:active, .register-btn:active {
+  transform: scale(0.98);
+}
+
+.register-tip {
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
+}
+
+.register-link {
+  color: #667eea;
+  margin-left: 12rpx;
+  font-weight: 500;
+}
+
+/* 申诉弹窗 */
 .modal-mask {
   position: fixed;
   top: 0;
@@ -569,7 +824,7 @@ export default {
   width: 85%;
   max-height: 85vh;
   background-color: #fff;
-  border-radius: 30rpx;
+  border-radius: 48rpx;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -579,12 +834,12 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
+  padding: 32rpx;
   border-bottom: 1px solid #eee;
 }
 
 .modal-title {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #333;
 }
@@ -597,14 +852,14 @@ export default {
 
 .modal-body {
   flex: 1;
-  padding: 30rpx;
+  padding: 32rpx;
   max-height: 60vh;
   overflow-y: auto;
 }
 
 .modal-footer {
   display: flex;
-  padding: 20rpx 30rpx;
+  padding: 24rpx 32rpx;
   border-top: 1px solid #eee;
   gap: 20rpx;
   padding-bottom: 40rpx;
@@ -612,7 +867,7 @@ export default {
 
 .cancel-btn, .submit-btn {
   flex: 1;
-  border-radius: 50rpx;
+  border-radius: 60rpx;
   padding: 24rpx;
   font-size: 28rpx;
   border: none;
@@ -624,37 +879,48 @@ export default {
 }
 
 .submit-btn {
-  background-color: #f0e68c;
-  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
 }
 
 .form-item {
-  margin-bottom: 30rpx;
+  margin-bottom: 32rpx;
 }
 
 .label {
   font-size: 28rpx;
   color: #333;
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
   font-weight: 500;
+}
+
+.required {
+  color: #ff4757;
 }
 
 .picker {
   width: 100%;
   padding: 24rpx;
   border: 1px solid #e0e0e0;
-  border-radius: 12rpx;
+  border-radius: 60rpx;
   font-size: 28rpx;
   background-color: #fff;
-  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.picker-arrow {
+  font-size: 36rpx;
+  color: #ccc;
 }
 
 .appeal-textarea {
   width: 100%;
-  min-height: 150rpx;
+  min-height: 180rpx;
   border: 1px solid #e0e0e0;
-  border-radius: 12rpx;
+  border-radius: 24rpx;
   padding: 20rpx;
   font-size: 28rpx;
   box-sizing: border-box;
@@ -670,18 +936,22 @@ export default {
 
 .appeal-info {
   background-color: #f8f9fa;
-  padding: 20rpx;
-  border-radius: 12rpx;
-  margin-bottom: 30rpx;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  margin-bottom: 32rpx;
 }
 
 .info-item {
   display: flex;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
 }
 
 .info-label {
-  width: 140rpx;
+  width: 160rpx;
   font-size: 26rpx;
   color: #666;
 }
@@ -690,6 +960,7 @@ export default {
   flex: 1;
   font-size: 26rpx;
   color: #333;
+  font-weight: 500;
 }
 
 .status-pending {
@@ -708,8 +979,8 @@ export default {
   display: flex;
   align-items: center;
   padding: 20rpx;
-  background-color: #fff9e6;
-  border-radius: 12rpx;
+  background: linear-gradient(135deg, #fff9e6, #fff5d9);
+  border-radius: 20rpx;
   margin-top: 20rpx;
 }
 
@@ -722,5 +993,6 @@ export default {
   font-size: 24rpx;
   color: #999;
   flex: 1;
+  line-height: 1.4;
 }
 </style>

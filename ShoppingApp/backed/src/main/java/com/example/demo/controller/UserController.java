@@ -37,22 +37,26 @@ public class UserController {
     @PostMapping("/register-merchant")
     public ResponseEntity<Map<String, Object>> registerMerchant(@RequestBody User user) {
         Map<String, Object> response = new HashMap<>();
+
         if (userService.findByUsername(user.getUsername()) != null) {
             response.put("success", false);
             response.put("message", "用户名已存在");
             return ResponseEntity.badRequest().body(response);
         }
+
         if (user.getShopName() == null || user.getShopName().isEmpty()) {
             response.put("success", false);
             response.put("message", "请填写商家名称");
             return ResponseEntity.badRequest().body(response);
         }
+
         User merchant = userService.registerMerchant(
                 user.getUsername(),
                 user.getPassword(),
                 user.getShopName(),
                 user.getPhone()
         );
+
         response.put("success", true);
         response.put("message", "商家注册成功，请等待管理员审核");
         response.put("merchantId", merchant.getId());
@@ -62,14 +66,30 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestBody User user) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody User user) {
         User loggedInUser = userService.login(user.getUsername(), user.getPassword());
         if (loggedInUser != null) {
+            System.out.println("========== 登录调试 ==========");
             System.out.println("登录用户: " + loggedInUser.getUsername());
             System.out.println("用户状态: " + loggedInUser.getStatus());
             System.out.println("用户角色: " + loggedInUser.getRole());
-            loggedInUser.setPassword(null);
-            return ResponseEntity.ok(loggedInUser);
+            System.out.println("生成的token: " + loggedInUser.getToken());
+            System.out.println("token是否为null: " + (loggedInUser.getToken() == null));
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", loggedInUser.getId());
+            response.put("username", loggedInUser.getUsername());
+            response.put("role", loggedInUser.getRole());
+            response.put("status", loggedInUser.getStatus());
+            response.put("token", loggedInUser.getToken());
+            response.put("shopName", loggedInUser.getShopName());
+            response.put("phone", loggedInUser.getPhone());
+            response.put("email", loggedInUser.getEmail());
+            response.put("avatar", loggedInUser.getAvatar());
+            response.put("gender", loggedInUser.getGender());
+            response.put("age", loggedInUser.getAge());
+
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(401).body(null);
         }
@@ -92,18 +112,56 @@ public class UserController {
 
     @PutMapping("/profile")
     public ResponseEntity<User> updateProfile(@RequestHeader("Authorization") String token,
-                                              @RequestBody User userInfo) {
-        String tokenValue = token.substring(7);
-        User currentUser = userService.getUserByToken(tokenValue);
-        if (currentUser == null) {
-            return ResponseEntity.status(401).body(null);
+                                              @RequestBody Map<String, Object> updates) {
+        try {
+            String tokenValue = token.substring(7);
+            User currentUser = userService.getUserByToken(tokenValue);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(null);
+            }
+
+            User updateData = new User();
+
+            if (updates.containsKey("username")) {
+                updateData.setUsername((String) updates.get("username"));
+            }
+            if (updates.containsKey("phone")) {
+                updateData.setPhone((String) updates.get("phone"));
+            }
+            if (updates.containsKey("email")) {
+                updateData.setEmail((String) updates.get("email"));
+            }
+            if (updates.containsKey("avatar")) {
+                updateData.setAvatar((String) updates.get("avatar"));
+            }
+            if (updates.containsKey("gender")) {
+                updateData.setGender((String) updates.get("gender"));
+            }
+            if (updates.containsKey("age")) {
+                Object age = updates.get("age");
+                if (age instanceof Integer) {
+                    updateData.setAge((Integer) age);
+                } else if (age instanceof String) {
+                    try {
+                        updateData.setAge(Integer.parseInt((String) age));
+                    } catch (NumberFormatException e) {}
+                }
+            }
+            if (updates.containsKey("password")) {
+                updateData.setPassword((String) updates.get("password"));
+            }
+
+            User updated = userService.updateUser(currentUser.getId(), updateData);
+            if (updated != null) {
+                updated.setPassword(null);
+                updated.setToken(null);
+                return ResponseEntity.ok(updated);
+            }
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(null);
         }
-        User updated = userService.updateUser(currentUser.getId(), userInfo);
-        if (updated != null) {
-            updated.setPassword(null);
-            return ResponseEntity.ok(updated);
-        }
-        return ResponseEntity.badRequest().body(null);
     }
 
     @GetMapping("/check-banned")
@@ -111,11 +169,13 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         String tokenValue = token.substring(7);
         User user = userService.getUserByToken(tokenValue);
+
         if (user == null) {
             response.put("isBanned", false);
             response.put("message", "未登录");
             return ResponseEntity.ok(response);
         }
+
         response.put("isBanned", "BANNED".equals(user.getStatus()));
         response.put("userId", user.getId());
         response.put("role", user.getRole());
@@ -142,6 +202,7 @@ public class UserController {
         if (merchant == null || !"MERCHANT".equals(merchant.getRole())) {
             return ResponseEntity.status(403).body(null);
         }
+
         User updated = userService.updateMerchantInfo(merchant.getId(), userInfo);
         if (updated != null) {
             updated.setPassword(null);
@@ -155,11 +216,13 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         String tokenValue = token.substring(7);
         User user = userService.getUserByToken(tokenValue);
+
         if (user == null) {
             response.put("isMerchant", false);
             response.put("message", "未登录");
             return ResponseEntity.ok(response);
         }
+
         response.put("isMerchant", "MERCHANT".equals(user.getRole()));
         response.put("merchantId", user.getId());
         response.put("shopName", user.getShopName());

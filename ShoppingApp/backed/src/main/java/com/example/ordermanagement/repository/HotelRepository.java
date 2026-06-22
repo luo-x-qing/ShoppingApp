@@ -14,7 +14,9 @@ public interface HotelRepository extends JpaRepository<Hotel, Long> {
     List<Hotel> findByMerchantId(Long merchantId);
     
     Hotel findByName(String name);
-    
+
+    long countByStatus(String status);
+
     @Query("SELECT h FROM Hotel h WHERE h.status = '营业中' ORDER BY h.price ASC")
     List<Hotel> findAllOrderByPriceAsc();
     

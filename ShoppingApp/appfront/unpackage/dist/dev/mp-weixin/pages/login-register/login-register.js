@@ -11,6 +11,7 @@ const _sfc_main = {
       phone: "",
       email: "",
       shopDescription: "",
+      rememberPwd: false,
       // 界面状态
       isLogin: true,
       userRole: "user",
@@ -47,6 +48,15 @@ const _sfc_main = {
       return "";
     }
   },
+  onLoad() {
+    const savedUsername = common_vendor.index.getStorageSync("savedUsername");
+    const savedPassword = common_vendor.index.getStorageSync("savedPassword");
+    if (savedUsername && savedPassword) {
+      this.username = savedUsername;
+      this.password = savedPassword;
+      this.rememberPwd = true;
+    }
+  },
   methods: {
     switchRole(role) {
       this.userRole = role;
@@ -69,7 +79,6 @@ const _sfc_main = {
       this.appealType = this.appealTypes[e.detail.value];
     },
     openAppealModal(username, shopName, status) {
-      common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:183", "打开申诉弹窗:", { username, shopName, status });
       this.appealUsername = username;
       this.appealShopName = shopName || "";
       this.appealStatus = status;
@@ -140,6 +149,13 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请输入账号密码", icon: "none" });
         return;
       }
+      if (this.rememberPwd) {
+        common_vendor.index.setStorageSync("savedUsername", this.username);
+        common_vendor.index.setStorageSync("savedPassword", this.password);
+      } else {
+        common_vendor.index.removeStorageSync("savedUsername");
+        common_vendor.index.removeStorageSync("savedPassword");
+      }
       const loginUrl = "http://localhost:8080/api/users/login";
       common_vendor.index.showLoading({ title: "登录中..." });
       common_vendor.index.request({
@@ -152,12 +168,8 @@ const _sfc_main = {
         success: (res) => {
           var _a;
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:272", "登录返回完整数据:", JSON.stringify(res.data));
           if (res.statusCode === 200 && res.data) {
             const userData = res.data;
-            common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:277", "用户数据字段:", Object.keys(userData));
-            common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:278", "status值:", userData.status);
-            common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:279", "role值:", userData.role);
             if (this.userRole === "merchant" && userData.role !== "MERCHANT") {
               common_vendor.index.showToast({ title: "该账号不是商家账号", icon: "none" });
               return;
@@ -167,68 +179,50 @@ const _sfc_main = {
               return;
             }
             if (this.userRole === "merchant") {
-              const status = userData.status || "NORMAL";
-              const statusUpper = status.toUpperCase();
-              common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:294", "处理后的状态:", statusUpper);
-              if (statusUpper === "PENDING") {
-                common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:297", "弹出待审核提示");
+              const status = (userData.status || "NORMAL").toUpperCase();
+              if (status === "PENDING") {
                 common_vendor.index.showModal({
                   title: "账号待审核",
                   content: "您的商家账号正在审核中，请等待管理员审核。如需联系管理员，请点击申诉。",
                   confirmText: "申诉",
                   cancelText: "知道了",
                   success: (modalRes) => {
-                    common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:304", "弹窗结果:", modalRes);
                     if (modalRes.confirm) {
                       this.openAppealModal(userData.username, userData.shopName, "PENDING");
                     }
                   }
                 });
                 return;
-              } else if (statusUpper === "REJECTED") {
-                common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:312", "弹出已拒绝提示");
+              } else if (status === "REJECTED") {
                 common_vendor.index.showModal({
                   title: "审核未通过",
                   content: "您的商家账号审核未通过。如需申诉或了解详情，请联系管理员。",
                   confirmText: "申诉",
                   cancelText: "知道了",
                   success: (modalRes) => {
-                    common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:319", "弹窗结果:", modalRes);
                     if (modalRes.confirm) {
                       this.openAppealModal(userData.username, userData.shopName, "REJECTED");
                     }
                   }
                 });
                 return;
-              } else if (statusUpper === "BANNED") {
-                common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:327", "=== 进入 BANNED 分支，准备弹窗 ===");
+              } else if (status === "BANNED") {
                 common_vendor.index.showModal({
                   title: "账号已禁用",
                   content: "您的商家账号已被禁用。如需申诉，请联系管理员。",
                   confirmText: "申诉",
                   cancelText: "知道了",
                   success: (modalRes) => {
-                    common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:334", "BANNED弹窗点击结果:", modalRes);
                     if (modalRes.confirm) {
-                      common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:336", "用户点击了申诉，打开申诉弹窗");
                       this.openAppealModal(userData.username, userData.shopName, "BANNED");
                     }
-                  },
-                  fail: (err) => {
-                    common_vendor.index.__f__("error", "at pages/login-register/login-register.vue:341", "showModal 失败:", err);
-                    common_vendor.index.showToast({
-                      title: "账号已禁用，请联系管理员",
-                      icon: "none",
-                      duration: 3e3
-                    });
                   }
                 });
                 return;
-              } else if (statusUpper !== "NORMAL") {
+              } else if (status !== "NORMAL") {
                 common_vendor.index.showToast({
-                  title: "账号状态异常(" + statusUpper + ")，请联系管理员",
-                  icon: "none",
-                  duration: 2e3
+                  title: "账号状态异常(" + status + ")，请联系管理员",
+                  icon: "none"
                 });
                 return;
               }
@@ -261,15 +255,14 @@ const _sfc_main = {
             });
           } else {
             common_vendor.index.showToast({
-              title: ((_a = res.data) == null ? void 0 : _a.message) || "登录失败",
+              title: ((_a = res.data) == null ? void 0 : _a.message) || "用户名或密码错误",
               icon: "none"
             });
           }
         },
-        fail: (err) => {
+        fail: () => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/login-register/login-register.vue:397", "登录请求失败:", err);
-          common_vendor.index.showToast({ title: "网络异常", icon: "none" });
+          common_vendor.index.showToast({ title: "网络异常，请稍后重试", icon: "none" });
         }
       });
     },
@@ -281,6 +274,10 @@ const _sfc_main = {
       }
       if (this.password !== this.confirmPassword) {
         common_vendor.index.showToast({ title: "两次密码不一致", icon: "none" });
+        return;
+      }
+      if (this.password.length < 6) {
+        common_vendor.index.showToast({ title: "密码至少6位", icon: "none" });
         return;
       }
       if (this.userRole === "merchant") {
@@ -313,7 +310,6 @@ const _sfc_main = {
         success: (res) => {
           var _a;
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/login-register/login-register.vue:449", "注册返回:", res.data);
           if (res.statusCode === 200 && res.data.success) {
             if (this.userRole === "merchant") {
               common_vendor.index.showModal({
@@ -323,10 +319,7 @@ const _sfc_main = {
                 showCancel: false
               });
             } else {
-              common_vendor.index.showToast({
-                title: "注册成功",
-                icon: "success"
-              });
+              common_vendor.index.showToast({ title: "注册成功", icon: "success" });
             }
             this.isLogin = true;
             this.clearForm();
@@ -357,52 +350,57 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.o(($event) => $data.username = $event.detail.value),
     h: $data.password,
     i: common_vendor.o(($event) => $data.password = $event.detail.value),
-    j: common_vendor.o((...args) => $options.login && $options.login(...args)),
-    k: common_vendor.t($data.isLogin ? "注册" : "返回登录"),
-    l: common_vendor.o((...args) => $options.toggleForm && $options.toggleForm(...args))
+    j: $data.rememberPwd,
+    k: common_vendor.o(($event) => $data.rememberPwd = !$data.rememberPwd),
+    l: common_vendor.o((...args) => $options.login && $options.login(...args)),
+    m: common_vendor.o((...args) => $options.toggleForm && $options.toggleForm(...args))
   } : common_vendor.e({
-    m: $data.username,
-    n: common_vendor.o(($event) => $data.username = $event.detail.value),
-    o: $data.password,
-    p: common_vendor.o(($event) => $data.password = $event.detail.value),
-    q: $data.confirmPassword,
-    r: common_vendor.o(($event) => $data.confirmPassword = $event.detail.value),
-    s: $data.userRole === "merchant"
+    n: common_vendor.t($data.userRole === "merchant" ? "加入商家平台" : "开启旅游之旅"),
+    o: $data.username,
+    p: common_vendor.o(($event) => $data.username = $event.detail.value),
+    q: $data.password,
+    r: common_vendor.o(($event) => $data.password = $event.detail.value),
+    s: $data.confirmPassword,
+    t: common_vendor.o(($event) => $data.confirmPassword = $event.detail.value),
+    v: $data.userRole === "merchant"
   }, $data.userRole === "merchant" ? {
-    t: $data.shopName,
-    v: common_vendor.o(($event) => $data.shopName = $event.detail.value),
-    w: $data.phone,
-    x: common_vendor.o(($event) => $data.phone = $event.detail.value),
-    y: $data.email,
-    z: common_vendor.o(($event) => $data.email = $event.detail.value),
-    A: $data.shopDescription,
-    B: common_vendor.o(($event) => $data.shopDescription = $event.detail.value)
+    w: $data.shopName,
+    x: common_vendor.o(($event) => $data.shopName = $event.detail.value),
+    y: $data.phone,
+    z: common_vendor.o(($event) => $data.phone = $event.detail.value),
+    A: $data.email,
+    B: common_vendor.o(($event) => $data.email = $event.detail.value),
+    C: $data.shopDescription,
+    D: common_vendor.o(($event) => $data.shopDescription = $event.detail.value)
   } : {}, {
-    C: common_vendor.o((...args) => $options.register && $options.register(...args)),
-    D: common_vendor.o((...args) => $options.toggleForm && $options.toggleForm(...args))
+    E: common_vendor.o((...args) => $options.register && $options.register(...args)),
+    F: common_vendor.o((...args) => $options.toggleForm && $options.toggleForm(...args))
   }), {
-    E: $data.showAppealModal
-  }, $data.showAppealModal ? {
-    F: common_vendor.o((...args) => $options.closeAppealModal && $options.closeAppealModal(...args)),
-    G: common_vendor.t($options.appealStatusText),
-    H: common_vendor.n($options.appealStatusClass),
-    I: common_vendor.t($data.appealUsername),
-    J: common_vendor.t($data.appealShopName || "无"),
-    K: common_vendor.t($data.appealType || "请选择申诉类型"),
-    L: $data.appealTypes,
-    M: common_vendor.o((...args) => $options.onAppealTypeChange && $options.onAppealTypeChange(...args)),
-    N: $data.appealContent,
-    O: common_vendor.o(($event) => $data.appealContent = $event.detail.value),
-    P: common_vendor.t($data.appealContent.length),
-    Q: $data.contactInfo,
-    R: common_vendor.o(($event) => $data.contactInfo = $event.detail.value),
-    S: common_vendor.o((...args) => $options.closeAppealModal && $options.closeAppealModal(...args)),
-    T: common_vendor.o((...args) => $options.submitAppeal && $options.submitAppeal(...args)),
-    U: common_vendor.o(() => {
+    G: $data.showAppealModal
+  }, $data.showAppealModal ? common_vendor.e({
+    H: common_vendor.o((...args) => $options.closeAppealModal && $options.closeAppealModal(...args)),
+    I: common_vendor.t($options.appealStatusText),
+    J: common_vendor.n($options.appealStatusClass),
+    K: common_vendor.t($data.appealUsername),
+    L: $data.appealShopName
+  }, $data.appealShopName ? {
+    M: common_vendor.t($data.appealShopName)
+  } : {}, {
+    N: common_vendor.t($data.appealType || "请选择申诉类型"),
+    O: $data.appealTypes,
+    P: common_vendor.o((...args) => $options.onAppealTypeChange && $options.onAppealTypeChange(...args)),
+    Q: $data.appealContent,
+    R: common_vendor.o(($event) => $data.appealContent = $event.detail.value),
+    S: common_vendor.t($data.appealContent.length),
+    T: $data.contactInfo,
+    U: common_vendor.o(($event) => $data.contactInfo = $event.detail.value),
+    V: common_vendor.o((...args) => $options.closeAppealModal && $options.closeAppealModal(...args)),
+    W: common_vendor.o((...args) => $options.submitAppeal && $options.submitAppeal(...args)),
+    X: common_vendor.o(() => {
     }),
-    V: common_vendor.o((...args) => $options.closeAppealModal && $options.closeAppealModal(...args))
-  } : {});
+    Y: common_vendor.o((...args) => $options.closeAppealModal && $options.closeAppealModal(...args))
+  }) : {});
 }
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-64876f70"]]);
 wx.createPage(MiniProgramPage);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/login-register/login-register.js.map

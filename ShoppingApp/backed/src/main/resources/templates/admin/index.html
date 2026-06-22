@@ -3,133 +3,613 @@
 <head>
     <meta charset="UTF-8">
     <title>旅游资源管理后台</title>
-    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
-        .dashboard-card {
-            transition: transform 0.2s;
-            cursor: pointer;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+
+        body {
+            background: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #007bff;
+
+        /* ========== 顶部导航 ========== */
+        .navbar-custom {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            padding: 0 30px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .stat-label {
-            color: #666;
+        .navbar-custom .brand {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .navbar-custom .brand .icon {
+            font-size: 28px;
+        }
+        .navbar-custom .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .navbar-custom .nav-right .admin-name {
+            color: rgba(255,255,255,0.8);
             font-size: 14px;
         }
+        .navbar-custom .nav-right .logout-btn {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .navbar-custom .nav-right .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        /* ========== 主体布局 ========== */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* ========== 左侧菜单 ========== */
+        .sidebar {
+            width: 220px;
+            background: #fff;
+            padding: 20px 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+        .sidebar .menu-item {
+            display: block;
+            padding: 14px 24px;
+            color: #555;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar .menu-item:hover {
+            background: #f5f7fa;
+            color: #1677ff;
+            text-decoration: none;
+        }
+        .sidebar .menu-item.active {
+            background: #e8f4ff;
+            color: #1677ff;
+            border-left-color: #1677ff;
+            font-weight: 600;
+        }
+        .sidebar .menu-item .icon {
+            margin-right: 12px;
+        }
+
+        /* ========== 右侧内容 ========== */
+        .content {
+            flex: 1;
+            padding: 24px 30px;
+            overflow-x: hidden;
+        }
+
+        /* ========== 页面标题 ========== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .page-header h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .page-header .date-text {
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* ========== 统计卡片 ========== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 1px solid #f0f0f0;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        .stat-card .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1677ff;
+            line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: 14px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .stat-card .stat-icon {
+            font-size: 28px;
+            float: right;
+            opacity: 0.3;
+        }
+        .stat-card.pending .stat-number { color: #fa8c16; }
+        .stat-card.approved .stat-number { color: #52c41a; }
+        .stat-card.violation .stat-number { color: #ff4d4f; }
+        .stat-card.total .stat-number { color: #1677ff; }
+
+        /* ========== 第二行统计（只有两个卡片） ========== */
+        .stats-row2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .stat-card-sm .stat-number {
+            font-size: 24px;
+        }
+
+        /* ========== 经营分析卡片 ========== */
+        .analysis-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+            border: 1px solid #f0f0f0;
+            overflow: hidden;
+        }
+        .analysis-card .card-header {
+            padding: 16px 24px;
+            background: #1677ff;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .analysis-card .card-body {
+            padding: 20px 24px 24px;
+        }
+
+        /* ========== Tabs ========== */
+        .nav-tabs-custom {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 20px;
+        }
+        .nav-tabs-custom .tab-item {
+            padding: 10px 24px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        .nav-tabs-custom .tab-item:hover {
+            color: #1677ff;
+        }
+        .nav-tabs-custom .tab-item.active {
+            color: #1677ff;
+            border-bottom-color: #1677ff;
+            font-weight: 600;
+        }
+
+        /* ========== 图表容器 ========== */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .chart-box {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #f0f0f0;
+        }
+        .chart-box .chart-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 280px;
+        }
+
+        /* ========== 概览指标 ========== */
+        .overview-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .metric-item {
+            text-align: center;
+            padding: 16px;
+            background: #fafafa;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+        }
+        .metric-item .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .metric-item .metric-label {
+            font-size: 13px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .metric-item .metric-value.blue { color: #1677ff; }
+        .metric-item .metric-value.green { color: #52c41a; }
+        .metric-item .metric-value.orange { color: #fa8c16; }
+        .metric-item .metric-value.red { color: #ff4d4f; }
+
+        /* ========== 酒店排名表格 ========== */
+        .rank-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .rank-table th {
+            background: #fafafa;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .rank-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        .rank-table tr:hover td {
+            background: #f8f9fc;
+        }
+        .rank-table .rank-num {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .rank-table .rank-1 { background: #ffd700; color: #fff; }
+        .rank-table .rank-2 { background: #c0c0c0; color: #fff; }
+        .rank-table .rank-3 { background: #cd7f32; color: #fff; }
+        .rank-table .rank-other { background: #f0f0f0; color: #999; }
+
+        /* ========== 待办事项 ========== */
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .todo-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .todo-list li:last-child {
+            border-bottom: none;
+        }
+        .todo-list .todo-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .todo-list .todo-dot.warning { background: #fa8c16; }
+        .todo-list .todo-dot.danger { background: #ff4d4f; }
+        .todo-list .todo-dot.info { background: #1677ff; }
+        .todo-list .todo-dot.success { background: #52c41a; }
+
+        /* ========== 违规记录 ========== */
         .violation-item {
+            display: flex;
+            align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #f5f5f5;
         }
         .violation-item:last-child {
             border-bottom: none;
         }
-        .violation-type {
+        .violation-badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 2px 12px;
+            border-radius: 12px;
             font-size: 12px;
-            margin-right: 10px;
+            font-weight: 500;
+            margin-right: 12px;
+            flex-shrink: 0;
         }
-        .type-hotel { background: #ffe6e6; color: #d32f2f; }
-        .type-merchant { background: #fff3e0; color: #f57c00; }
-        .type-user { background: #e3f2fd; color: #1976d2; }
-        .type-comment { background: #f3e5f5; color: #7b1fa2; }
-        .violation-name { font-weight: 500; }
-        .violation-reason { color: #999; font-size: 12px; }
+        .violation-badge.hotel { background: #ffe6e6; color: #d32f2f; }
+        .violation-badge.merchant { background: #fff3e0; color: #f57c00; }
+        .violation-badge.user { background: #e3f2fd; color: #1976d2; }
+        .violation-badge.comment { background: #f3e5f5; color: #7b1fa2; }
+        .violation-info {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+        }
+        .violation-info .violation-reason {
+            color: #999;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+        .violation-time {
+            font-size: 12px;
+            color: #bbb;
+            flex-shrink: 0;
+        }
+
+        /* ========== 底部两列布局 ========== */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 1200px) {
+            .stats-grid, .stats-row2, .overview-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .stats-grid, .stats-row2, .overview-metrics {
+                grid-template-columns: 1fr 1fr;
+            }
+            .content {
+                padding: 16px;
+            }
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-dark bg-dark mb-3">
-    <a class="navbar-brand ml-3">旅游资源管理系统</a>
-    <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-            <a class="nav-link mr-3" th:href="@{/logout}">退出登录</a>
-        </li>
-    </ul>
+
+<!-- ========== 顶部导航 ========== -->
+<nav class="navbar-custom">
+    <div class="brand">
+        <span class="icon">🏨</span>
+        旅游资源管理系统
+    </div>
+    <div class="nav-right">
+        <span class="admin-name">👋 管理员</span>
+        <a th:href="@{/logout}" class="logout-btn">退出登录</a>
+    </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2">
-            <div class="list-group">
-                <a th:href="@{/admin}" class="list-group-item active">📊 仪表盘</a>
-                <a th:href="@{/admin/hotels}" class="list-group-item">🏨 酒店管理</a>
-                <a th:href="@{/admin/attractions}" class="list-group-item">🏞️ 景点管理</a>
-                <a th:href="@{/admin/users}" class="list-group-item">👤 用户管理</a>
-                <a th:href="@{/admin/merchants}" class="list-group-item">🏢 商家管理</a>
-                <a th:href="@{/admin/comments}" class="list-group-item">💬 评价管理</a>
-                <a th:href="@{/admin/appeals}" class="list-group-item">📋 申诉管理</a>
+<!-- ========== 主体 ========== -->
+<div class="main-container">
+
+    <!-- 左侧菜单 -->
+    <div class="sidebar">
+        <a th:href="@{/admin}" class="menu-item active">
+            <span class="icon">📊</span> 仪表盘
+        </a>
+        <a th:href="@{/admin/hotels}" class="menu-item">
+            <span class="icon">🏨</span> 酒店管理
+        </a>
+        <a th:href="@{/admin/attractions}" class="menu-item">
+            <span class="icon">🏞️</span> 景点管理
+        </a>
+        <a th:href="@{/admin/users}" class="menu-item">
+            <span class="icon">👤</span> 用户管理
+        </a>
+        <a th:href="@{/admin/merchants}" class="menu-item">
+            <span class="icon">🏢</span> 商家管理
+        </a>
+        <a th:href="@{/admin/comments}" class="menu-item">
+            <span class="icon">💬</span> 评价管理
+        </a>
+        <a th:href="@{/admin/appeals}" class="menu-item">
+            <span class="icon">📋</span> 申诉管理
+        </a>
+    </div>
+
+    <!-- 右侧内容 -->
+    <div class="content">
+
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h3>📊 数据仪表盘</h3>
+            <span class="date-text" id="currentDate">加载中...</span>
+        </div>
+
+        <!-- ====== 第一行统计卡片 ====== -->
+        <div class="stats-grid">
+            <div class="stat-card pending" onclick="location.href='/admin/hotels?tab=pending'">
+                <span class="stat-icon">⏳</span>
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">待审核酒店</div>
+            </div>
+            <div class="stat-card approved" onclick="location.href='/admin/hotels?tab=approved'">
+                <span class="stat-icon">✅</span>
+                <div class="stat-number" id="approvedCount">0</div>
+                <div class="stat-label">正常运营</div>
+            </div>
+            <div class="stat-card violation" onclick="location.href='/admin/hotels?tab=violation'">
+                <span class="stat-icon">⚠️</span>
+                <div class="stat-number" id="violationCount">0</div>
+                <div class="stat-label">违规/停业</div>
+            </div>
+            <div class="stat-card total" onclick="location.href='/admin/hotels?tab=all'">
+                <span class="stat-icon">📋</span>
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">全部酒店</div>
             </div>
         </div>
 
-        <div class="col-md-10">
-            <h3>欢迎回来，管理员</h3>
-            <p class="text-muted">今日是 <span id="currentDate"></span></p>
-
-            <!-- 统计卡片 -->
-            <div class="row mt-4">
-                <div class="col-md-3 mb-3">
-                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=pending'">
-                        <div class="card-body text-center">
-                            <div class="stat-number" id="pendingCount">0</div>
-                            <div class="stat-label">⏳ 待审核酒店</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=approved'">
-                        <div class="card-body text-center">
-                            <div class="stat-number" id="approvedCount">0</div>
-                            <div class="stat-label">✅ 正常运营</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=violation'">
-                        <div class="card-body text-center">
-                            <div class="stat-number" id="violationCount">0</div>
-                            <div class="stat-label">⚠️ 违规/停业</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <div class="card dashboard-card" onclick="location.href='/admin/hotels?tab=all'">
-                        <div class="card-body text-center">
-                            <div class="stat-number" id="totalCount">0</div>
-                            <div class="stat-label">📋 全部酒店</div>
-                        </div>
-                    </div>
-                </div>
+        <!-- ====== 待办事项 ====== -->
+        <div class="analysis-card" style="margin-bottom:0;">
+            <div class="card-header" style="background:#fa8c16;">
+                ⚡ 待办事项
             </div>
-
-            <!-- 待办事项 -->
-            <div class="card mt-4">
-                <div class="card-header bg-warning text-white">
-                    ⚡ 待办事项
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled" id="todoList">
-                        <li>加载中...</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- 最近违规记录（包含所有类型） -->
-            <div class="card mt-4">
-                <div class="card-header bg-danger text-white">
-                    📋 最近违规记录
-                </div>
-                <div class="card-body" id="recentViolations">
-                    加载中...
-                </div>
+            <div class="card-body">
+                <ul class="todo-list" id="todoList">
+                    <li>加载中...</li>
+                </ul>
             </div>
         </div>
+
+        <!-- ====== 违规记录 ====== -->
+        <div class="analysis-card" style="margin-bottom:0;">
+            <div class="card-header" style="background:#ff4d4f;">
+                📋 最近违规记录
+            </div>
+            <div class="card-body" id="recentViolations">
+                加载中...
+            </div>
+        </div>
+
+        <!-- ====== 酒店经营分析（放在最底部） ====== -->
+        <div class="analysis-card" style="margin-top:24px;">
+            <div class="card-header">
+                📈 酒店经营分析
+            </div>
+            <div class="card-body">
+
+                <!-- Tabs -->
+                <div class="nav-tabs-custom">
+                    <span class="tab-item active" data-tab="overview" onclick="switchTab('overview')">总览</span>
+                    <span class="tab-item" data-tab="revenue" onclick="switchTab('revenue')">收入分析</span>
+                    <span class="tab-item" data-tab="orders" onclick="switchTab('orders')">订单分析</span>
+                    <span class="tab-item" data-tab="hotels" onclick="switchTab('hotels')">酒店排名</span>
+                </div>
+
+                <!-- Tab 内容 -->
+                <div id="tab-overview" class="tab-content">
+                    <div class="overview-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value blue" id="totalRevenue">¥0</div>
+                            <div class="metric-label">总收入</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value green" id="totalOrdersCount">0</div>
+                            <div class="metric-label">总订单</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value orange" id="avgPrice">¥0</div>
+                            <div class="metric-label">平均客单价</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value red" id="occupancyRate">0%</div>
+                            <div class="metric-label">平均入住率</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <div class="chart-title">📊 月度收入趋势</div>
+                            <div class="chart-container" id="revenueChart"></div>
+                        </div>
+                        <div class="chart-box">
+                            <div class="chart-title">📊 订单状态分布</div>
+                            <div class="chart-container" id="orderStatusChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-revenue" class="tab-content" style="display:none;">
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <div class="chart-title">📈 收入趋势（最近12个月）</div>
+                            <div class="chart-container" id="revenueTrendChart"></div>
+                        </div>
+                        <div class="chart-box">
+                            <div class="chart-title">🏆 各酒店收入排名</div>
+                            <div class="chart-container" id="hotelRevenueChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-orders" class="tab-content" style="display:none;">
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <div class="chart-title">📦 订单趋势（最近12个月）</div>
+                            <div class="chart-container" id="orderTrendChart"></div>
+                        </div>
+                        <div class="chart-box">
+                            <div class="chart-title">📊 订单状态分布</div>
+                            <div class="chart-container" id="orderStatusDistributionChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-hotels" class="tab-content" style="display:none;">
+                    <table class="rank-table" id="hotelRankTable">
+                        <thead>
+                        <tr>
+                            <th style="width:60px;">排名</th>
+                            <th>酒店名称</th>
+                            <th style="width:150px;">总收入</th>
+                            <th style="width:100px;">订单数</th>
+                            <th style="width:100px;">评价数</th>
+                            <th style="width:100px;">平均评分</th>
+                        </tr>
+                        </thead>
+                        <tbody id="hotelRankBody">
+                        <tr><td colspan="6" style="text-align:center;color:#999;">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -137,18 +617,63 @@
 <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
 <script>
     const API_BASE = "http://localhost:8080";
+    let charts = {};
 
-    $(function(){
-        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('zh-CN');
+    // ============================================================
+    //  初始化
+    // ============================================================
+    $(function() {
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('zh-CN', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+        });
+
+        initCharts();
         loadAllData();
+        loadBusinessAnalysis();
+
+        window.addEventListener('resize', function() {
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.resize();
+            });
+        });
     });
 
-    function loadAllData(){
+    // ============================================================
+    //  初始化 ECharts
+    // ============================================================
+    function initCharts() {
+        charts.revenue = echarts.init(document.getElementById('revenueChart'));
+        charts.orderStatus = echarts.init(document.getElementById('orderStatusChart'));
+        charts.revenueTrend = echarts.init(document.getElementById('revenueTrendChart'));
+        charts.hotelRevenue = echarts.init(document.getElementById('hotelRevenueChart'));
+        charts.orderTrend = echarts.init(document.getElementById('orderTrendChart'));
+        charts.orderStatusDistribution = echarts.init(document.getElementById('orderStatusDistributionChart'));
+    }
+
+    // ============================================================
+    //  Tab 切换
+    // ============================================================
+    function switchTab(tab) {
+        $('.tab-item').removeClass('active');
+        $('.tab-item[data-tab="' + tab + '"]').addClass('active');
+        $('.tab-content').hide();
+        $('#tab-' + tab).show();
+        setTimeout(function() {
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.resize();
+            });
+        }, 100);
+    }
+
+    // ============================================================
+    //  加载仪表盘数据
+    // ============================================================
+    function loadAllData() {
         let pendingHotels = 0;
         let approvedHotels = 0;
         let violationHotels = 0;
         let totalHotels = 0;
-        let allViolations = []; // 存储所有违规记录
+        let allViolations = [];
 
         // 1. 获取酒店数据
         $.ajax({
@@ -166,19 +691,17 @@
                 totalHotels = hotels.length;
                 pendingHotels = hotels.filter(h => !h.status || h.status === 'pending' || h.status === 'PENDING').length;
                 approvedHotels = hotels.filter(h => h.status === 'approved' || h.status === 'APPROVED' || h.status === '营业中' || h.status === 'NORMAL').length;
-                violationHotels = hotels.filter(h => h.status === 'violation' || h.status === 'VIOLATION' || h.status === '违规').length;
+                violationHotels = hotels.filter(h => h.status === 'violation' || h.status === 'VIOLATION' || h.status === '违规' || h.status === '已停业').length;
 
-                // 酒店违规记录
                 hotels.forEach(h => {
-                    if(h.status === 'violation' || h.status === 'VIOLATION' || h.status === '违规'){
+                    if(h.status === 'violation' || h.status === 'VIOLATION' || h.status === '违规' || h.status === '已停业'){
                         allViolations.push({
                             type: 'hotel',
                             typeName: '酒店',
-                            typeClass: 'type-hotel',
+                            badgeClass: 'hotel',
                             name: h.name,
                             reason: h.violationReason || '违规经营',
-                            time: h.updateTime || h.createTime || new Date().toISOString(),
-                            url: '/admin/hotels?tab=violation'
+                            time: h.updateTime || h.createTime || new Date().toISOString()
                         });
                     }
                 });
@@ -206,17 +729,15 @@
                     merchants = res;
                 }
 
-                // 商家违规记录（状态为BANNED的商家）
                 merchants.forEach(m => {
                     if(m.status === 'BANNED' || m.status === 'banned' || m.status === '已禁用'){
                         allViolations.push({
                             type: 'merchant',
                             typeName: '商家',
-                            typeClass: 'type-merchant',
+                            badgeClass: 'merchant',
                             name: m.shopName || m.username,
                             reason: '账号被禁用',
-                            time: m.updateTime || m.createTime || new Date().toISOString(),
-                            url: '/admin/merchants'
+                            time: m.updateTime || m.createTime || new Date().toISOString()
                         });
                     }
                 });
@@ -239,17 +760,15 @@
                     users = res;
                 }
 
-                // 用户违规记录（状态为BANNED的用户）
                 users.forEach(u => {
                     if(u.role === 'USER' && (u.status === 'BANNED' || u.status === 'banned')){
                         allViolations.push({
                             type: 'user',
                             typeName: '用户',
-                            typeClass: 'type-user',
+                            badgeClass: 'user',
                             name: u.username,
                             reason: '账号被禁言',
-                            time: u.updateTime || u.createTime || new Date().toISOString(),
-                            url: '/admin/users'
+                            time: u.updateTime || u.createTime || new Date().toISOString()
                         });
                     }
                 });
@@ -272,16 +791,14 @@
                     comments = res;
                 }
 
-                // 评价违规记录
                 comments.forEach(c => {
                     allViolations.push({
                         type: 'comment',
                         typeName: '评价',
-                        typeClass: 'type-comment',
-                        name: c.username + ' 对 ' + c.hotelName + ' 的评价',
+                        badgeClass: 'comment',
+                        name: c.username + ' 的评价',
                         reason: c.content ? (c.content.substring(0, 50) + '...') : '违规内容',
-                        time: c.createTime || new Date().toISOString(),
-                        url: '/admin/comments'
+                        time: c.createTime || new Date().toISOString()
                     });
                 });
             },
@@ -323,48 +840,335 @@
 
         let todoHtml = '';
         if(pendingHotels > 0){
-            todoHtml += `<li class="mb-2">🔔 有 ${pendingHotels} 家酒店待审核</li>`;
+            todoHtml += '<li><span class="todo-dot warning"></span> 🔔 有 ' + pendingHotels + ' 家酒店待审核</li>';
         }
         if(violationHotels > 0){
-            todoHtml += `<li class="mb-2">⚠️ 有 ${violationHotels} 家酒店违规，请处理</li>`;
+            todoHtml += '<li><span class="todo-dot danger"></span> ⚠️ 有 ' + violationHotels + ' 家酒店违规待处理</li>';
         }
         if(pendingMerchants > 0){
-            todoHtml += `<li class="mb-2">🏢 有 ${pendingMerchants} 个商家待审核</li>`;
+            todoHtml += '<li><span class="todo-dot info"></span> 🏢 有 ' + pendingMerchants + ' 个商家待审核</li>';
         }
         if(pendingAppeals > 0){
-            todoHtml += `<li class="mb-2">📋 有 ${pendingAppeals} 条申诉待处理</li>`;
+            todoHtml += '<li><span class="todo-dot warning"></span> 📋 有 ' + pendingAppeals + ' 条申诉待处理</li>';
         }
         if(todoHtml === ''){
-            todoHtml = '<li class="text-muted">✅ 暂无待办事项，系统运行正常</li>';
+            todoHtml = '<li><span class="todo-dot success"></span> ✅ 暂无待办事项，系统运行正常</li>';
         }
         $("#todoList").html(todoHtml);
 
-        // 6. 生成最近违规记录（按时间倒序，取前5条）
+        // 6. 生成最近违规记录
         allViolations.sort((a, b) => new Date(b.time) - new Date(a.time));
         let recentViolations = allViolations.slice(0, 10);
 
         let violationHtml = '';
         if(recentViolations.length > 0){
-            violationHtml = '<div class="violation-list">';
             recentViolations.forEach(v => {
-                violationHtml += `
-                    <div class="violation-item">
-                        <span class="violation-type ${v.typeClass}">${v.typeName}</span>
-                        <span class="violation-name">${escapeHtml(v.name)}</span>
-                        <span class="violation-reason"> - ${escapeHtml(v.reason)}</span>
-                        <div style="margin-top: 5px;">
-                            <small class="text-muted">⏰ ${formatDate(v.time)}</small>
-                        </div>
-                    </div>
-                `;
+                violationHtml +=
+                    '<div class="violation-item">' +
+                        '<span class="violation-badge ' + v.badgeClass + '">' + v.typeName + '</span>' +
+                        '<span class="violation-info">' +
+                            escapeHtml(v.name) +
+                            '<span class="violation-reason">- ' + escapeHtml(v.reason) + '</span>' +
+                        '</span>' +
+                        '<span class="violation-time">' + formatTime(v.time) + '</span>' +
+                    '</div>';
             });
-            violationHtml += '</div>';
         } else {
-            violationHtml = '<p class="text-muted mb-0">✅ 暂无违规记录，系统运行正常</p>';
+            violationHtml = '<p style="color:#999;text-align:center;padding:20px 0;">✅ 暂无违规记录</p>';
         }
         $("#recentViolations").html(violationHtml);
     }
 
+    // ============================================================
+    //  加载经营分析数据
+    // ============================================================
+    function loadBusinessAnalysis() {
+        $.ajax({
+            url: API_BASE + "/api/admin/business-analysis",
+            type: "GET",
+            data: { period: '6months' },
+            success: function(res) {
+                if (res.code === 200 && res.data) {
+                    const d = res.data;
+
+                    $('#totalRevenue').text('¥' + (d.totalRevenue || 0));
+                    $('#totalOrdersCount').text(d.totalOrders || 0);
+                    $('#avgPrice').text('¥' + (d.avgPrice || 0));
+                    $('#occupancyRate').text((d.averageOccupancy || 0) + '%');
+
+                    renderRevenueChart(d.revenueTrend);
+                    renderOrderStatusChart(d.orderStatusDistribution);
+                    renderRevenueTrendChart(d.revenueTrend);
+                    renderHotelRevenueChart(d.hotelRevenueRank);
+                    renderOrderTrendChart(d.orderTrend);
+                    renderOrderStatusDistributionChart(d.orderStatusDistribution);
+                    renderHotelRankTable(d.hotelRevenueRank, d.hotelCommentStats);
+                }
+            },
+            error: function() {
+                console.log('加载经营分析数据失败');
+            }
+        });
+    }
+
+    // ============================================================
+    //  渲染图表
+    // ============================================================
+
+    function renderRevenueChart(data) {
+        if (!data || !data.length) return;
+        const months = data.map(item => item.month);
+        const values = data.map(item => item.revenue);
+
+        charts.revenue.setOption({
+            tooltip: { trigger: 'axis', formatter: function(params) {
+                    return params[0].name + '<br/>收入：¥' + params[0].value;
+                }},
+            grid: { left: '6%', right: '4%', top: '10%', bottom: '15%' },
+            xAxis: {
+                type: 'category',
+                data: months,
+                axisLabel: { fontSize: 11 }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { fontSize: 11, formatter: '¥{value}' }
+            },
+            series: [{
+                type: 'bar',
+                data: values,
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#1677ff' },
+                        { offset: 1, color: '#69b1ff' }
+                    ]),
+                    borderRadius: [4, 4, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: function(params) { return '¥' + params.value; },
+                    fontSize: 10,
+                    color: '#999'
+                }
+            }]
+        });
+    }
+
+    function renderOrderStatusChart(data) {
+        if (!data) return;
+        const colors = ['#fa8c16', '#1677ff', '#69b1ff', '#52c41a', '#13c2c2', '#722ed1', '#ff4d4f', '#faad14'];
+        const pieData = Object.entries(data).map(([name, value], index) => ({
+            name: name,
+            value: value,
+            itemStyle: { color: colors[index % colors.length] }
+        }));
+
+        charts.orderStatus.setOption({
+            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+            legend: {
+                orient: 'vertical',
+                right: '5%',
+                top: 'center',
+                itemWidth: 12,
+                itemHeight: 12,
+                textStyle: { fontSize: 12 }
+            },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                center: ['40%', '50%'],
+                data: pieData,
+                label: { show: false },
+                emphasis: {
+                    label: { show: true, fontSize: 14, fontWeight: 'bold' }
+                }
+            }]
+        });
+    }
+
+    function renderRevenueTrendChart(data) {
+        if (!data || !data.length) return;
+        const months = data.map(item => item.month);
+        const values = data.map(item => item.revenue);
+
+        charts.revenueTrend.setOption({
+            tooltip: { trigger: 'axis', formatter: function(params) {
+                    return params[0].name + '<br/>收入：¥' + params[0].value;
+                }},
+            grid: { left: '8%', right: '4%', top: '10%', bottom: '12%' },
+            xAxis: {
+                type: 'category',
+                data: months,
+                axisLabel: { fontSize: 11 }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { fontSize: 11, formatter: '¥{value}' }
+            },
+            series: [{
+                type: 'line',
+                data: values,
+                smooth: true,
+                lineStyle: { color: '#1677ff', width: 3 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(22, 119, 255, 0.3)' },
+                        { offset: 1, color: 'rgba(22, 119, 255, 0.05)' }
+                    ])
+                },
+                itemStyle: { color: '#1677ff' },
+                symbol: 'circle',
+                symbolSize: 8
+            }]
+        });
+    }
+
+    function renderHotelRevenueChart(data) {
+        if (!data || !data.length) return;
+        const names = data.map(item => item.hotelName);
+        const values = data.map(item => item.revenue);
+
+        charts.hotelRevenue.setOption({
+            tooltip: { trigger: 'axis', formatter: function(params) {
+                    return params[0].name + '<br/>收入：¥' + params[0].value;
+                }},
+            grid: { left: '10%', right: '4%', top: '10%', bottom: '12%' },
+            xAxis: {
+                type: 'category',
+                data: names,
+                axisLabel: { fontSize: 10, interval: 0, rotate: 30 }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { fontSize: 11, formatter: '¥{value}' }
+            },
+            series: [{
+                type: 'bar',
+                data: values,
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#fa8c16' },
+                        { offset: 1, color: '#ffd591' }
+                    ]),
+                    borderRadius: [4, 4, 0, 0]
+                }
+            }]
+        });
+    }
+
+    function renderOrderTrendChart(data) {
+        if (!data || !data.length) return;
+        const months = data.map(item => item.month);
+        const values = data.map(item => item.orders);
+
+        charts.orderTrend.setOption({
+            tooltip: { trigger: 'axis', formatter: function(params) {
+                    return params[0].name + '<br/>订单数：' + params[0].value + ' 笔';
+                }},
+            grid: { left: '8%', right: '4%', top: '10%', bottom: '12%' },
+            xAxis: {
+                type: 'category',
+                data: months,
+                axisLabel: { fontSize: 11 }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { fontSize: 11 }
+            },
+            series: [{
+                type: 'line',
+                data: values,
+                smooth: true,
+                lineStyle: { color: '#52c41a', width: 3 },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(82, 196, 26, 0.3)' },
+                        { offset: 1, color: 'rgba(82, 196, 26, 0.05)' }
+                    ])
+                },
+                itemStyle: { color: '#52c41a' },
+                symbol: 'circle',
+                symbolSize: 8
+            }]
+        });
+    }
+
+    function renderOrderStatusDistributionChart(data) {
+        if (!data) return;
+        const colors = ['#fa8c16', '#1677ff', '#69b1ff', '#52c41a', '#13c2c2', '#722ed1', '#ff4d4f', '#faad14'];
+        const pieData = Object.entries(data).map(([name, value], index) => ({
+            name: name,
+            value: value,
+            itemStyle: { color: colors[index % colors.length] }
+        }));
+
+        charts.orderStatusDistribution.setOption({
+            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+            legend: {
+                orient: 'vertical',
+                right: '5%',
+                top: 'center',
+                itemWidth: 12,
+                itemHeight: 12,
+                textStyle: { fontSize: 12 }
+            },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                center: ['40%', '50%'],
+                data: pieData,
+                label: {
+                    show: true,
+                    formatter: '{b}\n{d}%',
+                    fontSize: 11
+                }
+            }]
+        });
+    }
+
+    // ============================================================
+    //  酒店排名表格
+    // ============================================================
+    function renderHotelRankTable(revenueData, commentStats) {
+        const commentMap = {};
+        if (commentStats) {
+            commentStats.forEach(item => {
+                commentMap[item.hotelId] = {
+                    commentCount: item.commentCount || 0,
+                    avgScore: item.avgScore || 0
+                };
+            });
+        }
+
+        let html = '';
+        const topData = revenueData ? revenueData.slice(0, 10) : [];
+
+        if (topData.length === 0) {
+            html = '<tr><td colspan="6" style="text-align:center;color:#999;">暂无数据</td></tr>';
+        } else {
+            topData.forEach((item, index) => {
+                const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other';
+                const commentInfo = commentMap[item.hotelId] || { commentCount: 0, avgScore: 0 };
+
+                html +=
+                    '<tr>' +
+                        '<td><span class="rank-num ' + rankClass + '">' + (index + 1) + '</span></td>' +
+                        '<td>' + item.hotelName + '</td>' +
+                        '<td>¥' + item.revenue + '</td>' +
+                        '<td>' + item.orderCount + '</td>' +
+                        '<td>' + commentInfo.commentCount + '</td>' +
+                        '<td>' + (commentInfo.avgScore ? commentInfo.avgScore.toFixed(1) : '0.0') + '</td>' +
+                    '</tr>';
+            });
+        }
+
+        $('#hotelRankBody').html(html);
+    }
+
+    // ============================================================
+    //  工具函数
+    // ============================================================
     function escapeHtml(str) {
         if(!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -375,19 +1179,25 @@
         });
     }
 
-    function formatDate(dateStr) {
-        if(!dateStr) return '未知时间';
+    function formatTime(dateStr) {
+        if (!dateStr) return '未知';
         try {
-            let date = new Date(dateStr);
-            if(isNaN(date.getTime())) return dateStr;
-            let year = date.getFullYear();
-            let month = String(date.getMonth() + 1).padStart(2, '0');
-            let day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const now = new Date();
+            const diff = now - d;
+
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         } catch(e) {
             return dateStr;
         }
     }
 </script>
+
 </body>
 </html>

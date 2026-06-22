@@ -25,6 +25,8 @@ if (!Math) {
   "./pages/merchant/messages.js";
   "./pages/merchant/notifications.js";
   "./pages/merchant/setting.js";
+  "./pages/merchant/banned.js";
+  "./pages/merchant/analysis.js";
   "./pages/message/message.js";
   "./pages/profile/setting.js";
   "./pages/profile/notifications.js";

@@ -121,6 +121,9 @@ const _sfc_main = {
     onAdultCountChange(e) {
       this.searchParams.adultCount = this.adultCounts[e.detail.value];
     },
+    onAdultCountChange(e) {
+      this.searchParams.adultCount = this.adultCounts[e.detail.value];
+    },
     formatTimeDisplay(dateTimeStr) {
       if (!dateTimeStr)
         return "--";
@@ -175,10 +178,10 @@ const _sfc_main = {
         method: "GET",
         data: { dep: this.searchParams.fromCity, arr: this.searchParams.toCity, date: this.searchParams.fromDate },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:364", "航班查询返回：", res.data);
+          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:382", "航班查询返回：", res.data);
           let flights = [];
           if (res.data && res.data.success && typeof res.data.data === "string") {
-            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:370", "原始数据前500字符：", res.data.data.substring(0, 500));
+            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:388", "原始数据前500字符：", res.data.data.substring(0, 500));
             flights = this.parseFlightsFromString(res.data.data);
           } else if (res.data && res.data.code === 200 && res.data.data && Array.isArray(res.data.data)) {
             flights = res.data.data;
@@ -187,7 +190,7 @@ const _sfc_main = {
           }
           if (flights.length > 0) {
             this.flightList = flights.slice(0, 20);
-            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:380", "解析出的航班数量：", this.flightList.length);
+            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:398", "解析出的航班数量：", this.flightList.length);
           } else {
             this.flightList = this.getMockFlights();
             common_vendor.index.showToast({ title: "使用演示数据", icon: "none" });
@@ -195,7 +198,7 @@ const _sfc_main = {
           this.showResultFlag = true;
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:389", "请求失败：", err);
+          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:407", "请求失败：", err);
           this.flightList = this.getMockFlights();
           this.showResultFlag = true;
           common_vendor.index.showToast({ title: "查询失败，使用演示数据", icon: "none" });
@@ -231,7 +234,7 @@ const _sfc_main = {
       try {
         const allFlights = dataStr.match(/\{\s*'fcategory':[^}]+\}/g);
         if (allFlights && allFlights.length > 0) {
-          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:430", "直接找到航班对象数量：", allFlights.length);
+          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:448", "直接找到航班对象数量：", allFlights.length);
           return this.extractFlightsFromMatches(allFlights);
         }
         let dataArrayMatch = dataStr.match(/data['"]?\s*:\s*\[(.*?)\]/s);
@@ -242,14 +245,14 @@ const _sfc_main = {
           const flightsStr = dataArrayMatch[1];
           const flightMatches = flightsStr.match(/\{\s*'fcategory':[^}]+\}/g);
           if (flightMatches && flightMatches.length > 0) {
-            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:444", "从data数组找到航班数量：", flightMatches.length);
+            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:462", "从data数组找到航班数量：", flightMatches.length);
             return this.extractFlightsFromMatches(flightMatches);
           }
         }
-        common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:449", "未找到任何航班数据");
+        common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:467", "未找到任何航班数据");
         return [];
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:453", "解析航班数据失败：", e);
+        common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:471", "解析航班数据失败：", e);
         return [];
       }
     },
@@ -284,7 +287,7 @@ const _sfc_main = {
             });
           }
         } catch (e) {
-          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:502", "提取航班失败：", e);
+          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:520", "提取航班失败：", e);
         }
       }
       return flights;
@@ -312,21 +315,25 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.n($data.searchParams.fromDate ? "selected" : "placeholder"),
     j: $data.searchParams.fromDate,
     k: common_vendor.o((...args) => $options.onDateChange && $options.onDateChange(...args)),
-    l: common_vendor.t($data.searchParams.adultCount),
-    m: $data.adultCounts,
-    n: common_vendor.o((...args) => $options.onAdultCountChange && $options.onAdultCountChange(...args)),
-    o: common_vendor.t($data.isLoading ? "搜索中..." : "🔍 搜索机票"),
-    p: common_vendor.o((...args) => $options.searchFlights && $options.searchFlights(...args)),
-    q: $data.isLoading,
-    r: $data.showCityPickerFlag
+    l: common_vendor.t($data.searchParams.fromDate || "请选择日期"),
+    m: common_vendor.n($data.searchParams.fromDate ? "selected" : "placeholder"),
+    n: $data.searchParams.fromDate,
+    o: common_vendor.o((...args) => $options.onDateChange && $options.onDateChange(...args)),
+    p: common_vendor.t($data.searchParams.adultCount),
+    q: $data.adultCounts,
+    r: common_vendor.o((...args) => $options.onAdultCountChange && $options.onAdultCountChange(...args)),
+    s: common_vendor.t($data.isLoading ? "搜索中..." : "🔍 搜索机票"),
+    t: common_vendor.o((...args) => $options.searchFlights && $options.searchFlights(...args)),
+    v: $data.isLoading,
+    w: $data.showCityPickerFlag
   }, $data.showCityPickerFlag ? common_vendor.e({
-    s: common_vendor.t($data.cityPickerType === "from" ? "选择出发城市" : "选择到达城市"),
-    t: common_vendor.o((...args) => $options.closeCityPicker && $options.closeCityPicker(...args)),
-    v: common_vendor.o([($event) => $data.citySearchKeyword = $event.detail.value, (...args) => $options.filterCities && $options.filterCities(...args)]),
-    w: $data.citySearchKeyword,
-    x: !$data.citySearchKeyword
+    x: common_vendor.t($data.cityPickerType === "from" ? "选择出发城市" : "选择到达城市"),
+    y: common_vendor.o((...args) => $options.closeCityPicker && $options.closeCityPicker(...args)),
+    z: common_vendor.o([($event) => $data.citySearchKeyword = $event.detail.value, (...args) => $options.filterCities && $options.filterCities(...args)]),
+    A: $data.citySearchKeyword,
+    B: !$data.citySearchKeyword
   }, !$data.citySearchKeyword ? {
-    y: common_vendor.f($data.hotCities, (city, k0, i0) => {
+    C: common_vendor.f($data.hotCities, (city, k0, i0) => {
       return {
         a: common_vendor.t(city.name),
         b: common_vendor.t(city.code),
@@ -335,7 +342,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    z: common_vendor.f($options.filteredCityList, (group, letter, i0) => {
+    D: common_vendor.f($options.filteredCityList, (group, letter, i0) => {
       return {
         a: common_vendor.t(letter),
         b: common_vendor.f(group, (city, k1, i1) => {
@@ -349,19 +356,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         c: letter
       };
     }),
-    A: common_vendor.o(() => {
+    E: common_vendor.o(() => {
     }),
-    B: common_vendor.o((...args) => $options.closeCityPicker && $options.closeCityPicker(...args))
+    F: common_vendor.o((...args) => $options.closeCityPicker && $options.closeCityPicker(...args))
   }) : {}, {
-    C: $data.showResultFlag
+    G: $data.showResultFlag
   }, $data.showResultFlag ? common_vendor.e({
-    D: common_vendor.o((...args) => $options.closeResult && $options.closeResult(...args)),
-    E: common_vendor.t($data.searchParams.fromCityName),
-    F: common_vendor.t($data.searchParams.toCityName),
-    G: common_vendor.t($data.searchParams.fromDate),
-    H: $data.flightList.length > 0
+    H: common_vendor.o((...args) => $options.closeResult && $options.closeResult(...args)),
+    I: common_vendor.t($data.searchParams.fromCityName),
+    J: common_vendor.t($data.searchParams.toCityName),
+    K: common_vendor.t($data.searchParams.fromDate),
+    L: $data.flightList.length > 0
   }, $data.flightList.length > 0 ? {
-    I: common_vendor.f($data.flightList, (flight, index, i0) => {
+    M: common_vendor.f($data.flightList, (flight, index, i0) => {
       return {
         a: common_vendor.t(flight.flightNumber || "--"),
         b: common_vendor.t(flight.airline || "航空公司"),
@@ -376,9 +383,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    J: common_vendor.o(() => {
+    N: common_vendor.o(() => {
     }),
-    K: common_vendor.o((...args) => $options.closeResult && $options.closeResult(...args))
+    O: common_vendor.o((...args) => $options.closeResult && $options.closeResult(...args))
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-e3d3529c"]]);

@@ -44,4 +44,8 @@ public class MessageService {
     public List<Object[]> findMerchantSessions(String merchantId) {
         return messageRepository.findMerchantSessions(merchantId);
     }
+
+    public Integer getMerchantTotalUnreadCount(String merchantId) {
+        return messageRepository.countTotalUnreadForMerchant(merchantId);
+    }
 }

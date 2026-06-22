@@ -224,7 +224,9 @@ export default {
           this.detail = res.data
           this.setupMap()
           this.getNearby()
-          if (res.data.photo) {
+          if (res.data.images && res.data.images.length > 0) {
+            this.images = res.data.images.map(img => img.url ? BASE_URL + img.url : BASE_URL + img)
+          } else if (res.data.photo) {
             this.images = [res.data.photo.startsWith('http') ? res.data.photo : BASE_URL + res.data.photo]
           }
           if (this.images.length === 0) {

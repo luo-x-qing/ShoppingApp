@@ -40,6 +40,25 @@ public class Hotel {
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoomType> roomTypes = new ArrayList<>();
 
+    @PrePersist
+    protected void onCreate() {
+        updateTime = LocalDateTime.now();
+        if (status == null) {
+            status = "营业中";
+        }
+        if (totalRooms == null) {
+            totalRooms = 0;
+        }
+        if (avgRating == null) {
+            avgRating = 0.0;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updateTime = LocalDateTime.now();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }

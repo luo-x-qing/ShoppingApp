@@ -221,8 +221,6 @@
   flex-direction: column;
   overflow: hidden;
 }
-
-/* 编辑房型弹窗容器 - 修复溢出问题 */
 .room-form-container {
   width: 90%;
   max-width: 650rpx;
@@ -237,16 +235,12 @@
   top: 50%;
   transform: translateY(-50%);
 }
-
-/* 弹窗主体滚动区域 - 确保内容不溢出 */
 .room-form-container .modal-body {
   flex: 1;
   padding: 30rpx;
   overflow-y: auto;
   box-sizing: border-box;
 }
-
-/* 所有表单输入框确保不溢出父容器 */
 .room-form-container .form-item {
   margin-bottom: 30rpx;
   width: 100%;
@@ -451,6 +445,12 @@
   color: #999;
   font-size: 28rpx;
 }
+.upload-tip {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 10rpx;
+  display: block;
+}
 
 /* 百度地图弹窗样式 */
 .map-modal-container {
@@ -619,4 +619,23 @@
 .map-confirm-btn {
   background-color: #f0e68c;
   color: #333;
+}
+.map-tip {
+  padding: 20rpx 30rpx;
+  background-color: #f0e68c;
+  border-bottom: 1px solid #e6d058;
+  text-align: center;
+}
+.map-tip-text {
+  font-size: 26rpx;
+  color: #8B6914;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+.map-tip-text::before {
+  content: "📍";
+  font-size: 30rpx;
 }

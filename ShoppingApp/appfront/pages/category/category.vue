@@ -317,7 +317,10 @@ export default {
             hotelData = []
           }
           
-          this.originalHotelList = hotelData.map(item => {
+          // 过滤掉状态为"已停业"的酒店
+          const availableHotels = hotelData.filter(item => item.status !== '已停业')
+          
+          this.originalHotelList = availableHotels.map(item => {
             const distanceValue = this.calculateDistanceValue(item.latitude, item.longitude)
             return {
               id: item.id,
@@ -371,8 +374,11 @@ export default {
             hotelData = res.data
           }
           
+          // 过滤掉已停业的酒店
+          const availableHotels = hotelData.filter(item => item.status !== '已停业')
+          
           // 最多显示5条建议
-          this.suggestList = hotelData.slice(0, 5).map(item => ({
+          this.suggestList = availableHotels.slice(0, 5).map(item => ({
             id: item.id,
             name: item.name,
             category: item.category,

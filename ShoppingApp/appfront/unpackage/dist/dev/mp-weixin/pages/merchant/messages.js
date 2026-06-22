@@ -58,7 +58,52 @@ const _sfc_main = {
       if (!this.merchantId)
         return;
       common_vendor.index.__f__("log", "at pages/merchant/messages.vue:195", "开始加载商家会话列表, 商家ID:", this.merchantId);
-      this.loadOrdersByMerchantDirect();
+      this.loadConversationsFromServer();
+    },
+    // 从服务器加载会话列表
+    loadConversationsFromServer() {
+      common_vendor.index.request({
+        url: `http://localhost:8080/api/messages/merchant/conversations?merchantId=${this.merchantId}`,
+        method: "GET",
+        success: (res) => {
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:205", "会话列表查询结果:", res.data);
+          if (res.data && res.data.code === 200) {
+            const conversations = res.data.data || [];
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:208", "从服务器获取到会话数量:", conversations.length);
+            if (conversations.length > 0) {
+              this.conversations = conversations.map((conv) => {
+                const rawMessage = conv.lastMessage || "暂无消息";
+                const displayMessage = rawMessage.replace(/\n/g, " ").replace(/\s+/g, " ");
+                const key = `chat_${this.merchantId}_${conv.userId}`;
+                const saved = common_vendor.index.getStorageSync(key);
+                return {
+                  userId: conv.userId,
+                  userName: conv.userName || conv.userId,
+                  hotelName: conv.hotelName || "酒店",
+                  hotelId: conv.hotelId,
+                  orderId: conv.orderId,
+                  merchantId: this.merchantId,
+                  lastMessage: displayMessage,
+                  lastSender: conv.lastSender || "merchant",
+                  lastTime: this.formatTime(conv.lastTime),
+                  unreadCount: conv.unreadCount || 0,
+                  showDelete: false,
+                  messages: saved ? saved.messages : []
+                };
+              });
+              this.calcTotalUnread();
+            } else {
+              this.loadOrdersByMerchantDirect();
+            }
+          } else {
+            this.loadOrdersByMerchantDirect();
+          }
+        },
+        fail: (err) => {
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:243", "获取会话列表失败:", err);
+          this.loadOrdersByMerchantDirect();
+        }
+      });
     },
     // 直接根据商家ID查询订单
     loadOrdersByMerchantDirect() {
@@ -66,26 +111,26 @@ const _sfc_main = {
         url: `http://localhost:8080/api/hotel-orders/merchant/orders?merchantId=${this.merchantId}`,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:205", "订单查询结果:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:255", "订单查询结果:", res.data);
           if (res.data && res.data.code === 200) {
             const orders = res.data.data || [];
-            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:208", "直接获取到订单数量:", orders.length);
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:258", "直接获取到订单数量:", orders.length);
             this.generateConversationsFromOrders(orders);
           } else {
-            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:211", "未获取到订单，尝试从本地存储加载");
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:261", "未获取到订单，尝试从本地存储加载");
             this.loadFromLocalStorage();
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:216", "获取订单失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:266", "获取订单失败:", err);
           this.loadFromLocalStorage();
         }
       });
     },
     // 根据订单生成会话列表
     generateConversationsFromOrders(orders) {
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:224", "=== 开始生成会话 ===");
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:225", "传入订单数量:", orders.length);
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:274", "=== 开始生成会话 ===");
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:275", "传入订单数量:", orders.length);
       const conversationsMap = {};
       orders.forEach((order) => {
         const userId = order.username || `order_${order.id}`;
@@ -94,6 +139,8 @@ const _sfc_main = {
         if (!conversationsMap[userId]) {
           const key = `chat_${this.merchantId}_${userId}`;
           const saved = common_vendor.index.getStorageSync(key);
+          const rawMessage = saved ? saved.lastMessage : `欢迎预订${hotelName}！`;
+          const displayMessage = rawMessage ? rawMessage.replace(/\n/g, " ").replace(/\s+/g, " ") : "";
           conversationsMap[userId] = {
             userId,
             userName,
@@ -101,12 +148,11 @@ const _sfc_main = {
             hotelId: order.hotelId,
             orderId: order.id,
             merchantId: this.merchantId,
-            lastMessage: saved ? saved.lastMessage : `欢迎预订${hotelName}！`,
+            lastMessage: displayMessage,
             lastSender: saved ? saved.lastSender : "merchant",
             lastTime: saved ? saved.lastTime : this.formatTime(order.createTime),
-            unreadCount: saved ? saved.unreadCount : 1,
+            unreadCount: 0,
             showDelete: false,
-            // 是否显示删除按钮
             messages: saved ? saved.messages : [
               {
                 role: "merchant",
@@ -123,8 +169,34 @@ const _sfc_main = {
         }
       });
       this.conversations = Object.values(conversationsMap);
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:261", "最终生成的会话数量:", this.conversations.length);
-      this.calcTotalUnread();
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:314", "最终生成的会话数量:", this.conversations.length);
+      this.fetchUnreadCountsFromServer();
+    },
+    // 从服务器获取未读数
+    fetchUnreadCountsFromServer() {
+      this.conversations.forEach((conv) => {
+        common_vendor.index.request({
+          url: `http://localhost:8080/api/messages/unread?role=merchant&identifier=${this.merchantId}&otherParty=${conv.userId}`,
+          method: "GET",
+          success: (res) => {
+            var _a;
+            if (res.data && res.data.code === 200) {
+              const serverUnread = ((_a = res.data.data) == null ? void 0 : _a.unreadCount) || 0;
+              conv.unreadCount = serverUnread;
+              const key = `chat_${this.merchantId}_${conv.userId}`;
+              const saved = common_vendor.index.getStorageSync(key);
+              if (saved) {
+                saved.unreadCount = serverUnread;
+                common_vendor.index.setStorageSync(key, saved);
+              }
+              this.calcTotalUnread();
+            }
+          },
+          fail: (err) => {
+            common_vendor.index.__f__("error", "at pages/merchant/messages.vue:341", "获取未读数失败", err);
+          }
+        });
+      });
     },
     // 从本地存储加载会话
     loadFromLocalStorage() {
@@ -133,11 +205,13 @@ const _sfc_main = {
       Object.keys(savedMessages).forEach((key) => {
         const data = savedMessages[key];
         if (data && data.name) {
+          const rawMessage = data.lastMessage || "您好";
+          const displayMessage = rawMessage.replace(/\n/g, " ").replace(/\s+/g, " ");
           conversations.push({
             userId: key,
             userName: data.name,
             hotelName: data.hotelName || "酒店",
-            lastMessage: data.lastMessage || "您好",
+            lastMessage: displayMessage,
             lastTime: data.lastTime || this.formatTime(/* @__PURE__ */ new Date()),
             unreadCount: data.unreadCount || 0,
             orderId: data.orderId,
@@ -149,12 +223,29 @@ const _sfc_main = {
         }
       });
       this.conversations = conversations;
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:290", "从本地存储加载的会话数量:", this.conversations.length);
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:375", "从本地存储加载的会话数量:", this.conversations.length);
       this.calcTotalUnread();
     },
     // 计算总未读数
     calcTotalUnread() {
       this.totalUnread = this.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+    },
+    // 标记消息已读
+    markMessagesAsRead(username) {
+      if (!username) {
+        common_vendor.index.__f__("error", "at pages/merchant/messages.vue:387", "用户名不能为空");
+        return;
+      }
+      common_vendor.index.request({
+        url: `http://localhost:8080/api/messages/read?role=merchant&identifier=${this.merchantId}&otherParty=${username}`,
+        method: "POST",
+        success: (res) => {
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:394", "标记已读成功", res.data);
+        },
+        fail: (err) => {
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:397", "标记已读失败", err);
+        }
+      });
     },
     // ========== 左滑删除功能 ==========
     handleTouchStart(e, conv) {
@@ -221,9 +312,16 @@ const _sfc_main = {
       this.calcTotalUnread();
       common_vendor.index.request({
         url: `http://localhost:8080/api/messages/merchant/read-all?merchantId=${this.merchantId}`,
-        method: "POST"
+        method: "POST",
+        success: (res) => {
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:479", "全部标记已读成功", res.data);
+          common_vendor.index.showToast({ title: "已全部标为已读", icon: "success" });
+        },
+        fail: (err) => {
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:483", "标记全部已读失败", err);
+          common_vendor.index.showToast({ title: "操作失败", icon: "none" });
+        }
       });
-      common_vendor.index.showToast({ title: "已全部标为已读", icon: "success" });
     },
     // 打开聊天
     openChat(conv) {
@@ -231,6 +329,13 @@ const _sfc_main = {
       this.currentUser = conv;
       conv.unreadCount = 0;
       this.calcTotalUnread();
+      const key = `chat_${this.merchantId}_${conv.userId}`;
+      const saved = common_vendor.index.getStorageSync(key);
+      if (saved) {
+        saved.unreadCount = 0;
+        common_vendor.index.setStorageSync(key, saved);
+      }
+      this.markMessagesAsRead(conv.userId);
       this.loadChatHistory();
       this.showChat = true;
     },
@@ -251,6 +356,7 @@ const _sfc_main = {
               }));
               this.saveMessagesToLocal();
               this.scrollToBottom();
+              this.markMessagesAsRead(this.currentUser.userId);
               return;
             }
           }
@@ -279,18 +385,21 @@ const _sfc_main = {
     saveMessagesToLocal() {
       const key = `chat_${this.merchantId}_${this.currentUser.userId}`;
       const lastMsg = this.currentMessages[this.currentMessages.length - 1];
+      const rawLastMessage = (lastMsg == null ? void 0 : lastMsg.content) || "";
+      const displayLastMessage = rawLastMessage ? rawLastMessage.replace(/\n/g, " ").replace(/\s+/g, " ") : "";
       common_vendor.index.setStorageSync(key, {
         messages: this.currentMessages,
-        lastMessage: lastMsg == null ? void 0 : lastMsg.content,
+        lastMessage: displayLastMessage,
         lastSender: lastMsg == null ? void 0 : lastMsg.role,
         lastTime: this.formatTime(/* @__PURE__ */ new Date()),
         unreadCount: 0
       });
       const index = this.conversations.findIndex((c) => c.userId === this.currentUser.userId);
       if (index !== -1) {
-        this.conversations[index].lastMessage = lastMsg == null ? void 0 : lastMsg.content;
+        this.conversations[index].lastMessage = displayLastMessage;
         this.conversations[index].lastSender = lastMsg == null ? void 0 : lastMsg.role;
         this.conversations[index].lastTime = this.formatTime(/* @__PURE__ */ new Date());
+        this.conversations[index].unreadCount = 0;
       }
     },
     // 滚动到底部
@@ -316,9 +425,20 @@ const _sfc_main = {
       this.scrollToBottom();
       this.saveMessagesToLocal();
       if (this.currentUser) {
-        this.currentUser.lastMessage = msgContent;
+        const displayMsg = msgContent.replace(/\n/g, " ").replace(/\s+/g, " ");
+        this.currentUser.lastMessage = displayMsg;
         this.currentUser.lastSender = "merchant";
         this.currentUser.lastTime = this.formatTime(/* @__PURE__ */ new Date());
+        this.currentUser.unreadCount = 0;
+        const key = `chat_${this.merchantId}_${this.currentUser.userId}`;
+        const saved = common_vendor.index.getStorageSync(key);
+        if (saved) {
+          saved.unreadCount = 0;
+          saved.lastMessage = displayMsg;
+          saved.lastSender = "merchant";
+          saved.lastTime = this.formatTime(/* @__PURE__ */ new Date());
+          common_vendor.index.setStorageSync(key, saved);
+        }
       }
       common_vendor.index.request({
         url: "http://localhost:8080/api/messages/send",
@@ -333,10 +453,10 @@ const _sfc_main = {
           isRead: 0
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:522", "消息发送成功", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:642", "消息发送成功", res.data);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:525", "消息发送失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:645", "消息发送失败", err);
         }
       });
     },

@@ -101,3 +101,21 @@ page.data-v-197ccafb {
 .submit-btn[disabled].data-v-197ccafb {
   opacity: 0.6;
 }
+.passenger-section.data-v-197ccafb {
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.passenger-section.data-v-197ccafb:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.passenger-title.data-v-197ccafb {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #1677ff;
+  margin: 20rpx 0 10rpx 0;
+  padding-left: 10rpx;
+  border-left: 4rpx solid #1677ff;
+}
