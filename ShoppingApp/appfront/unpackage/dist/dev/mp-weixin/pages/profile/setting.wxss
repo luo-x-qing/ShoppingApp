@@ -1,21 +1,29 @@
 
 .container.data-v-46031339 {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(180deg, #f0eaf8 0%, #e8e0f2 100%);
 }
 .header.data-v-46031339 {
-  background: #fff;
-  padding: 25rpx 0;
+  background: linear-gradient(135deg, #9b7bcf, #7b5cad);
+  padding: 32rpx 0;
   text-align: center;
-  font-size: 32rpx;
-  font-weight: bold;
+  padding-top: calc(32rpx + constant(safe-area-inset-top));
+  padding-top: calc(32rpx + env(safe-area-inset-top));
   margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(123, 92, 173, 0.15);
+}
+.header .title.data-v-46031339 {
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
 }
 .info-card.data-v-46031339 {
   background: #fff;
   margin: 20rpx;
   padding: 30rpx;
-  border-radius: 20rpx;
+  border-radius: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(123, 92, 173, 0.08);
 }
 .user-row.data-v-46031339 {
   display: flex;
@@ -26,7 +34,7 @@
   height: 120rpx;
   border-radius: 60rpx;
   margin-right: 20rpx;
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, #ede5fc, #e0d4f5);
 }
 .info.data-v-46031339 {
   flex: 1;
@@ -35,27 +43,28 @@
   display: block;
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: #5a3d8c;
   margin-bottom: 8rpx;
 }
 .role.data-v-46031339 {
   display: block;
   font-size: 26rpx;
-  color: #999;
+  color: #b8a6da;
 }
 .setting-list.data-v-46031339 {
   margin: 0 20rpx 20rpx;
   background-color: #fff;
-  border-radius: 20rpx;
+  border-radius: 28rpx;
   overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(123, 92, 173, 0.06);
 }
 .setting-section.data-v-46031339 {
-  border-bottom: 20rpx solid #f5f5f5;
+  border-bottom: 20rpx solid #f4f0fa;
 }
 .section-title.data-v-46031339 {
   padding: 30rpx 30rpx 20rpx;
   font-size: 28rpx;
-  color: #999;
+  color: #b8a6da;
   background-color: #fff;
 }
 .setting-item.data-v-46031339 {
@@ -64,14 +73,14 @@
   align-items: center;
   padding: 30rpx;
   background-color: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0eaf8;
 }
 .setting-item.data-v-46031339:active {
-  background-color: #f9f9f9;
+  background-color: #f8f4ff;
 }
 .item-label.data-v-46031339 {
   font-size: 30rpx;
-  color: #333;
+  color: #5a3d8c;
 }
 .item-right.data-v-46031339 {
   display: flex;
@@ -80,7 +89,7 @@
 }
 .item-value.data-v-46031339 {
   font-size: 28rpx;
-  color: #999;
+  color: #b8a6da;
   max-width: 400rpx;
   text-align: right;
 }
@@ -92,25 +101,26 @@
 }
 .item-arrow.data-v-46031339 {
   font-size: 32rpx;
-  color: #ccc;
+  color: #d4c4ec;
 }
 .avatar-preview.data-v-46031339 {
   width: 60rpx;
   height: 60rpx;
   border-radius: 30rpx;
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, #ede5fc, #e0d4f5);
 }
 .logout-section.data-v-46031339 {
   padding: 40rpx 30rpx;
 }
 .logout-btn.data-v-46031339 {
   width: 100%;
-  background-color: #ff6b6b;
+  background: linear-gradient(135deg, #e0a0a0, #d08080);
   color: #fff;
   border-radius: 50rpx;
   padding: 24rpx;
   font-size: 30rpx;
   border: none;
+  box-shadow: 0 4rpx 12rpx rgba(208, 128, 128, 0.3);
 }
 .version-info.data-v-46031339 {
   padding: 30rpx;
@@ -118,7 +128,7 @@
 }
 .version-text.data-v-46031339 {
   font-size: 24rpx;
-  color: #ccc;
+  color: #ccc0e0;
 }
 
 /* 弹窗样式 */
@@ -137,45 +147,60 @@
 .modal-container.data-v-46031339 {
   width: 85%;
   background-color: #fff;
-  border-radius: 30rpx;
+  border-radius: 32rpx;
   overflow: hidden;
+  box-shadow: 0 24rpx 48rpx rgba(123, 92, 173, 0.2);
 }
 .modal-header.data-v-46031339 {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 30rpx;
-  border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, #9b7bcf, #7b5cad);
 }
 .modal-title.data-v-46031339 {
   font-size: 34rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 .modal-close.data-v-46031339 {
   font-size: 48rpx;
-  color: #999;
+  color: rgba(255,255,255,0.8);
   line-height: 1;
 }
 .modal-body.data-v-46031339 {
   padding: 40rpx 30rpx;
 }
+.input-group.data-v-46031339 {
+  margin-bottom: 30rpx;
+}
+.input-label.data-v-46031339 {
+  display: block;
+  font-size: 28rpx;
+  color: #5a3d8c;
+  margin-bottom: 12rpx;
+}
 .edit-input.data-v-46031339 {
   width: 100%;
   padding: 24rpx;
-  border: 1px solid #e0e0e0;
-  border-radius: 12rpx;
+  border: 1px solid #e0d4f5;
+  border-radius: 16rpx;
   font-size: 28rpx;
   box-sizing: border-box;
+  background: #f8f4ff;
+}
+.edit-input.data-v-46031339:focus {
+  border-color: #9b7bcf;
 }
 .edit-textarea.data-v-46031339 {
   width: 100%;
   min-height: 200rpx;
   padding: 24rpx;
-  border: 1px solid #e0e0e0;
-  border-radius: 12rpx;
+  border: 1px solid #e0d4f5;
+  border-radius: 16rpx;
   font-size: 28rpx;
   box-sizing: border-box;
+  background: #f8f4ff;
 }
 .modal-footer.data-v-46031339 {
   display: flex;
@@ -190,36 +215,37 @@
   border: none;
 }
 .cancel-btn.data-v-46031339 {
-  background-color: #f5f5f5;
-  color: #666;
+  background: #f0eaf8;
+  color: #b8a6da;
 }
 .confirm-btn.data-v-46031339 {
-  background-color: #f0e68c;
-  color: #333;
+  background: linear-gradient(135deg, #9b7bcf, #7b5cad);
+  color: #fff;
 }
 
 /* 关于弹窗 */
 .about-container.data-v-46031339 {
   width: 80%;
   background-color: #fff;
-  border-radius: 30rpx;
+  border-radius: 32rpx;
   overflow: hidden;
+  box-shadow: 0 24rpx 48rpx rgba(123, 92, 173, 0.2);
 }
 .about-header.data-v-46031339 {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 30rpx;
-  border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, #9b7bcf, #7b5cad);
 }
 .about-title.data-v-46031339 {
   font-size: 34rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 .about-close.data-v-46031339 {
   font-size: 48rpx;
-  color: #999;
+  color: rgba(255,255,255,0.8);
   line-height: 1;
 }
 .about-body.data-v-46031339 {
@@ -235,30 +261,30 @@
   display: block;
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: #5a3d8c;
   margin-bottom: 10rpx;
 }
 .app-version.data-v-46031339 {
   display: block;
   font-size: 26rpx;
-  color: #999;
+  color: #b8a6da;
   margin-bottom: 20rpx;
 }
 .app-desc.data-v-46031339 {
   display: block;
   font-size: 28rpx;
-  color: #666;
+  color: #8a78a8;
   margin-bottom: 30rpx;
 }
 .contact-info.data-v-46031339 {
   text-align: left;
-  background-color: #f8f8f8;
+  background: #f8f4ff;
   padding: 20rpx;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
 }
 .contact-info text.data-v-46031339 {
   display: block;
   font-size: 26rpx;
-  color: #666;
+  color: #8a78a8;
   margin-bottom: 10rpx;
 }
