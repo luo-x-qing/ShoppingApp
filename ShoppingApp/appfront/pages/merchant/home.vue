@@ -20,7 +20,7 @@
         </view>
       </view>
     </view>
-
+    
     <!-- 状态提示卡片（非正常状态时显示） -->
     <view class="status-card" v-if="userInfo.status && userInfo.status !== 'NORMAL'">
       <text class="status-icon">{{ statusIcon }}</text>
@@ -29,7 +29,7 @@
         <text class="status-desc">{{ statusDesc }}</text>
       </view>
     </view>
-
+    
     <!-- 申诉入口（账号异常时显示） -->
     <view class="appeal-entry" v-if="userInfo.status && userInfo.status !== 'NORMAL'" @click="goToAppeal">
       <text class="appeal-icon">📢</text>
@@ -39,7 +39,7 @@
       </view>
       <text class="appeal-arrow">›</text>
     </view>
-
+    
     <!-- 正常状态菜单 - 可点击 -->
     <view class="menu" v-if="userInfo.status === 'NORMAL'">
       <view class="menu-item" @click="navigateTo('/pages/merchant/hotel-list')">
@@ -57,6 +57,7 @@
       <view class="menu-item" @click="navigateTo('/pages/merchant/messages')">
         <text class="menu-icon">💌</text>
         <text>客户消息</text>
+        <!-- 显示未读消息数量 -->
         <view class="message-badge" v-if="messageUnreadCount > 0">
           <text>{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</text>
         </view>
@@ -70,7 +71,7 @@
         <text>商家设置</text>
       </view>
     </view>
-
+    
     <!-- 非正常状态时显示的占位卡片 - 不可点击 -->
     <view class="disabled-menu" v-else>
       <view class="disabled-item">
@@ -99,7 +100,7 @@
         <text class="disabled-tag">{{ statusTag }}</text>
       </view>
     </view>
-
+    
     <button class="logout-btn" @click="logout">退出登录</button>
   </view>
 </template>
@@ -109,8 +110,8 @@ export default {
   data() {
     return {
       userInfo: {},
-      unreadCount: 0,
-      messageUnreadCount: 0,
+      unreadCount: 0,        // 通知未读数
+      messageUnreadCount: 0,  // 消息未读数
       avatarColor: '#f0e68c'
     };
   },
@@ -161,13 +162,13 @@ export default {
       const shopName = this.userInfo.shopName || this.userInfo.name || '商';
       const firstChar = shopName.charAt(0);
       return /[a-zA-Z]/.test(firstChar) ? firstChar.toUpperCase() : firstChar;
-    }
+    },
   },
   onShow() {
     this.loadUserInfo();
     this.checkMerchantStatus();
     this.loadUnreadCount();
-    this.loadMessageUnreadCount();
+    this.loadMessageUnreadCount();  // 从后端获取消息未读数
   },
   methods: {
     loadUserInfo() {
@@ -179,7 +180,7 @@ export default {
         console.error('读取用户信息失败', e);
       }
     },
-
+    
     generateAvatarColor() {
       const shopName = this.userInfo.shopName || this.userInfo.name || '商家';
       const colors = [
@@ -194,11 +195,12 @@ export default {
       const index = sum % colors.length;
       this.avatarColor = colors[index];
     },
-
+    
+    // 加载通知未读数
     loadUnreadCount() {
       const token = uni.getStorageSync('token');
       if (!token) return;
-
+      
       uni.request({
         url: 'http://localhost:8080/api/merchant/notifications/unread-count',
         method: 'GET',
@@ -215,37 +217,47 @@ export default {
         }
       });
     },
-
+    
+    // 加载消息未读数 - 直接从后端数据库读取
     loadMessageUnreadCount() {
       const merchantId = this.userInfo.id;
       if (!merchantId) {
+        console.log('商家ID不存在，无法获取消息未读数');
         this.messageUnreadCount = 0;
         return;
       }
-
+      
+      console.log('=== 从后端获取商家总未读数 ===');
+      console.log('商家ID:', merchantId);
+      
       uni.request({
         url: `http://localhost:8080/api/messages/merchant/total-unread?merchantId=${merchantId}`,
         method: 'GET',
         success: (res) => {
+          console.log('后端返回完整数据:', res.data);
           if (res.data && res.data.code === 200) {
             this.messageUnreadCount = res.data.data || 0;
+            console.log('✅ 主页显示未读数:', this.messageUnreadCount);
           } else {
+            console.log('❌ 后端返回异常:', res.data);
             this.messageUnreadCount = 0;
           }
         },
-        fail: () => {
+        fail: (err) => {
+          console.error('❌ 获取消息未读数失败:', err);
           this.messageUnreadCount = 0;
         }
       });
     },
-
+    
+    // 检查商家状态
     checkMerchantStatus() {
       const status = this.userInfo.status;
-
+      
       if (status && status !== 'NORMAL') {
         let title = '';
         let content = '';
-
+        
         if (status === 'PENDING') {
           title = '账号待审核';
           content = '您的商家账号正在审核中，请等待管理员审核通过后使用全部功能。';
@@ -256,7 +268,7 @@ export default {
           title = '账号已禁用';
           content = '您的商家账号已被禁用，请联系管理员申诉。';
         }
-
+        
         if (title) {
           uni.showModal({
             title: title,
@@ -276,7 +288,8 @@ export default {
         }
       }
     },
-
+    
+    // 核心校验方法：检查商家状态是否允许操作
     checkStatusAndAlert() {
       const status = this.userInfo.status;
       if (status !== 'NORMAL') {
@@ -290,9 +303,9 @@ export default {
         } else {
           message = '账号状态异常，暂无法使用此功能';
         }
-
-        uni.showToast({
-          title: message,
+        
+        uni.showToast({ 
+          title: message, 
           icon: 'none',
           duration: 2000
         });
@@ -300,25 +313,26 @@ export default {
       }
       return true;
     },
-
+    
+    // 导航跳转 - 统一校验
     navigateTo(url) {
       if (this.checkStatusAndAlert()) {
         uni.navigateTo({ url });
       }
     },
-
+    
     goToNotifications() {
       if (this.checkStatusAndAlert()) {
         uni.navigateTo({ url: '/pages/merchant/notifications' });
       }
     },
-
+    
     goToAppeal() {
       uni.navigateTo({
         url: '/pages/merchant/appeal'
       });
     },
-
+    
     logout() {
       uni.clearStorageSync();
       uni.reLaunch({
@@ -427,7 +441,6 @@ export default {
   text-align: center;
 }
 
-/* 状态提示卡片 */
 .status-card {
   background-color: #fff;
   border-radius: 20rpx;
@@ -461,7 +474,6 @@ export default {
   line-height: 1.5;
 }
 
-/* 申诉入口 */
 .appeal-entry {
   display: flex;
   align-items: center;
@@ -499,7 +511,6 @@ export default {
   color: #999;
 }
 
-/* 正常菜单 */
 .menu {
   background-color: #fff;
   border-radius: 20rpx;
@@ -542,7 +553,6 @@ export default {
   font-weight: bold;
 }
 
-/* 禁用状态菜单 */
 .disabled-menu {
   background-color: #fff;
   border-radius: 20rpx;
@@ -578,7 +588,6 @@ export default {
   transform: scale(0.98);
 }
 
-/* 文字头像 */
 .avatar-text {
   width: 120rpx;
   height: 120rpx;

@@ -254,15 +254,16 @@
   align-items: center;
   padding: 32rpx;
   border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 .modal-title.data-v-64876f70 {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 .modal-close.data-v-64876f70 {
   font-size: 48rpx;
-  color: #999;
+  color: #fff;
   line-height: 1;
 }
 .modal-body.data-v-64876f70 {

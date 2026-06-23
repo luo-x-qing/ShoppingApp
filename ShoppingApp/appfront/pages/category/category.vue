@@ -293,7 +293,7 @@ export default {
       })
     },
 
-    // 加载全部酒店列表（保持不变）
+    // 加载全部酒店列表（过滤掉已停业的酒店）
     loadData() {
       this.loading = true
       let cat = this.categoryList[this.activeTab]
@@ -350,7 +350,7 @@ export default {
       })
     },
 
-    // 实时搜索建议（输入时触发）
+    // 实时搜索建议（输入时触发）- 只显示营业中的酒店
     onSearchInput(e) {
       const keyword = e.detail.value
       this.keyword = keyword

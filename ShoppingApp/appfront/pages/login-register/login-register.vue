@@ -44,7 +44,7 @@
       <view class="form-body">
         <view class="input-group">
           <view class="input-icon">👤</view>
-          <input class="input" placeholder="用户名" v-model="username" />
+          <input class="input" placeholder="用户名 / 手机号" v-model="username" />
         </view>
         
         <view class="input-group">
@@ -176,7 +176,7 @@
           
           <view class="contact-tips">
             <text class="tips-icon">💡</text>
-            <text class="tips-text">也可直接联系管理员：admin@example.com | 客服电话：400-123-4567</text>
+            <text class="tips-text">也可直接联系管理员：service@example.com | 客服电话：400-123-4567</text>
           </view>
         </scroll-view>
         <view class="modal-footer">
@@ -311,19 +311,12 @@ export default {
         },
         success: (res) => {
           uni.hideLoading();
-          if (res.data && (res.data.code === 200 || res.data.success)) {
-            uni.showToast({ 
-              title: '申诉已提交，管理员会尽快处理', 
-              icon: 'success',
-              duration: 2000
-            });
-            this.closeAppealModal();
-          } else {
-            uni.showToast({ 
-              title: res.data?.message || '提交失败', 
-              icon: 'none' 
-            });
-          }
+          uni.showToast({ 
+            title: '申诉已提交，管理员会尽快处理', 
+            icon: 'success',
+            duration: 2000
+          });
+          this.closeAppealModal();
         },
         fail: () => {
           uni.hideLoading();
@@ -384,67 +377,88 @@ export default {
             if (this.userRole === 'merchant') {
               const status = (userData.status || 'NORMAL').toUpperCase();
               
+              // 保存用户信息到本地存储（用于后续页面显示）
+              uni.setStorageSync('token', userData.token);
+              uni.setStorageSync('loginUsername', this.username);
+              uni.setStorageSync('userRole', userData.role);
+              uni.setStorageSync('userInfo', {
+                id: userData.id,
+                name: this.username,
+                username: userData.username || this.username,
+                role: userData.role,
+                status: userData.status || 'NORMAL',
+                shopName: userData.shopName || '',
+                phone: userData.phone || '',
+                email: userData.email || '',
+                avatar: userData.avatar || '',
+                bio: userData.bio || ''
+              });
+              
+              // 待审核状态 - 跳转到等待审核页
               if (status === 'PENDING') {
-                uni.showModal({
-                  title: '账号待审核',
-                  content: '您的商家账号正在审核中，请等待管理员审核。如需联系管理员，请点击申诉。',
-                  confirmText: '申诉',
-                  cancelText: '知道了',
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      this.openAppealModal(userData.username, userData.shopName, 'PENDING');
-                    }
-                  }
-                });
-                return;
-              } else if (status === 'REJECTED') {
-                uni.showModal({
-                  title: '审核未通过',
-                  content: '您的商家账号审核未通过。如需申诉或了解详情，请联系管理员。',
-                  confirmText: '申诉',
-                  cancelText: '知道了',
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      this.openAppealModal(userData.username, userData.shopName, 'REJECTED');
-                    }
-                  }
-                });
-                return;
-              } else if (status === 'BANNED') {
-                uni.showModal({
-                  title: '账号已禁用',
-                  content: '您的商家账号已被禁用。如需申诉，请联系管理员。',
-                  confirmText: '申诉',
-                  cancelText: '知道了',
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      this.openAppealModal(userData.username, userData.shopName, 'BANNED');
-                    }
-                  }
-                });
-                return;
-              } else if (status !== 'NORMAL') {
-                uni.showToast({ 
-                  title: '账号状态异常(' + status + ')，请联系管理员', 
-                  icon: 'none'
-                });
+                uni.showToast({ title: '登录成功', icon: 'success' });
+                setTimeout(() => {
+                  uni.redirectTo({ 
+                    url: '/pages/merchant/pending?username=' + encodeURIComponent(userData.username) + '&shopName=' + encodeURIComponent(userData.shopName || '')
+                  });
+                }, 500);
                 return;
               }
+              
+              // 已拒绝状态 - 跳转到拒绝提示页
+              if (status === 'REJECTED') {
+                uni.showToast({ title: '登录成功', icon: 'success' });
+                setTimeout(() => {
+                  uni.redirectTo({ 
+                    url: '/pages/merchant/rejected?username=' + encodeURIComponent(userData.username) + '&shopName=' + encodeURIComponent(userData.shopName || '')
+                  });
+                }, 500);
+                return;
+              }
+              
+              // 已禁用状态 - 跳转到禁用提示页
+              if (status === 'BANNED') {
+                uni.showToast({ title: '登录成功', icon: 'success' });
+                setTimeout(() => {
+                  uni.redirectTo({ 
+                    url: '/pages/merchant/banned?username=' + encodeURIComponent(userData.username) + '&shopName=' + encodeURIComponent(userData.shopName || '')
+                  });
+                }, 500);
+                return;
+              }
+              
+              // 正常状态 - 进入商家主页
+              if (status === 'NORMAL') {
+                uni.showToast({ title: '登录成功', icon: 'success' });
+                setTimeout(() => {
+                  uni.reLaunch({ url: '/pages/merchant/home' });
+                }, 500);
+                return;
+              }
+              
+              // 其他未知状态
+              uni.showToast({ 
+                title: '账号状态异常，请联系管理员', 
+                icon: 'none'
+              });
+              return;
             }
             
-            // 保存登录信息
+            // ✅ 保存完整用户信息
             uni.setStorageSync('token', userData.token);
             uni.setStorageSync('loginUsername', this.username);
             uni.setStorageSync('userRole', userData.role);
             uni.setStorageSync('userInfo', {
               id: userData.id,
               name: this.username,
+              username: userData.username || this.username,
               role: userData.role,
               status: userData.status || 'NORMAL',
               shopName: userData.shopName || '',
               phone: userData.phone || '',
               email: userData.email || '',
-              avatar: userData.avatar || ''
+              avatar: userData.avatar || '',
+              bio: userData.bio || ''
             });
             
             uni.showToast({
@@ -836,17 +850,18 @@ export default {
   align-items: center;
   padding: 32rpx;
   border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .modal-title {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 
 .modal-close {
   font-size: 48rpx;
-  color: #999;
+  color: #fff;
   line-height: 1;
 }
 

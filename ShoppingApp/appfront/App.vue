@@ -11,10 +11,10 @@ import RouteFloat from '@/components/RouteFloat.vue';
 export default {
   components: { RouteFloat },
   onLaunch() {
-    this.checkLogin();
+    setTimeout(() => this.checkLogin(), 300);
   },
   onShow() {
-    this.checkLogin();
+    setTimeout(() => this.checkLogin(), 300);
   },
   onHide() {},
   methods: {

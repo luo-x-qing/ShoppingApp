@@ -55,6 +55,13 @@ const _sfc_main = {
     this.checkInDate = tomorrowStr;
     this.minCheckOutDate = tomorrowStr;
     this.checkOutDate = dayAfterTomorrowStr;
+    common_vendor.index.__f__("log", "at pages/booking/booking.vue:172", "日期设置：", {
+      today: todayStr,
+      minCheckIn: this.minCheckInDate,
+      checkIn: this.checkInDate,
+      minCheckOut: this.minCheckOutDate,
+      checkOut: this.checkOutDate
+    });
     this.days = 1;
     this.totalPrice = this.price;
     this.roomCount = 1;
@@ -69,7 +76,7 @@ const _sfc_main = {
         url: "http://localhost:8080/api/room-types/hotel/" + this.id,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/booking/booking.vue:191", "房型列表返回：", res.data);
+          common_vendor.index.__f__("log", "at pages/booking/booking.vue:199", "房型列表返回：", res.data);
           let rooms = [];
           if (res.data && res.data.code === 200) {
             rooms = res.data.data || [];
@@ -79,7 +86,7 @@ const _sfc_main = {
           this.roomTypes = rooms;
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/booking/booking.vue:203", "获取房型失败：", err);
+          common_vendor.index.__f__("error", "at pages/booking/booking.vue:211", "获取房型失败：", err);
         }
       });
     },
@@ -96,6 +103,7 @@ const _sfc_main = {
     // 入住日期变化
     bindCheckInChange(e) {
       const newCheckIn = e.detail.value;
+      common_vendor.index.__f__("log", "at pages/booking/booking.vue:231", "选择的入住日期：", newCheckIn);
       const today = /* @__PURE__ */ new Date();
       today.setHours(0, 0, 0, 0);
       const selectedDate = new Date(newCheckIn);
@@ -123,6 +131,7 @@ const _sfc_main = {
     // 退房日期变化
     bindCheckOutChange(e) {
       const newCheckOut = e.detail.value;
+      common_vendor.index.__f__("log", "at pages/booking/booking.vue:270", "选择的退房日期：", newCheckOut);
       if (newCheckOut <= this.checkInDate) {
         common_vendor.index.showToast({
           title: "退房日期必须晚于入住日期",
@@ -204,7 +213,7 @@ const _sfc_main = {
         contactPhone: this.contactPhone,
         status: "待支付"
       };
-      common_vendor.index.__f__("log", "at pages/booking/booking.vue:359", "提交订单数据：", submitData);
+      common_vendor.index.__f__("log", "at pages/booking/booking.vue:369", "提交订单数据：", submitData);
       common_vendor.index.showLoading({ title: "提交中..." });
       common_vendor.index.request({
         url: "http://localhost:8080/api/hotel-orders",
@@ -215,7 +224,7 @@ const _sfc_main = {
         data: submitData,
         success: (res) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/booking/booking.vue:372", "订单提交结果：", res.data);
+          common_vendor.index.__f__("log", "at pages/booking/booking.vue:382", "订单提交结果：", res.data);
           if (res.data && res.data.code === 200) {
             common_vendor.index.showToast({ title: "预订成功！", icon: "success" });
             setTimeout(() => {
@@ -230,7 +239,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/booking/booking.vue:388", "提交订单失败：", err);
+          common_vendor.index.__f__("error", "at pages/booking/booking.vue:398", "提交订单失败：", err);
           common_vendor.index.showToast({ title: "网络错误，请重试", icon: "none" });
         }
       });

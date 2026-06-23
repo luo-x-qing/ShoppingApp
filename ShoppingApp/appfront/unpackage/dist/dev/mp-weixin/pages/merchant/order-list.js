@@ -77,7 +77,7 @@ const _sfc_main = {
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:241", "获取订单失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:242", "获取订单失败", err);
           this.loadAllOrders();
         }
       });
@@ -89,7 +89,7 @@ const _sfc_main = {
         method: "GET",
         success: (res) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:254", "获取所有订单：", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:255", "获取所有订单：", res.data);
           if (res.data && res.data.code === 200) {
             let orders = res.data.data || [];
             this.checkAndCancelExpiredOrders(orders);
@@ -100,13 +100,16 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:266", "获取订单失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:267", "获取订单失败", err);
           common_vendor.index.showToast({ title: "获取订单失败", icon: "none" });
           this.orderList = [];
         }
       });
     },
-    // 检查并自动取消过期订单
+    // ========== 🔥 核心方法：检查并自动取消过期订单 ==========
+    /**
+     * 检查所有待确认和已支付的订单，如果入住日期已过且商家未确认，自动取消
+     */
     checkAndCancelExpiredOrders(orders) {
       if (!orders || orders.length === 0)
         return;
@@ -124,13 +127,16 @@ const _sfc_main = {
       });
       if (expiredOrders.length === 0)
         return;
-      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:294", `发现 ${expiredOrders.length} 个订单已过入住日期未确认，自动取消`);
+      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:304", `发现 ${expiredOrders.length} 个订单已过入住日期未确认，自动取消`);
       expiredOrders.forEach((order) => {
         this.cancelExpiredOrder(order);
       });
     },
+    /**
+     * 取消过期的订单（调用后端接口）
+     */
     cancelExpiredOrder(order) {
-      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:302", `自动取消订单 ${order.id}，入住日期：${order.checkIn}，状态：${order.status}`);
+      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:316", `自动取消订单 ${order.id}，入住日期：${order.checkIn}，状态：${order.status}`);
       const cancelReason = `商家未在入住日期(${order.checkIn})前确认订单，系统自动取消`;
       common_vendor.index.request({
         url: `http://localhost:8080/api/hotel-orders/${order.id}/auto-cancel`,
@@ -139,14 +145,19 @@ const _sfc_main = {
           reason: cancelReason
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:313", `订单 ${order.id} 自动取消结果`, res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:329", `订单 ${order.id} 自动取消失败`, res.data);
+          this.updateOrderStatus(order.id, "已取消", cancelReason);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:316", `订单 ${order.id} 自动取消失败`, err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:336", `订单 ${order.id} 自动取消失败`, err);
           this.updateOrderStatus(order.id, "已取消", cancelReason);
         }
       });
     },
+    /**
+     * 备用方案：直接更新订单状态
+     * 如果后端没有专用接口，直接调用更新接口
+     */
     updateOrderStatus(orderId, status, reason) {
       common_vendor.index.request({
         url: `http://localhost:8080/api/hotel-orders/${orderId}`,
@@ -156,22 +167,22 @@ const _sfc_main = {
           cancelReason: reason || "订单过期自动取消"
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:331", `订单 ${orderId} 状态已更新为 ${status}`, res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:356", `订单 ${orderId} 状态已更新为 ${status}`, res.data);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:334", `更新订单 ${orderId} 状态失败`, err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:359", `更新订单 ${orderId} 状态失败`, err);
         }
       });
     },
     // 处理订单数据
     processOrders(orders) {
-      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:341", "原始订单数量：", orders.length);
+      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:366", "原始订单数量：", orders.length);
       orders.forEach((order) => {
-        common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:344", `订单ID: ${order.id}, 酒店ID: ${order.hotelId}, 状态: "${order.status}"`);
+        common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:369", `订单ID: ${order.id}, 酒店ID: ${order.hotelId}, 状态: "${order.status}"`);
       });
       if (this.activeTab !== "all") {
         orders = orders.filter((order) => this.filterByStatus(order.status));
-        common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:349", "筛选后订单数量：", orders.length);
+        common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:374", "筛选后订单数量：", orders.length);
       }
       orders.sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
       this.orderList = orders;
@@ -196,6 +207,11 @@ const _sfc_main = {
       this.loadOrdersByMerchant();
     },
     // ========== 入住时间校验 ==========
+    /**
+     * 检查是否可以确认入住
+     * @param {string} checkInDate - 入住日期 (格式: YYYY-MM-DD)
+     * @returns {boolean} - 是否可以入住
+     */
     canCheckIn(checkInDate) {
       if (!checkInDate)
         return false;
@@ -205,6 +221,11 @@ const _sfc_main = {
       checkIn.setHours(0, 0, 0, 0);
       return checkIn <= today;
     },
+    /**
+     * 获取入住校验失败的原因
+     * @param {string} checkInDate - 入住日期
+     * @returns {string} - 失败原因
+     */
     getCheckInFailReason(checkInDate) {
       if (!checkInDate)
         return "订单缺少入住日期信息";
@@ -218,6 +239,7 @@ const _sfc_main = {
       }
       return "未知原因";
     },
+    // 处理确认入住（带校验）
     handleCheckIn(order) {
       if (!this.canCheckIn(order.checkIn)) {
         this.warningMessage = this.getCheckInFailReason(order.checkIn);
@@ -234,7 +256,7 @@ const _sfc_main = {
         }
       });
     },
-    // 确认订单
+    // ========== 确认订单 ==========
     confirmOrder(order) {
       common_vendor.index.showModal({
         title: "确认订单",
@@ -257,7 +279,7 @@ const _sfc_main = {
               },
               fail: (err) => {
                 common_vendor.index.hideLoading();
-                common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:452", "确认订单失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:493", "确认订单失败", err);
                 common_vendor.index.showToast({ title: "网络错误", icon: "none" });
               }
             });
@@ -265,6 +287,9 @@ const _sfc_main = {
         }
       });
     },
+    /**
+     * 发送确认消息给客户
+     */
     sendConfirmedMessage(order) {
       const hotelId = order.hotelId || order.id;
       const hotelName = order.name || order.hotelName || `酒店${hotelId}`;
@@ -272,7 +297,7 @@ const _sfc_main = {
       const customerUsername = order.username;
       const orderId = order.id;
       if (!customerUsername) {
-        common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:469", "缺少客户用户名，无法发送确认消息");
+        common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:513", "缺少客户用户名，无法发送确认消息");
         return;
       }
       const confirmedMessage = `🎉 欢迎预订${hotelName}！
@@ -282,7 +307,7 @@ const _sfc_main = {
 💰 订单金额：¥${order.price || 0}
 
 如有任何问题，请随时联系我们，欢迎您的入住~`;
-      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:475", `发送确认消息，订单ID: ${orderId}, 用户: ${customerUsername}`);
+      common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:519", `发送确认消息，订单ID: ${orderId}, 用户: ${customerUsername}`);
       this.saveConfirmedMessageToLocal(order, hotelId, hotelName, confirmedMessage);
       common_vendor.index.request({
         url: "http://localhost:8080/api/messages/send",
@@ -297,13 +322,16 @@ const _sfc_main = {
           isRead: 0
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:492", "确认消息发送成功", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/order-list.vue:538", "确认消息发送成功", res.data);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:495", "确认消息发送失败：", err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:541", "确认消息发送失败：", err);
         }
       });
     },
+    /**
+     * 保存确认消息到本地存储
+     */
     saveConfirmedMessageToLocal(order, hotelId, hotelName, message) {
       const userId = order.username;
       if (!userId)
@@ -353,7 +381,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:555", "确认入住失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:604", "确认入住失败", err);
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });
@@ -380,7 +408,7 @@ const _sfc_main = {
               },
               fail: (err) => {
                 common_vendor.index.hideLoading();
-                common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:584", "确认退房失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:633", "确认退房失败", err);
                 common_vendor.index.showToast({ title: "网络错误", icon: "none" });
               }
             });
@@ -410,7 +438,7 @@ const _sfc_main = {
               },
               fail: (err) => {
                 common_vendor.index.hideLoading();
-                common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:616", "同意取消失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:665", "同意取消失败", err);
                 common_vendor.index.showToast({ title: "网络错误", icon: "none" });
               }
             });
@@ -455,7 +483,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:666", "拒绝取消失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/order-list.vue:715", "拒绝取消失败", err);
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });

@@ -116,7 +116,7 @@ export default {
       roomTypeId: null,
       roomTypeName: "",
       showRoomPicker: false,
-
+      
       // 日期限制
       minCheckInDate: "",
       minCheckOutDate: ""
@@ -169,6 +169,14 @@ export default {
     this.minCheckOutDate = tomorrowStr;
     this.checkOutDate = dayAfterTomorrowStr;
     
+    console.log('日期设置：', {
+      today: todayStr,
+      minCheckIn: this.minCheckInDate,
+      checkIn: this.checkInDate,
+      minCheckOut: this.minCheckOutDate,
+      checkOut: this.checkOutDate
+    });
+    
     this.days = 1;
     this.totalPrice = this.price;
     this.roomCount = 1;
@@ -220,6 +228,7 @@ export default {
     // 入住日期变化
     bindCheckInChange(e) {
       const newCheckIn = e.detail.value;
+      console.log('选择的入住日期：', newCheckIn);
       
       // 验证入住日期是否在今天之前
       const today = new Date();
@@ -258,6 +267,7 @@ export default {
     // 退房日期变化
     bindCheckOutChange(e) {
       const newCheckOut = e.detail.value;
+      console.log('选择的退房日期：', newCheckOut);
       
       // 验证退房日期是否晚于入住日期
       if (newCheckOut <= this.checkInDate) {
@@ -276,7 +286,7 @@ export default {
       this.checkOutDate = newCheckOut;
       this.calcDays();
     },
-
+    
     // 格式化日期
     formatDateStr(date) {
       const year = date.getFullYear();

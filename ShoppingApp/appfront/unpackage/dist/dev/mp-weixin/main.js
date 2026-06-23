@@ -117,10 +117,10 @@ const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main$1, [["rend
 const _sfc_main = {
   components: { RouteFloat: Component },
   onLaunch() {
-    this.checkLogin();
+    setTimeout(() => this.checkLogin(), 300);
   },
   onShow() {
-    this.checkLogin();
+    setTimeout(() => this.checkLogin(), 300);
   },
   onHide() {
   },

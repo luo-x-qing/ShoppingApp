@@ -221,6 +221,8 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+/* 编辑房型弹窗容器 - 修复溢出问题 */
 .room-form-container {
   width: 90%;
   max-width: 650rpx;
@@ -235,12 +237,16 @@
   top: 50%;
   transform: translateY(-50%);
 }
+
+/* 弹窗主体滚动区域 - 确保内容不溢出 */
 .room-form-container .modal-body {
   flex: 1;
   padding: 30rpx;
   overflow-y: auto;
   box-sizing: border-box;
 }
+
+/* 所有表单输入框确保不溢出父容器 */
 .room-form-container .form-item {
   margin-bottom: 30rpx;
   width: 100%;

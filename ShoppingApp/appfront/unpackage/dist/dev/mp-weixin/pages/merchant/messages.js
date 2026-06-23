@@ -60,16 +60,16 @@ const _sfc_main = {
       common_vendor.index.__f__("log", "at pages/merchant/messages.vue:195", "开始加载商家会话列表, 商家ID:", this.merchantId);
       this.loadConversationsFromServer();
     },
-    // 从服务器加载会话列表
+    // 从服务器加载会话列表（使用后端的 /merchant/conversations 接口）
     loadConversationsFromServer() {
       common_vendor.index.request({
         url: `http://localhost:8080/api/messages/merchant/conversations?merchantId=${this.merchantId}`,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:205", "会话列表查询结果:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:206", "会话列表查询结果:", res.data);
           if (res.data && res.data.code === 200) {
             const conversations = res.data.data || [];
-            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:208", "从服务器获取到会话数量:", conversations.length);
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:209", "从服务器获取到会话数量:", conversations.length);
             if (conversations.length > 0) {
               this.conversations = conversations.map((conv) => {
                 const rawMessage = conv.lastMessage || "暂无消息";
@@ -96,11 +96,12 @@ const _sfc_main = {
               this.loadOrdersByMerchantDirect();
             }
           } else {
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:244", "获取会话列表失败，尝试从订单生成");
             this.loadOrdersByMerchantDirect();
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:243", "获取会话列表失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:249", "获取会话列表失败:", err);
           this.loadOrdersByMerchantDirect();
         }
       });
@@ -111,26 +112,26 @@ const _sfc_main = {
         url: `http://localhost:8080/api/hotel-orders/merchant/orders?merchantId=${this.merchantId}`,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:255", "订单查询结果:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:261", "订单查询结果:", res.data);
           if (res.data && res.data.code === 200) {
             const orders = res.data.data || [];
-            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:258", "直接获取到订单数量:", orders.length);
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:264", "直接获取到订单数量:", orders.length);
             this.generateConversationsFromOrders(orders);
           } else {
-            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:261", "未获取到订单，尝试从本地存储加载");
+            common_vendor.index.__f__("log", "at pages/merchant/messages.vue:267", "未获取到订单，尝试从本地存储加载");
             this.loadFromLocalStorage();
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:266", "获取订单失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:272", "获取订单失败:", err);
           this.loadFromLocalStorage();
         }
       });
     },
-    // 根据订单生成会话列表
+    // 根据订单生成会话列表（包含换行处理）
     generateConversationsFromOrders(orders) {
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:274", "=== 开始生成会话 ===");
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:275", "传入订单数量:", orders.length);
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:280", "=== 开始生成会话 ===");
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:281", "传入订单数量:", orders.length);
       const conversationsMap = {};
       orders.forEach((order) => {
         const userId = order.username || `order_${order.id}`;
@@ -169,10 +170,10 @@ const _sfc_main = {
         }
       });
       this.conversations = Object.values(conversationsMap);
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:314", "最终生成的会话数量:", this.conversations.length);
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:321", "最终生成的会话数量:", this.conversations.length);
       this.fetchUnreadCountsFromServer();
     },
-    // 从服务器获取未读数
+    // 从服务器获取未读数（使用 URL 参数）
     fetchUnreadCountsFromServer() {
       this.conversations.forEach((conv) => {
         common_vendor.index.request({
@@ -193,7 +194,7 @@ const _sfc_main = {
             }
           },
           fail: (err) => {
-            common_vendor.index.__f__("error", "at pages/merchant/messages.vue:341", "获取未读数失败", err);
+            common_vendor.index.__f__("error", "at pages/merchant/messages.vue:350", "获取未读数失败", err);
           }
         });
       });
@@ -223,27 +224,27 @@ const _sfc_main = {
         }
       });
       this.conversations = conversations;
-      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:375", "从本地存储加载的会话数量:", this.conversations.length);
+      common_vendor.index.__f__("log", "at pages/merchant/messages.vue:385", "从本地存储加载的会话数量:", this.conversations.length);
       this.calcTotalUnread();
     },
     // 计算总未读数
     calcTotalUnread() {
       this.totalUnread = this.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     },
-    // 标记消息已读
+    // 标记消息已读（使用 URL 参数）
     markMessagesAsRead(username) {
       if (!username) {
-        common_vendor.index.__f__("error", "at pages/merchant/messages.vue:387", "用户名不能为空");
+        common_vendor.index.__f__("error", "at pages/merchant/messages.vue:397", "用户名不能为空");
         return;
       }
       common_vendor.index.request({
         url: `http://localhost:8080/api/messages/read?role=merchant&identifier=${this.merchantId}&otherParty=${username}`,
         method: "POST",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:394", "标记已读成功", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:404", "标记已读成功", res.data);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:397", "标记已读失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:407", "标记已读失败", err);
         }
       });
     },
@@ -314,11 +315,11 @@ const _sfc_main = {
         url: `http://localhost:8080/api/messages/merchant/read-all?merchantId=${this.merchantId}`,
         method: "POST",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:479", "全部标记已读成功", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:501", "全部标记已读成功", res.data);
           common_vendor.index.showToast({ title: "已全部标为已读", icon: "success" });
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:483", "标记全部已读失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:505", "标记全部已读失败", err);
           common_vendor.index.showToast({ title: "操作失败", icon: "none" });
         }
       });
@@ -381,7 +382,7 @@ const _sfc_main = {
       }
       this.scrollToBottom();
     },
-    // 保存消息到本地
+    // ========== 保存消息到本地（包含换行处理） ==========
     saveMessagesToLocal() {
       const key = `chat_${this.merchantId}_${this.currentUser.userId}`;
       const lastMsg = this.currentMessages[this.currentMessages.length - 1];
@@ -415,7 +416,7 @@ const _sfc_main = {
       this.inputMessage = reply;
       this.sendMessage();
     },
-    // 发送消息
+    // ========== 发送消息（包含换行处理） ==========
     sendMessage() {
       if (!this.inputMessage.trim())
         return;
@@ -453,10 +454,10 @@ const _sfc_main = {
           isRead: 0
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:642", "消息发送成功", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/messages.vue:680", "消息发送成功", res.data);
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:645", "消息发送失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/messages.vue:683", "消息发送失败", err);
         }
       });
     },

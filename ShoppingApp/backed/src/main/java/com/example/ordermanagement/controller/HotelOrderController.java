@@ -115,6 +115,23 @@ public class HotelOrderController {
         }
     }
 
+    @PostMapping("/{orderId}/cancel")
+    public Result<Map<String, Object>> cancelOrder(@PathVariable Long orderId) {
+        try {
+            boolean success = hotelOrderService.cancelOrder(orderId);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            if (success) {
+                return Result.success(result);
+            } else {
+                return Result.error("取消失败，订单状态不正确");
+            }
+        } catch (Exception e) {
+            return Result.error("取消失败：" + e.getMessage());
+        }
+    }
+
+    // ========== 用户申请取消 ==========
     @PostMapping("/{orderId}/cancel-request")
     public Result<Map<String, Object>> cancelRequest(@PathVariable Long orderId,
                                                       @RequestParam String username,

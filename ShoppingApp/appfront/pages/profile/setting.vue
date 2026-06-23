@@ -116,19 +116,19 @@
           <view v-if="editType === 'password' && !isPasswordVerified">
             <view class="input-group">
               <text class="input-label">当前密码</text>
-              <input
-                class="edit-input"
-                v-model="currentPassword"
-                placeholder="请输入当前密码"
+              <input 
+                class="edit-input" 
+                v-model="currentPassword" 
+                placeholder="请输入当前密码" 
                 password
               />
             </view>
             <view class="input-group">
               <text class="input-label">绑定手机号</text>
-              <input
-                class="edit-input"
-                v-model="verifyPhone"
-                placeholder="请输入绑定的手机号"
+              <input 
+                class="edit-input" 
+                v-model="verifyPhone" 
+                placeholder="请输入绑定的手机号" 
                 type="number"
               />
             </view>
@@ -137,36 +137,36 @@
           <view v-else-if="editType === 'password' && isPasswordVerified">
             <view class="input-group">
               <text class="input-label">新密码</text>
-              <input
-                class="edit-input"
-                v-model="newPassword"
-                placeholder="请输入新密码（至少6位）"
+              <input 
+                class="edit-input" 
+                v-model="newPassword" 
+                placeholder="请输入新密码（至少6位）" 
                 password
               />
             </view>
             <view class="input-group">
               <text class="input-label">确认新密码</text>
-              <input
-                class="edit-input"
-                v-model="confirmPassword"
-                placeholder="请再次输入新密码"
+              <input 
+                class="edit-input" 
+                v-model="confirmPassword" 
+                placeholder="请再次输入新密码" 
                 password
               />
             </view>
           </view>
           <!-- 其他编辑 -->
           <view v-else>
-            <input
+            <input 
               v-if="editType !== 'textarea'"
-              class="edit-input"
-              v-model="editValue"
+              class="edit-input" 
+              v-model="editValue" 
               :placeholder="'请输入' + editTitle"
               :type="editType === 'phone' ? 'number' : 'text'"
             />
-            <textarea
+            <textarea 
               v-else
-              class="edit-textarea"
-              v-model="editValue"
+              class="edit-textarea" 
+              v-model="editValue" 
               :placeholder="'请输入' + editTitle"
               maxlength="200"
               auto-height
@@ -209,21 +209,21 @@ export default {
       userInfo: {},
       token: '',
       cacheSize: '0KB',
-
+      
       // 编辑弹窗
       showEditModal: false,
       editType: '',
       editTitle: '',
       editValue: '',
       editFieldName: '',
-
+      
       // 密码修改相关
       currentPassword: '',
       verifyPhone: '',
       newPassword: '',
       confirmPassword: '',
       isPasswordVerified: false,
-
+      
       // 关于弹窗
       showAboutModal: false
     };
@@ -234,6 +234,7 @@ export default {
     this.calculateCacheSize();
   },
   methods: {
+    // 获取完整图片URL
     getFullImageUrl(path) {
       if (!path) return '/static/default-avatar.png';
       if (path.startsWith('http')) return path;
@@ -242,11 +243,11 @@ export default {
       }
       return path;
     },
-
+    
     checkLogin() {
       const token = uni.getStorageSync('token');
       const username = uni.getStorageSync('loginUsername');
-
+      
       if (!token || !username) {
         uni.showToast({ title: '请先登录', icon: 'none' });
         setTimeout(() => {
@@ -254,19 +255,20 @@ export default {
         }, 1500);
         return;
       }
-
+      
       this.token = token;
     },
-
+    
     loadUserInfo() {
       try {
         const userInfo = uni.getStorageSync('userInfo');
         this.userInfo = userInfo || {};
+        console.log('用户信息:', this.userInfo);
       } catch (e) {
         console.error('读取用户信息失败', e);
       }
     },
-
+    
     calculateCacheSize() {
       try {
         let size = 0;
@@ -276,7 +278,7 @@ export default {
           const str = JSON.stringify(value);
           size += str.length;
         });
-
+        
         if (size < 1024) {
           this.cacheSize = size + 'B';
         } else if (size < 1024 * 1024) {
@@ -288,18 +290,18 @@ export default {
         this.cacheSize = '0KB';
       }
     },
-
+    
     editField(field) {
       this.editType = field;
       this.editFieldName = field;
-
+      
       // 重置密码相关状态
       this.currentPassword = '';
       this.verifyPhone = '';
       this.newPassword = '';
       this.confirmPassword = '';
       this.isPasswordVerified = false;
-
+      
       switch(field) {
         case 'nickname':
           this.editTitle = '昵称';
@@ -333,7 +335,7 @@ export default {
           return;
       }
     },
-
+    
     chooseAvatar() {
       uni.chooseImage({
         count: 1,
@@ -345,10 +347,10 @@ export default {
         }
       });
     },
-
+    
     uploadAvatar(filePath) {
       uni.showLoading({ title: '上传中...' });
-
+      
       uni.uploadFile({
         url: 'http://localhost:8080/api/upload',
         filePath: filePath,
@@ -360,11 +362,11 @@ export default {
             const data = JSON.parse(uploadRes.data);
             avatarUrl = data.url || data;
           } catch(e) {}
-
+          
           if (avatarUrl && avatarUrl.startsWith('/file')) {
             avatarUrl = 'http://localhost:8080' + avatarUrl;
           }
-
+          
           this.updateProfile({ avatar: avatarUrl });
         },
         fail: () => {
@@ -373,7 +375,7 @@ export default {
         }
       });
     },
-
+    
     closeEditModal() {
       this.showEditModal = false;
       this.editValue = '';
@@ -383,7 +385,7 @@ export default {
       this.confirmPassword = '';
       this.isPasswordVerified = false;
     },
-
+    
     submitEdit() {
       if (this.editType === 'password') {
         if (!this.isPasswordVerified) {
@@ -398,7 +400,7 @@ export default {
           uni.showToast({ title: '请填写' + this.editTitle, icon: 'none' });
           return;
         }
-
+        
         const updateData = {};
         switch(this.editType) {
           case 'nickname':
@@ -417,7 +419,8 @@ export default {
         this.updateProfile(updateData);
       }
     },
-
+    
+    // 验证身份：使用登录接口验证密码，本地验证手机号
     verifyIdentity() {
       if (!this.currentPassword) {
         uni.showToast({ title: '请输入当前密码', icon: 'none' });
@@ -427,14 +430,16 @@ export default {
         uni.showToast({ title: '请输入绑定的手机号', icon: 'none' });
         return;
       }
-
+      
+      // 先验证手机号是否匹配
       if (this.userInfo.phone !== this.verifyPhone) {
         uni.showToast({ title: '手机号不匹配', icon: 'none' });
         return;
       }
-
+      
       uni.showLoading({ title: '验证中...' });
-
+      
+      // 使用登录接口验证密码
       uni.request({
         url: 'http://localhost:8080/api/users/login',
         method: 'POST',
@@ -447,6 +452,7 @@ export default {
         },
         success: (res) => {
           uni.hideLoading();
+          // 登录成功返回200和用户对象（包含id）
           if (res.statusCode === 200 && res.data && res.data.id) {
             this.isPasswordVerified = true;
             uni.showToast({ title: '验证成功', icon: 'success' });
@@ -460,7 +466,8 @@ export default {
         }
       });
     },
-
+    
+    // 修改密码：使用profile接口更新
     updatePassword() {
       if (!this.newPassword || this.newPassword.length < 6) {
         uni.showToast({ title: '新密码至少6位', icon: 'none' });
@@ -470,9 +477,10 @@ export default {
         uni.showToast({ title: '两次输入的密码不一致', icon: 'none' });
         return;
       }
-
+      
       uni.showLoading({ title: '修改中...' });
-
+      
+      // 使用 profile 接口更新密码（后端已支持password字段）
       uni.request({
         url: 'http://localhost:8080/api/users/profile',
         method: 'PUT',
@@ -485,10 +493,11 @@ export default {
         },
         success: (res) => {
           uni.hideLoading();
+          // 成功返回200和更新后的用户对象（包含id）
           if (res.statusCode === 200 && res.data && res.data.id) {
             uni.showToast({ title: '密码修改成功，请重新登录', icon: 'success' });
             this.closeEditModal();
-
+            
             setTimeout(() => {
               uni.clearStorageSync();
               uni.reLaunch({ url: '/pages/login-register/login-register' });
@@ -503,10 +512,10 @@ export default {
         }
       });
     },
-
+    
     updateProfile(updateData) {
       uni.showLoading({ title: '保存中...' });
-
+      
       uni.request({
         url: 'http://localhost:8080/api/users/profile',
         method: 'PUT',
@@ -521,7 +530,7 @@ export default {
             const updatedUserInfo = { ...this.userInfo, ...updateData };
             uni.setStorageSync('userInfo', updatedUserInfo);
             this.userInfo = updatedUserInfo;
-
+            
             uni.showToast({ title: '修改成功', icon: 'success' });
             this.closeEditModal();
           } else {
@@ -534,7 +543,7 @@ export default {
         }
       });
     },
-
+    
     clearCache() {
       uni.showModal({
         title: '清除缓存',
@@ -550,11 +559,11 @@ export default {
         }
       });
     },
-
+    
     showAbout() {
       this.showAboutModal = true;
     },
-
+    
     showPrivacy() {
       uni.showModal({
         title: '隐私政策',
@@ -563,7 +572,7 @@ export default {
         confirmText: '我知道了'
       });
     },
-
+    
     logout() {
       uni.showModal({
         title: '提示',

@@ -53,15 +53,17 @@ const _sfc_main = {
       },
       markers: [],
       selectedLocation: null,
-      nearbyPois: [],
-      showSuggest: false
+      nearbyPois: []
     };
   },
   onShow() {
+    if (!this.checkMerchantStatus()) {
+      return;
+    }
     const userInfo = common_vendor.index.getStorageSync("userInfo");
     if (userInfo && userInfo.id) {
       this.merchantId = userInfo.id;
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:384", "商家ID:", this.merchantId);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:380", "商家ID:", this.merchantId);
       this.loadHotels();
     } else {
       common_vendor.index.showToast({ title: "请先登录", icon: "none" });
@@ -71,16 +73,21 @@ const _sfc_main = {
     }
   },
   methods: {
-    checkMerchantStatus(showToast = true) {
+    // ========== 商家状态校验方法 ==========
+    checkMerchantStatus(showError = true) {
       const userInfo = common_vendor.index.getStorageSync("userInfo");
-      if (!userInfo || !userInfo.id) {
-        if (showToast)
-          common_vendor.index.showToast({ title: "请先登录", icon: "none" });
-        return false;
-      }
-      if (userInfo.status && userInfo.status !== "NORMAL") {
-        if (showToast)
-          common_vendor.index.showToast({ title: "账号状态异常，无法操作", icon: "none" });
+      if (!userInfo || userInfo.status !== "NORMAL") {
+        if (showError) {
+          common_vendor.index.showModal({
+            title: "账号异常",
+            content: userInfo && userInfo.status === "PENDING" ? "您的商家账号正在审核中，请等待审核通过后使用酒店管理功能。" : userInfo && userInfo.status === "REJECTED" ? "您的商家账号审核未通过，无法使用酒店管理功能。" : userInfo && userInfo.status === "BANNED" ? "您的商家账号已被禁用，无法使用酒店管理功能。" : "您的商家账号状态异常，无法使用酒店管理功能。",
+            showCancel: false,
+            confirmText: "返回首页",
+            success: () => {
+              common_vendor.index.reLaunch({ url: "/pages/merchant/home" });
+            }
+          });
+        }
         return false;
       }
       return true;
@@ -99,9 +106,15 @@ const _sfc_main = {
         return "http://localhost:8080" + path;
       return path;
     },
+    previewImage(url) {
+      const fullUrl = this.getImageUrl(url);
+      common_vendor.index.previewImage({
+        urls: [fullUrl]
+      });
+    },
     loadHotels() {
       if (!this.merchantId) {
-        common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:422", "未获取到商家ID");
+        common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:438", "未获取到商家ID");
         return;
       }
       this.loading = true;
@@ -109,7 +122,7 @@ const _sfc_main = {
         url: `http://localhost:8080/api/hotels/merchant/${this.merchantId}`,
         method: "GET",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:431", "酒店列表返回:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:447", "酒店列表返回:", res.data);
           if (res.data && res.data.code === 200) {
             this.hotelList = res.data.data || [];
           } else if (Array.isArray(res.data)) {
@@ -119,7 +132,7 @@ const _sfc_main = {
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:441", "获取酒店列表失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:457", "获取酒店列表失败", err);
           this.hotelList = [];
         },
         complete: () => {
@@ -129,6 +142,8 @@ const _sfc_main = {
     },
     // ========== 酒店状态管理 ==========
     toggleHotelStatus(hotel) {
+      if (!this.checkMerchantStatus())
+        return;
       const newStatus = hotel.status === "营业中" ? "已停业" : "营业中";
       const confirmTitle = hotel.status === "营业中" ? "确认停业" : "确认恢复营业";
       const confirmContent = hotel.status === "营业中" ? `确定要将"${hotel.name}"设为停业吗？停业后用户将无法预订。` : `确定要将"${hotel.name}"恢复营业吗？`;
@@ -178,20 +193,22 @@ const _sfc_main = {
             },
             fail: (err) => {
               common_vendor.index.hideLoading();
-              common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:509", "更新状态失败", err);
+              common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:527", "更新状态失败", err);
               common_vendor.index.showToast({ title: "网络错误", icon: "none" });
             }
           });
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:516", "获取酒店信息失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:534", "获取酒店信息失败", err);
           common_vendor.index.showToast({ title: "获取酒店信息失败", icon: "none" });
         }
       });
     },
     // ========== 房型管理 ==========
     manageRooms(hotel) {
+      if (!this.checkMerchantStatus())
+        return;
       this.currentHotel = hotel;
       this.showRoomModal = true;
       this.loadRooms(hotel.id);
@@ -210,12 +227,14 @@ const _sfc_main = {
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:543", "获取房型失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:563", "获取房型失败", err);
           this.roomList = [];
         }
       });
     },
     openAddRoomModal() {
+      if (!this.checkMerchantStatus())
+        return;
       this.isEditRoom = false;
       this.roomForm = {
         id: null,
@@ -232,6 +251,8 @@ const _sfc_main = {
       this.showRoomFormModal = true;
     },
     openEditRoomModal(room) {
+      if (!this.checkMerchantStatus())
+        return;
       this.isEditRoom = true;
       this.roomForm = {
         id: room.id,
@@ -257,6 +278,8 @@ const _sfc_main = {
       this.roomForm.breakfast = this.breakfastOptions[e.detail.value];
     },
     submitRoom() {
+      if (!this.checkMerchantStatus(false))
+        return;
       if (!this.roomForm.typeName) {
         common_vendor.index.showToast({ title: "请输入房型名称", icon: "none" });
         return;
@@ -296,7 +319,7 @@ const _sfc_main = {
         url = "http://localhost:8080/api/room-types";
         method = "POST";
       }
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:638", "提交的房型数据：", submitData);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:664", "提交的房型数据：", submitData);
       common_vendor.index.showLoading({ title: "保存中..." });
       common_vendor.index.request({
         url,
@@ -305,7 +328,7 @@ const _sfc_main = {
         data: submitData,
         success: (res) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:649", "房型提交结果：", res);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:675", "房型提交结果：", res);
           if (res.statusCode === 200 && res.data && res.data.code === 200) {
             common_vendor.index.showToast({ title: this.isEditRoom ? "修改成功" : "添加成功", icon: "success" });
             this.closeRoomFormModal();
@@ -316,12 +339,14 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:661", "提交失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:687", "提交失败", err);
           common_vendor.index.showToast({ title: "网络错误，请重试", icon: "none" });
         }
       });
     },
     deleteRoom(roomId) {
+      if (!this.checkMerchantStatus())
+        return;
       common_vendor.index.showModal({
         title: "确认删除",
         content: "确定要删除该房型吗？",
@@ -337,7 +362,7 @@ const _sfc_main = {
                 this.loadRooms(this.currentHotel.id);
               },
               fail: (err) => {
-                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:683", "删除失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:711", "删除失败", err);
                 common_vendor.index.showToast({ title: "删除失败", icon: "none" });
               },
               complete: () => {
@@ -464,9 +489,10 @@ const _sfc_main = {
         data: {
           keyword,
           region: "福州"
+          // 关键：限制搜索区域为福州
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:825", "搜索建议返回:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:855", "搜索建议返回:", res.data);
           if (res.statusCode === 200 && res.data && res.data.success) {
             this.suggestList = res.data.data || [];
           } else {
@@ -522,7 +548,7 @@ const _sfc_main = {
         success: (res) => {
           var _a;
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:886", "地理编码返回:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:917", "地理编码返回:", res.data);
           if (res.statusCode === 200 && res.data && res.data.success) {
             const lat = res.data.latitude;
             const lng = res.data.longitude;
@@ -544,7 +570,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:910", "地理编码失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:941", "地理编码失败:", err);
           common_vendor.index.showToast({ title: "搜索失败，请重试", icon: "none" });
         }
       });
@@ -571,7 +597,7 @@ const _sfc_main = {
         success: (res) => {
           var _a;
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:940", "逆地理编码返回:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:971", "逆地理编码返回:", res.data);
           if (res.statusCode === 200 && res.data && res.data.success) {
             this.nearbyPois = res.data.nearbyPois || [];
             if (res.data.address) {
@@ -590,7 +616,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:960", "逆地理编码失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:991", "逆地理编码失败:", err);
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });
@@ -627,7 +653,7 @@ const _sfc_main = {
             if (url) {
               this.form.coverImage = url;
               common_vendor.index.showToast({ title: "封面上传成功", icon: "success" });
-              common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1000", "封面上传成功，URL:", url);
+              common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1031", "封面上传成功，URL:", url);
             } else {
               common_vendor.index.showToast({ title: "封面上传失败", icon: "none" });
             }
@@ -658,9 +684,9 @@ const _sfc_main = {
             this.uploadImageToServer(file, (url) => {
               if (url) {
                 uploadedUrls.push({ imageUrl: url });
-                common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1035", "图片上传成功，当前已上传数量:", uploadedUrls.length);
+                common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1066", "图片上传成功，当前已上传数量:", uploadedUrls.length);
               } else {
-                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1037", "图片上传失败:", file);
+                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1068", "图片上传失败:", file);
               }
               completed++;
               if (completed === tempFiles.length) {
@@ -670,7 +696,7 @@ const _sfc_main = {
                     title: `成功上传 ${uploadedUrls.length} 张图片`,
                     icon: "success"
                   });
-                  common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1047", "更新后的详情图列表:", JSON.stringify(this.form.detailImages));
+                  common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1078", "更新后的详情图列表:", JSON.stringify(this.form.detailImages));
                 } else {
                   common_vendor.index.showToast({ title: "上传失败，请重试", icon: "none" });
                 }
@@ -690,14 +716,14 @@ const _sfc_main = {
         filePath,
         name: "file",
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1069", "上传原始响应:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1100", "上传原始响应:", res.data);
           let imageUrl = null;
           try {
             const data = JSON.parse(res.data);
             imageUrl = data.url || data.data || data;
-            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1076", "JSON解析成功");
+            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1107", "JSON解析成功");
           } catch (e) {
-            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1078", "不是JSON格式，直接使用字符串");
+            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1109", "不是JSON格式，直接使用字符串");
             imageUrl = res.data;
             if (imageUrl.startsWith('"') && imageUrl.endsWith('"')) {
               imageUrl = imageUrl.slice(1, -1);
@@ -707,15 +733,15 @@ const _sfc_main = {
             if (!imageUrl.startsWith("http") && !imageUrl.startsWith("/file")) {
               imageUrl = "/file/" + imageUrl;
             }
-            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1089", "图片上传成功，最终URL:", imageUrl);
+            common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1120", "图片上传成功，最终URL:", imageUrl);
             callback(imageUrl);
           } else {
-            common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1092", "获取图片URL失败");
+            common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1123", "获取图片URL失败");
             callback(null);
           }
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1097", "上传失败", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1128", "上传失败", err);
           callback(null);
         }
       });
@@ -725,9 +751,9 @@ const _sfc_main = {
         return;
       const userInfo = common_vendor.index.getStorageSync("userInfo");
       const merchantId = userInfo && userInfo.id ? userInfo.id : null;
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1109", "=== 提交酒店 ===");
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1110", "商家ID:", merchantId);
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1111", "详情图原始数据:", this.form.detailImages);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1140", "=== 提交酒店 ===");
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1141", "商家ID:", merchantId);
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1142", "详情图原始数据:", this.form.detailImages);
       if (!this.form.name || this.form.name.trim() === "") {
         common_vendor.index.showToast({ title: "请输入酒店名称", icon: "none" });
         return;
@@ -774,8 +800,8 @@ const _sfc_main = {
         merchantId,
         status: "营业中"
       };
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1163", "提交的详情图数据:", JSON.stringify(detailImagesData));
-      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1164", "完整提交数据:", JSON.stringify(submitData));
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1196", "提交的详情图数据:", JSON.stringify(detailImagesData));
+      common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1197", "完整提交数据:", JSON.stringify(submitData));
       let url = "";
       let method = "";
       if (this.isEdit) {
@@ -793,7 +819,7 @@ const _sfc_main = {
         data: submitData,
         success: (res) => {
           var _a;
-          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1184", "提交结果:", res.data);
+          common_vendor.index.__f__("log", "at pages/merchant/hotel-list.vue:1217", "提交结果:", res.data);
           common_vendor.index.hideLoading();
           if (res.data && res.data.code === 200) {
             common_vendor.index.showToast({ title: this.isEdit ? "修改成功" : "添加成功", icon: "success" });
@@ -805,7 +831,7 @@ const _sfc_main = {
         },
         fail: (err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1197", "提交失败:", err);
+          common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1230", "提交失败:", err);
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });
@@ -814,7 +840,7 @@ const _sfc_main = {
       if (!this.checkMerchantStatus())
         return;
       if (!id) {
-        common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1207", "删除失败：酒店ID为空");
+        common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1240", "删除失败：酒店ID为空");
         common_vendor.index.showToast({ title: "删除失败", icon: "none" });
         return;
       }
@@ -833,7 +859,7 @@ const _sfc_main = {
                 this.loadHotels();
               },
               fail: (err) => {
-                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1227", "删除失败", err);
+                common_vendor.index.__f__("error", "at pages/merchant/hotel-list.vue:1260", "删除失败", err);
                 common_vendor.index.showToast({ title: "删除失败", icon: "none" });
               },
               complete: () => {
@@ -906,22 +932,25 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: $options.getImageUrl(img.imageUrl || img),
         b: common_vendor.o(($event) => $options.removeDetailImage(idx), idx),
-        c: idx
+        c: idx,
+        d: common_vendor.o(($event) => $options.previewImage(img.imageUrl || img), idx)
       };
     }),
     z: common_vendor.o((...args) => $options.uploadDetailImage && $options.uploadDetailImage(...args)),
-    A: common_vendor.o((...args) => $options.closeModal && $options.closeModal(...args)),
-    B: common_vendor.o((...args) => $options.submitHotel && $options.submitHotel(...args)),
-    C: common_vendor.o(() => {
+    A: $data.form.detailImages.length === 0
+  }, $data.form.detailImages.length === 0 ? {} : {}, {
+    B: common_vendor.o((...args) => $options.closeModal && $options.closeModal(...args)),
+    C: common_vendor.o((...args) => $options.submitHotel && $options.submitHotel(...args)),
+    D: common_vendor.o(() => {
     }),
-    D: common_vendor.o((...args) => $options.closeModal && $options.closeModal(...args))
+    E: common_vendor.o((...args) => $options.closeModal && $options.closeModal(...args))
   }) : {}, {
-    E: $data.showRoomModal
+    F: $data.showRoomModal
   }, $data.showRoomModal ? common_vendor.e({
-    F: common_vendor.t($data.currentHotel ? $data.currentHotel.name : ""),
-    G: common_vendor.o((...args) => $options.openAddRoomModal && $options.openAddRoomModal(...args)),
-    H: common_vendor.o((...args) => $options.closeRoomModal && $options.closeRoomModal(...args)),
-    I: common_vendor.f($data.roomList, (room, k0, i0) => {
+    G: common_vendor.t($data.currentHotel ? $data.currentHotel.name : ""),
+    H: common_vendor.o((...args) => $options.openAddRoomModal && $options.openAddRoomModal(...args)),
+    I: common_vendor.o((...args) => $options.closeRoomModal && $options.closeRoomModal(...args)),
+    J: common_vendor.f($data.roomList, (room, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(room.typeName),
         b: common_vendor.t(room.size),
@@ -939,52 +968,48 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         l: room.id
       });
     }),
-    J: $data.roomList.length === 0
+    K: $data.roomList.length === 0
   }, $data.roomList.length === 0 ? {} : {}, {
-    K: common_vendor.o((...args) => $options.closeRoomModal && $options.closeRoomModal(...args)),
-    L: common_vendor.o(() => {
+    L: common_vendor.o((...args) => $options.closeRoomModal && $options.closeRoomModal(...args)),
+    M: common_vendor.o(() => {
     }),
-    M: common_vendor.o((...args) => $options.closeRoomModal && $options.closeRoomModal(...args))
+    N: common_vendor.o((...args) => $options.closeRoomModal && $options.closeRoomModal(...args))
   }) : {}, {
-    N: $data.showRoomFormModal
+    O: $data.showRoomFormModal
   }, $data.showRoomFormModal ? {
-    O: common_vendor.t($data.isEditRoom ? "编辑房型" : "添加房型"),
-    P: common_vendor.o((...args) => $options.closeRoomFormModal && $options.closeRoomFormModal(...args)),
-    Q: $data.roomForm.typeName,
-    R: common_vendor.o(($event) => $data.roomForm.typeName = $event.detail.value),
-    S: $data.roomForm.price,
-    T: common_vendor.o(($event) => $data.roomForm.price = $event.detail.value),
-    U: $data.roomForm.totalCount,
-    V: common_vendor.o(($event) => $data.roomForm.totalCount = $event.detail.value),
-    W: $data.roomForm.availableCount,
-    X: common_vendor.o(($event) => $data.roomForm.availableCount = $event.detail.value),
-    Y: $data.roomForm.size,
-    Z: common_vendor.o(($event) => $data.roomForm.size = $event.detail.value),
-    aa: common_vendor.t($data.roomForm.bedType || "请选择床型"),
-    ab: $data.bedOptions,
-    ac: common_vendor.o((...args) => $options.onBedChange && $options.onBedChange(...args)),
-    ad: common_vendor.t($data.roomForm.windowStatus || "请选择"),
-    ae: $data.windowOptions,
-    af: common_vendor.o((...args) => $options.onWindowChange && $options.onWindowChange(...args)),
-    ag: common_vendor.t($data.roomForm.breakfast || "请选择"),
-    ah: $data.breakfastOptions,
-    ai: common_vendor.o((...args) => $options.onBreakfastChange && $options.onBreakfastChange(...args)),
-    aj: common_vendor.o((...args) => $options.closeRoomFormModal && $options.closeRoomFormModal(...args)),
-    ak: common_vendor.o((...args) => $options.submitRoom && $options.submitRoom(...args)),
-    al: common_vendor.o(() => {
+    P: common_vendor.t($data.isEditRoom ? "编辑房型" : "添加房型"),
+    Q: common_vendor.o((...args) => $options.closeRoomFormModal && $options.closeRoomFormModal(...args)),
+    R: $data.roomForm.typeName,
+    S: common_vendor.o(($event) => $data.roomForm.typeName = $event.detail.value),
+    T: $data.roomForm.price,
+    U: common_vendor.o(($event) => $data.roomForm.price = $event.detail.value),
+    V: $data.roomForm.totalCount,
+    W: common_vendor.o(($event) => $data.roomForm.totalCount = $event.detail.value),
+    X: $data.roomForm.availableCount,
+    Y: common_vendor.o(($event) => $data.roomForm.availableCount = $event.detail.value),
+    Z: $data.roomForm.size,
+    aa: common_vendor.o(($event) => $data.roomForm.size = $event.detail.value),
+    ab: common_vendor.t($data.roomForm.bedType || "请选择床型"),
+    ac: $data.bedOptions,
+    ad: common_vendor.o((...args) => $options.onBedChange && $options.onBedChange(...args)),
+    ae: common_vendor.t($data.roomForm.windowStatus || "请选择"),
+    af: $data.windowOptions,
+    ag: common_vendor.o((...args) => $options.onWindowChange && $options.onWindowChange(...args)),
+    ah: common_vendor.t($data.roomForm.breakfast || "请选择"),
+    ai: $data.breakfastOptions,
+    aj: common_vendor.o((...args) => $options.onBreakfastChange && $options.onBreakfastChange(...args)),
+    ak: common_vendor.o((...args) => $options.closeRoomFormModal && $options.closeRoomFormModal(...args)),
+    al: common_vendor.o((...args) => $options.submitRoom && $options.submitRoom(...args)),
+    am: common_vendor.o(() => {
     }),
-    am: common_vendor.o((...args) => $options.closeRoomFormModal && $options.closeRoomFormModal(...args))
+    an: common_vendor.o((...args) => $options.closeRoomFormModal && $options.closeRoomFormModal(...args))
   } : {}, {
-    an: $data.showMapPicker
+    ao: $data.showMapPicker
   }, $data.showMapPicker ? common_vendor.e({
-    ao: common_vendor.o((...args) => $options.closeMapPicker && $options.closeMapPicker(...args)),
-    ap: common_vendor.o([($event) => $data.searchKeyword = $event.detail.value, (...args) => $options.onSearchInput && $options.onSearchInput(...args)]),
-    aq: common_vendor.o((...args) => $options.searchLocation && $options.searchLocation(...args)),
-    ar: $data.searchKeyword,
-    as: common_vendor.o((...args) => $options.searchLocation && $options.searchLocation(...args)),
-    at: $data.suggestList.length > 0
+    ap: common_vendor.o((...args) => $options.closeMapPicker && $options.closeMapPicker(...args)),
+    aq: $data.suggestList.length > 0
   }, $data.suggestList.length > 0 ? {
-    av: common_vendor.f($data.suggestList, (item, index, i0) => {
+    ar: common_vendor.f($data.suggestList, (item, index, i0) => {
       return {
         a: common_vendor.t(item.name),
         b: common_vendor.t(item.address),
@@ -993,14 +1018,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    aw: $data.mapCenter.latitude,
-    ax: $data.mapCenter.longitude,
-    ay: $data.markers,
-    az: common_vendor.o((...args) => $options.onMapTap && $options.onMapTap(...args)),
-    aA: $data.nearbyPois.length > 0
+    as: $data.mapCenter.latitude,
+    at: $data.mapCenter.longitude,
+    av: $data.markers,
+    aw: common_vendor.o((...args) => $options.onMapTap && $options.onMapTap(...args)),
+    ax: $data.nearbyPois.length > 0
   }, $data.nearbyPois.length > 0 ? {
-    aB: common_vendor.o(($event) => $data.nearbyPois = []),
-    aC: common_vendor.f($data.nearbyPois, (poi, index, i0) => {
+    ay: common_vendor.o(($event) => $data.nearbyPois = []),
+    az: common_vendor.f($data.nearbyPois, (poi, index, i0) => {
       return {
         a: common_vendor.t(poi.name),
         b: common_vendor.t(poi.address),
@@ -1009,15 +1034,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    aD: $data.selectedLocation
+    aA: $data.selectedLocation
   }, $data.selectedLocation ? {
-    aE: common_vendor.t($data.selectedLocation.address)
+    aB: common_vendor.t($data.selectedLocation.address)
   } : {}, {
-    aF: common_vendor.o((...args) => $options.closeMapPicker && $options.closeMapPicker(...args)),
-    aG: common_vendor.o((...args) => $options.confirmLocation && $options.confirmLocation(...args)),
-    aH: common_vendor.o(() => {
+    aC: common_vendor.o((...args) => $options.closeMapPicker && $options.closeMapPicker(...args)),
+    aD: common_vendor.o((...args) => $options.confirmLocation && $options.confirmLocation(...args)),
+    aE: common_vendor.o(() => {
     }),
-    aI: common_vendor.o((...args) => $options.closeMapPicker && $options.closeMapPicker(...args))
+    aF: common_vendor.o((...args) => $options.closeMapPicker && $options.closeMapPicker(...args))
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

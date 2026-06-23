@@ -110,14 +110,15 @@
           <view class="form-item">
             <text class="label">详情图（可多张）</text>
             <view class="detail-upload-list">
-              <view v-for="(img, idx) in form.detailImages" :key="idx" class="detail-image-item">
+              <view v-for="(img, idx) in form.detailImages" :key="idx" class="detail-image-item" @click="previewImage(img.imageUrl || img)">
                 <image :src="getImageUrl(img.imageUrl || img)" class="detail-image" mode="aspectFill"></image>
-                <text class="detail-delete" @click="removeDetailImage(idx)">×</text>
+                <text class="detail-delete" @click.stop="removeDetailImage(idx)">×</text>
               </view>
               <view class="upload-btn" @click="uploadDetailImage">
                 <text class="upload-icon">+</text>
               </view>
             </view>
+            <text class="upload-tip" v-if="form.detailImages.length === 0">提示：最多可上传9张图片，点击+号选择图片</text>
           </view>
         </scroll-view>
 
@@ -238,18 +239,9 @@
           <text class="map-modal-close" @click="closeMapPicker">×</text>
         </view>
         
-        <!-- 搜索框 -->
-        <view class="map-search-bar">
-          <input 
-            class="map-search-input" 
-            v-model="searchKeyword" 
-            placeholder="搜索地点（如：福州三坊七巷）" 
-            confirm-type="search"
-            @input="onSearchInput"
-            @confirm="searchLocation"
-          />
-          <button class="map-search-btn" @click="searchLocation">搜索</button>
-        </view>
+        <view class="map-tip">
+              <text class="map-tip-text">点击地图上的位置选择酒店地址</text>
+            </view>
         
         <!-- 搜索建议列表 -->
         <view class="suggest-list" v-if="suggestList.length > 0">
@@ -372,12 +364,16 @@ export default {
       },
       markers: [],
       selectedLocation: null,
-      nearbyPois: [],
-      showSuggest: false
+      nearbyPois: []
     };
   },
   
   onShow() {
+    // 首先检查商家状态
+    if (!this.checkMerchantStatus()) {
+      return;
+    }
+    
     const userInfo = uni.getStorageSync('userInfo');
     if (userInfo && userInfo.id) {
       this.merchantId = userInfo.id;
@@ -392,14 +388,27 @@ export default {
   },
   
   methods: {
-    checkMerchantStatus(showToast = true) {
+    // ========== 商家状态校验方法 ==========
+    checkMerchantStatus(showError = true) {
       const userInfo = uni.getStorageSync('userInfo');
-      if (!userInfo || !userInfo.id) {
-        if (showToast) uni.showToast({ title: '请先登录', icon: 'none' });
-        return false;
-      }
-      if (userInfo.status && userInfo.status !== 'NORMAL') {
-        if (showToast) uni.showToast({ title: '账号状态异常，无法操作', icon: 'none' });
+      if (!userInfo || userInfo.status !== 'NORMAL') {
+        if (showError) {
+          uni.showModal({
+            title: '账号异常',
+            content: userInfo && userInfo.status === 'PENDING' 
+              ? '您的商家账号正在审核中，请等待审核通过后使用酒店管理功能。'
+              : userInfo && userInfo.status === 'REJECTED'
+              ? '您的商家账号审核未通过，无法使用酒店管理功能。'
+              : userInfo && userInfo.status === 'BANNED'
+              ? '您的商家账号已被禁用，无法使用酒店管理功能。'
+              : '您的商家账号状态异常，无法使用酒店管理功能。',
+            showCancel: false,
+            confirmText: '返回首页',
+            success: () => {
+              uni.reLaunch({ url: '/pages/merchant/home' });
+            }
+          });
+        }
         return false;
       }
       return true;
@@ -415,6 +424,13 @@ export default {
       if (path.startsWith('http')) return path;
       if (path.startsWith('/file')) return 'http://localhost:8080' + path;
       return path;
+    },
+    
+    previewImage(url) {
+      const fullUrl = this.getImageUrl(url);
+      uni.previewImage({
+        urls: [fullUrl]
+      });
     },
     
     loadHotels() {
@@ -449,6 +465,8 @@ export default {
     
     // ========== 酒店状态管理 ==========
     toggleHotelStatus(hotel) {
+      if (!this.checkMerchantStatus()) return;
+      
       const newStatus = hotel.status === '营业中' ? '已停业' : '营业中';
       const confirmTitle = hotel.status === '营业中' ? '确认停业' : '确认恢复营业';
       const confirmContent = hotel.status === '营业中' 
@@ -521,6 +539,8 @@ export default {
     
     // ========== 房型管理 ==========
     manageRooms(hotel) {
+      if (!this.checkMerchantStatus()) return;
+      
       this.currentHotel = hotel;
       this.showRoomModal = true;
       this.loadRooms(hotel.id);
@@ -547,6 +567,8 @@ export default {
     },
     
     openAddRoomModal() {
+      if (!this.checkMerchantStatus()) return;
+      
       this.isEditRoom = false;
       this.roomForm = {
         id: null,
@@ -564,6 +586,8 @@ export default {
     },
     
     openEditRoomModal(room) {
+      if (!this.checkMerchantStatus()) return;
+      
       this.isEditRoom = true;
       this.roomForm = {
         id: room.id,
@@ -593,6 +617,8 @@ export default {
     },
     
     submitRoom() {
+      if (!this.checkMerchantStatus(false)) return;
+      
       if (!this.roomForm.typeName) {
         uni.showToast({ title: '请输入房型名称', icon: 'none' });
         return;
@@ -665,6 +691,8 @@ export default {
     },
     
     deleteRoom(roomId) {
+      if (!this.checkMerchantStatus()) return;
+      
       uni.showModal({
         title: '确认删除',
         content: '确定要删除该房型吗？',
@@ -727,6 +755,7 @@ export default {
       if (!this.checkMerchantStatus()) return;
       
       this.isEdit = true;
+      // 处理 detailImages 格式，确保是对象数组
       let detailImages = [];
       if (hotel.detailImages && hotel.detailImages.length > 0) {
         detailImages = hotel.detailImages.map(img => {
@@ -814,12 +843,13 @@ export default {
         return;
       }
       
+      // 确保传递 region 参数为 '福州'
       uni.request({
         url: 'http://localhost:8080/api/map/search',
         method: 'GET',
         data: { 
           keyword: keyword, 
-          region: '福州'
+          region: '福州'  // 关键：限制搜索区域为福州
         },
         success: (res) => {
           console.log('搜索建议返回:', res.data);
@@ -876,6 +906,7 @@ export default {
     searchLocationDirect(address) {
       uni.showLoading({ title: '搜索中...' });
       
+      // 对地址进行编码，避免中文乱码
       const encodedAddress = encodeURIComponent(address);
       
       uni.request({
@@ -1110,6 +1141,7 @@ export default {
       console.log('商家ID:', merchantId);
       console.log('详情图原始数据:', this.form.detailImages);
       
+      // 验证必填字段
       if (!this.form.name || this.form.name.trim() === '') {
         uni.showToast({ title: '请输入酒店名称', icon: 'none' });
         return;
@@ -1132,6 +1164,7 @@ export default {
         return;
       }
       
+      // 处理 detailImages 格式
       let detailImagesData = [];
       if (this.form.detailImages && this.form.detailImages.length > 0) {
         detailImagesData = this.form.detailImages.map(img => {
@@ -1501,6 +1534,7 @@ export default {
   overflow: hidden;
 }
 
+/* 编辑房型弹窗容器 - 修复溢出问题 */
 .room-form-container {
   width: 90%;
   max-width: 650rpx;
@@ -1516,6 +1550,7 @@ export default {
   transform: translateY(-50%);
 }
 
+/* 弹窗主体滚动区域 - 确保内容不溢出 */
 .room-form-container .modal-body {
   flex: 1;
   padding: 30rpx;
@@ -1523,6 +1558,7 @@ export default {
   box-sizing: border-box;
 }
 
+/* 所有表单输入框确保不溢出父容器 */
 .room-form-container .form-item {
   margin-bottom: 30rpx;
   width: 100%;

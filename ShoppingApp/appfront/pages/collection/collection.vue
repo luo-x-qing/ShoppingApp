@@ -121,7 +121,6 @@
       </scroll-view>
     </view>
   </view>
-  <RouteFloat/>
 </template>
 
 <script>
@@ -300,12 +299,14 @@ export default {
       });
     },
 
+    // 酒店去探索 - 跳转到酒店页面
     goExploreHotel() {
       uni.switchTab({
         url: '/pages/category/category'
       });
     },
 
+    // 景点去探索 - 跳转到景点页面
     goExploreSpot() {
       uni.switchTab({
         url: '/pages/home/home'

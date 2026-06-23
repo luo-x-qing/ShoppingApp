@@ -14,13 +14,12 @@
     
     <!-- 用户信息卡片 -->
     <view class="user-card">
-      <view class="user-info" @click="showEditModal = true">
+      <view class="user-info">
         <image class="avatar" :src="avatarUrl" mode="aspectFill" />
         <view class="info">
-          <text class="name">{{ userInfo.name || userInfo.username || '用户' }}</text>
-          <text class="desc">{{ userInfo.desc || userInfo.bio || '这家伙很懒，什么都没留下' }}</text>
+          <text class="name">{{ userInfo.username || userInfo.name || '用户' }}</text>
+          <text class="desc">{{ userInfo.bio || userInfo.desc || '这家伙很懒，什么都没留下' }}</text>
         </view>
-        <view class="edit-icon">✎</view>
       </view>
       
       <!-- 统计数据 -->
@@ -73,27 +72,6 @@
       <text class="version-text">版本 v1.0.0</text>
     </view>
 
-    <!-- 编辑弹窗 -->
-    <view class="modal-overlay" v-if="showEditModal" @click="showEditModal = false">
-      <view class="modal-content" @click.stop>
-        <view class="modal-header">
-          <text class="modal-title">编辑个人信息</text>
-          <text class="modal-close" @click="showEditModal = false">×</text>
-        </view>
-
-        <view class="form-item">
-          <text class="label">用户名</text>
-          <input class="input" v-model="editForm.name" placeholder="请输入用户名" />
-        </view>
-        <view class="form-item">
-          <text class="label">个人简介</text>
-          <textarea class="textarea" v-model="editForm.desc" placeholder="介绍一下自己吧"></textarea>
-        </view>
-
-        <button class="save-btn" @click="saveInfo">保存修改</button>
-      </view>
-    </view>
-
     <!-- 关于弹窗 -->
     <view class="modal-overlay" v-if="showAboutModal" @click="showAboutModal = false">
       <view class="about-modal" @click.stop>
@@ -112,21 +90,12 @@
 </template>
 
 <script>
-// 默认用户资料
-const defaultUser = {
-  name: "点击编辑",
-  desc: "这家伙很懒，什么都没留下",
-  avatar: "/static/img/5.jpg"
-};
-
 export default {
   name: "profile",
   data() {
     return {
-      showEditModal: false,
       showAboutModal: false,
-      userInfo: { ...defaultUser },
-      editForm: { name: "", desc: "" },
+      userInfo: {},
       orderCount: 0,
       collectionCount: 0,
       unreadCount: 0,
@@ -136,11 +105,16 @@ export default {
 
   computed: {
     avatarUrl() {
-      const avatar = this.userInfo.avatar;
-      if (!avatar) return '/static/default-avatar.png';
-      if (avatar.startsWith('http')) return avatar;
-      if (avatar.startsWith('/file')) return 'http://localhost:8080' + avatar;
-      return avatar;
+      if (this.userInfo.avatar) {
+        if (this.userInfo.avatar.startsWith('http')) {
+          return this.userInfo.avatar;
+        }
+        if (this.userInfo.avatar.startsWith('/file')) {
+          return 'http://localhost:8080' + this.userInfo.avatar;
+        }
+        return this.userInfo.avatar;
+      }
+      return '/static/default-avatar.png';
     }
   },
 
@@ -153,9 +127,9 @@ export default {
       uni.reLaunch({ url: '/pages/login-register/login-register' });
       return;
     }
-
+    
     this.token = token;
-
+    
     // 加载用户资料
     this.loadUserProfile();
     // 加载统计数据
@@ -166,28 +140,25 @@ export default {
 
   methods: {
     loadUserProfile() {
-      const username = uni.getStorageSync('loginUsername');
-      const key = `userProfile_${username}`;
-      const saved = uni.getStorageSync(key);
+      // 先从本地缓存读取
+      const storedUserInfo = uni.getStorageSync('userInfo');
       
-      if (saved) {
-        this.userInfo = saved;
+      if (storedUserInfo && Object.keys(storedUserInfo).length > 0) {
+        this.userInfo = {
+          id: storedUserInfo.id,
+          username: storedUserInfo.username || storedUserInfo.name,
+          bio: storedUserInfo.bio || storedUserInfo.desc,
+          avatar: storedUserInfo.avatar,
+          phone: storedUserInfo.phone,
+          email: storedUserInfo.email,
+          role: storedUserInfo.role
+        };
       } else {
-        // 尝试从通用 userInfo 缓存读取
-        const storedUserInfo = uni.getStorageSync('userInfo');
-        if (storedUserInfo && Object.keys(storedUserInfo).length > 0) {
-          this.userInfo = {
-            name: storedUserInfo.username || storedUserInfo.name,
-            desc: storedUserInfo.bio || storedUserInfo.desc,
-            avatar: storedUserInfo.avatar
-          };
-        } else {
-          this.userInfo = { ...defaultUser };
-          this.fetchUserInfoFromServer();
-        }
+        // 如果没有缓存，从服务器获取
+        this.fetchUserInfoFromServer();
       }
     },
-
+    
     fetchUserInfoFromServer() {
       uni.request({
         url: 'http://localhost:8080/api/users/userinfo',
@@ -199,13 +170,17 @@ export default {
           if (res.statusCode === 200 && res.data) {
             const userData = res.data;
             this.userInfo = {
-              name: userData.username,
-              desc: userData.bio || '',
-              avatar: userData.avatar || ''
+              id: userData.id,
+              username: userData.username,
+              bio: userData.bio || '',
+              avatar: userData.avatar || '',
+              phone: userData.phone || '',
+              email: userData.email || '',
+              role: userData.role
             };
-            const username = uni.getStorageSync('loginUsername');
-            const key = `userProfile_${username}`;
-            uni.setStorageSync(key, this.userInfo);
+            
+            // 更新缓存
+            uni.setStorageSync('userInfo', this.userInfo);
           }
         },
         fail: (err) => {
@@ -213,7 +188,7 @@ export default {
         }
       });
     },
-
+    
     loadStats() {
       // 获取订单数量
       const username = uni.getStorageSync('loginUsername');
@@ -228,6 +203,9 @@ export default {
             orders = res.data;
           }
           this.orderCount = orders.length;
+        },
+        fail: () => {
+          this.orderCount = 0;
         }
       });
       
@@ -236,10 +214,10 @@ export default {
       const collections = uni.getStorageSync(key) || [];
       this.collectionCount = collections.length;
     },
-
+    
     loadUnreadCount() {
       if (!this.token) return;
-
+      
       uni.request({
         url: 'http://localhost:8080/api/user/notifications/unread-count',
         method: 'GET',
@@ -260,23 +238,23 @@ export default {
     goToOrders() {
       uni.navigateTo({ url: "/pages/my-orders/my-orders" });
     },
-
+    
     goToCollection() {
       uni.navigateTo({ url: "/pages/collection/collection" });
     },
-
+    
     goToSetting() {
       uni.navigateTo({ url: "/pages/profile/setting" });
     },
-
+    
     goToNotifications() {
       uni.navigateTo({ url: "/pages/profile/notifications" });
     },
-
+    
     showAbout() {
       this.showAboutModal = true;
     },
-
+    
     showFeedback() {
       uni.showModal({
         title: '意见反馈',
@@ -296,26 +274,7 @@ export default {
             uni.reLaunch({ url: '/pages/login-register/login-register' });
           }
         }
-      })
-    },
-
-    saveInfo() {
-      const username = uni.getStorageSync('loginUsername');
-      if (!username) return;
-
-      if (this.editForm.name) {
-        this.userInfo.name = this.editForm.name;
-      }
-      if (this.editForm.desc) {
-        this.userInfo.desc = this.editForm.desc;
-      }
-
-      const key = `userProfile_${username}`;
-      uni.setStorageSync(key, this.userInfo);
-
-      this.showEditModal = false;
-      this.editForm = { name: "", desc: "" };
-      uni.showToast({ title: "保存成功", icon: "success" });
+      });
     }
   }
 };
@@ -396,7 +355,6 @@ export default {
 .user-info {
   display: flex;
   align-items: center;
-  position: relative;
   margin-bottom: 30rpx;
 }
 
@@ -424,21 +382,6 @@ export default {
 .desc {
   display: block;
   font-size: 26rpx;
-  color: #999;
-}
-
-.edit-icon {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 56rpx;
-  height: 56rpx;
-  background: #f0f0f0;
-  border-radius: 28rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28rpx;
   color: #999;
 }
 
@@ -574,7 +517,7 @@ export default {
   color: #ccc;
 }
 
-/* 弹窗样式 */
+/* 关于弹窗 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -588,70 +531,6 @@ export default {
   z-index: 999;
 }
 
-.modal-content {
-  width: 85%;
-  background: #fff;
-  border-radius: 40rpx;
-  overflow: hidden;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #eee;
-}
-
-.modal-title {
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #333;
-}
-
-.modal-close {
-  font-size: 48rpx;
-  color: #999;
-  line-height: 1;
-}
-
-.form-item {
-  padding: 0 30rpx;
-  margin-bottom: 30rpx;
-}
-
-.label {
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 12rpx;
-  display: block;
-}
-
-.input, .textarea {
-  width: 100%;
-  border: 1rpx solid #eee;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  font-size: 28rpx;
-  box-sizing: border-box;
-  background: #fafafa;
-}
-
-.textarea {
-  height: 150rpx;
-}
-
-.save-btn {
-  margin: 20rpx 30rpx 40rpx;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff;
-  border-radius: 50rpx;
-  padding: 28rpx;
-  font-size: 30rpx;
-  border: none;
-}
-
-/* 关于弹窗 */
 .about-modal {
   width: 80%;
   background: #fff;

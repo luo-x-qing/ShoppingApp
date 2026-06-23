@@ -13,6 +13,12 @@ const _sfc_main = {
       editTitle: "",
       editValue: "",
       editFieldName: "",
+      // 密码修改相关
+      currentPassword: "",
+      verifyPhone: "",
+      newPassword: "",
+      confirmPassword: "",
+      isPasswordVerified: false,
       // 关于弹窗
       showAboutModal: false
     };
@@ -23,6 +29,17 @@ const _sfc_main = {
     this.calculateCacheSize();
   },
   methods: {
+    // 获取完整图片URL
+    getFullImageUrl(path) {
+      if (!path)
+        return "/static/default-avatar.png";
+      if (path.startsWith("http"))
+        return path;
+      if (path.startsWith("/file")) {
+        return "http://localhost:8080" + path;
+      }
+      return path;
+    },
     checkLogin() {
       const token = common_vendor.index.getStorageSync("token");
       const username = common_vendor.index.getStorageSync("loginUsername");
@@ -39,8 +56,9 @@ const _sfc_main = {
       try {
         const userInfo = common_vendor.index.getStorageSync("userInfo");
         this.userInfo = userInfo || {};
+        common_vendor.index.__f__("log", "at pages/profile/setting.vue:266", "用户信息:", this.userInfo);
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/profile/setting.vue:206", "读取用户信息失败", e);
+        common_vendor.index.__f__("error", "at pages/profile/setting.vue:268", "读取用户信息失败", e);
       }
     },
     calculateCacheSize() {
@@ -66,36 +84,43 @@ const _sfc_main = {
     editField(field) {
       this.editType = field;
       this.editFieldName = field;
+      this.currentPassword = "";
+      this.verifyPhone = "";
+      this.newPassword = "";
+      this.confirmPassword = "";
+      this.isPasswordVerified = false;
       switch (field) {
         case "nickname":
           this.editTitle = "昵称";
           this.editValue = this.userInfo.nickname || "";
+          this.showEditModal = true;
           break;
         case "phone":
           this.editTitle = "手机号";
           this.editValue = this.userInfo.phone || "";
+          this.showEditModal = true;
           break;
         case "email":
           this.editTitle = "邮箱";
           this.editValue = this.userInfo.email || "";
+          this.showEditModal = true;
           break;
         case "bio":
           this.editTitle = "个人简介";
           this.editValue = this.userInfo.bio || "";
           this.editType = "textarea";
+          this.showEditModal = true;
           break;
         case "password":
           this.editTitle = "修改密码";
-          this.editValue = "";
+          this.showEditModal = true;
           break;
         case "avatar":
-          this.editTitle = "更换头像";
           this.chooseAvatar();
           return;
         default:
           return;
       }
-      this.showEditModal = true;
     },
     chooseAvatar() {
       common_vendor.index.chooseImage({
@@ -122,6 +147,9 @@ const _sfc_main = {
             avatarUrl = data.url || data;
           } catch (e) {
           }
+          if (avatarUrl && avatarUrl.startsWith("/file")) {
+            avatarUrl = "http://localhost:8080" + avatarUrl;
+          }
           this.updateProfile({ avatar: avatarUrl });
         },
         fail: () => {
@@ -133,14 +161,19 @@ const _sfc_main = {
     closeEditModal() {
       this.showEditModal = false;
       this.editValue = "";
+      this.currentPassword = "";
+      this.verifyPhone = "";
+      this.newPassword = "";
+      this.confirmPassword = "";
+      this.isPasswordVerified = false;
     },
     submitEdit() {
       if (this.editType === "password") {
-        if (!this.editValue || this.editValue.length < 6) {
-          common_vendor.index.showToast({ title: "密码至少6位", icon: "none" });
-          return;
+        if (!this.isPasswordVerified) {
+          this.verifyIdentity();
+        } else {
+          this.updatePassword();
         }
-        this.updatePassword();
       } else {
         if (!this.editValue.trim() && this.editType !== "bio") {
           common_vendor.index.showToast({ title: "请填写" + this.editTitle, icon: "none" });
@@ -149,7 +182,7 @@ const _sfc_main = {
         const updateData = {};
         switch (this.editType) {
           case "nickname":
-            updateData.nickname = this.editValue.trim();
+            updateData.username = this.editValue.trim();
             break;
           case "phone":
             updateData.phone = this.editValue.trim();
@@ -164,7 +197,88 @@ const _sfc_main = {
         this.updateProfile(updateData);
       }
     },
+    // 验证身份：使用登录接口验证密码，本地验证手机号
+    verifyIdentity() {
+      if (!this.currentPassword) {
+        common_vendor.index.showToast({ title: "请输入当前密码", icon: "none" });
+        return;
+      }
+      if (!this.verifyPhone) {
+        common_vendor.index.showToast({ title: "请输入绑定的手机号", icon: "none" });
+        return;
+      }
+      if (this.userInfo.phone !== this.verifyPhone) {
+        common_vendor.index.showToast({ title: "手机号不匹配", icon: "none" });
+        return;
+      }
+      common_vendor.index.showLoading({ title: "验证中..." });
+      common_vendor.index.request({
+        url: "http://localhost:8080/api/users/login",
+        method: "POST",
+        header: {
+          "Content-Type": "application/json"
+        },
+        data: {
+          username: this.userInfo.username,
+          password: this.currentPassword
+        },
+        success: (res) => {
+          common_vendor.index.hideLoading();
+          if (res.statusCode === 200 && res.data && res.data.id) {
+            this.isPasswordVerified = true;
+            common_vendor.index.showToast({ title: "验证成功", icon: "success" });
+          } else {
+            common_vendor.index.showToast({ title: "当前密码错误", icon: "none" });
+          }
+        },
+        fail: () => {
+          common_vendor.index.hideLoading();
+          common_vendor.index.showToast({ title: "网络错误", icon: "none" });
+        }
+      });
+    },
+    // 修改密码：使用profile接口更新
+    updatePassword() {
+      if (!this.newPassword || this.newPassword.length < 6) {
+        common_vendor.index.showToast({ title: "新密码至少6位", icon: "none" });
+        return;
+      }
+      if (this.newPassword !== this.confirmPassword) {
+        common_vendor.index.showToast({ title: "两次输入的密码不一致", icon: "none" });
+        return;
+      }
+      common_vendor.index.showLoading({ title: "修改中..." });
+      common_vendor.index.request({
+        url: "http://localhost:8080/api/users/profile",
+        method: "PUT",
+        header: {
+          "Authorization": "Bearer " + this.token,
+          "Content-Type": "application/json"
+        },
+        data: {
+          password: this.newPassword
+        },
+        success: (res) => {
+          common_vendor.index.hideLoading();
+          if (res.statusCode === 200 && res.data && res.data.id) {
+            common_vendor.index.showToast({ title: "密码修改成功，请重新登录", icon: "success" });
+            this.closeEditModal();
+            setTimeout(() => {
+              common_vendor.index.clearStorageSync();
+              common_vendor.index.reLaunch({ url: "/pages/login-register/login-register" });
+            }, 1500);
+          } else {
+            common_vendor.index.showToast({ title: "修改失败，请稍后重试", icon: "none" });
+          }
+        },
+        fail: () => {
+          common_vendor.index.hideLoading();
+          common_vendor.index.showToast({ title: "网络错误", icon: "none" });
+        }
+      });
+    },
     updateProfile(updateData) {
+      common_vendor.index.showLoading({ title: "保存中..." });
       common_vendor.index.request({
         url: "http://localhost:8080/api/users/profile",
         method: "PUT",
@@ -174,47 +288,19 @@ const _sfc_main = {
         },
         data: updateData,
         success: (res) => {
-          var _a;
-          if (res.statusCode === 200 && res.data) {
+          common_vendor.index.hideLoading();
+          if (res.statusCode === 200 && res.data && res.data.id) {
             const updatedUserInfo = { ...this.userInfo, ...updateData };
             common_vendor.index.setStorageSync("userInfo", updatedUserInfo);
             this.userInfo = updatedUserInfo;
             common_vendor.index.showToast({ title: "修改成功", icon: "success" });
             this.closeEditModal();
           } else {
-            common_vendor.index.showToast({ title: ((_a = res.data) == null ? void 0 : _a.message) || "修改失败", icon: "none" });
+            common_vendor.index.showToast({ title: "修改失败", icon: "none" });
           }
         },
         fail: () => {
-          common_vendor.index.showToast({ title: "网络错误", icon: "none" });
-        }
-      });
-    },
-    updatePassword() {
-      common_vendor.index.request({
-        url: "http://localhost:8080/api/users/profile",
-        method: "PUT",
-        header: {
-          "Authorization": "Bearer " + this.token,
-          "Content-Type": "application/json"
-        },
-        data: {
-          password: this.editValue
-        },
-        success: (res) => {
-          var _a;
-          if (res.statusCode === 200 && res.data) {
-            common_vendor.index.showToast({ title: "密码修改成功，请重新登录", icon: "success" });
-            this.closeEditModal();
-            setTimeout(() => {
-              common_vendor.index.clearStorageSync();
-              common_vendor.index.reLaunch({ url: "/pages/login-register/login-register" });
-            }, 1500);
-          } else {
-            common_vendor.index.showToast({ title: ((_a = res.data) == null ? void 0 : _a.message) || "修改失败", icon: "none" });
-          }
-        },
-        fail: () => {
+          common_vendor.index.hideLoading();
           common_vendor.index.showToast({ title: "网络错误", icon: "none" });
         }
       });
@@ -261,7 +347,7 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $data.userInfo.avatar || "/static/default-avatar.png",
+    a: $options.getFullImageUrl($data.userInfo.avatar),
     b: common_vendor.t($data.userInfo.username || "用户"),
     c: common_vendor.t($data.userInfo.role === "MERCHANT" ? "商家账号" : "普通用户"),
     d: common_vendor.o(($event) => $options.editField("password")),
@@ -269,7 +355,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.o(($event) => $options.editField("phone")),
     g: common_vendor.t($data.userInfo.email || "未绑定"),
     h: common_vendor.o(($event) => $options.editField("email")),
-    i: $data.userInfo.avatar || "/static/default-avatar.png",
+    i: $options.getFullImageUrl($data.userInfo.avatar),
     j: common_vendor.o(($event) => $options.editField("avatar")),
     k: common_vendor.t($data.userInfo.nickname || $data.userInfo.username || "未设置"),
     l: common_vendor.o(($event) => $options.editField("nickname")),
@@ -284,31 +370,43 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.showEditModal ? common_vendor.e({
     v: common_vendor.t($data.editTitle),
     w: common_vendor.o((...args) => $options.closeEditModal && $options.closeEditModal(...args)),
-    x: $data.editType !== "textarea"
+    x: $data.editType === "password" && !$data.isPasswordVerified
+  }, $data.editType === "password" && !$data.isPasswordVerified ? {
+    y: $data.currentPassword,
+    z: common_vendor.o(($event) => $data.currentPassword = $event.detail.value),
+    A: $data.verifyPhone,
+    B: common_vendor.o(($event) => $data.verifyPhone = $event.detail.value)
+  } : $data.editType === "password" && $data.isPasswordVerified ? {
+    D: $data.newPassword,
+    E: common_vendor.o(($event) => $data.newPassword = $event.detail.value),
+    F: $data.confirmPassword,
+    G: common_vendor.o(($event) => $data.confirmPassword = $event.detail.value)
+  } : common_vendor.e({
+    H: $data.editType !== "textarea"
   }, $data.editType !== "textarea" ? {
-    y: "请输入" + $data.editTitle,
-    z: $data.editType === "phone" ? "number" : "text",
-    A: $data.editType === "password",
-    B: $data.editValue,
-    C: common_vendor.o(($event) => $data.editValue = $event.detail.value)
+    I: "请输入" + $data.editTitle,
+    J: $data.editType === "phone" ? "number" : "text",
+    K: $data.editValue,
+    L: common_vendor.o(($event) => $data.editValue = $event.detail.value)
   } : {
-    D: "请输入" + $data.editTitle,
-    E: $data.editValue,
-    F: common_vendor.o(($event) => $data.editValue = $event.detail.value)
-  }, {
-    G: common_vendor.o((...args) => $options.closeEditModal && $options.closeEditModal(...args)),
-    H: common_vendor.o((...args) => $options.submitEdit && $options.submitEdit(...args)),
-    I: common_vendor.o(() => {
+    M: "请输入" + $data.editTitle,
+    N: $data.editValue,
+    O: common_vendor.o(($event) => $data.editValue = $event.detail.value)
+  }), {
+    C: $data.editType === "password" && $data.isPasswordVerified,
+    P: common_vendor.o((...args) => $options.closeEditModal && $options.closeEditModal(...args)),
+    Q: common_vendor.o((...args) => $options.submitEdit && $options.submitEdit(...args)),
+    R: common_vendor.o(() => {
     }),
-    J: common_vendor.o((...args) => $options.closeEditModal && $options.closeEditModal(...args))
+    S: common_vendor.o((...args) => $options.closeEditModal && $options.closeEditModal(...args))
   }) : {}, {
-    K: $data.showAboutModal
+    T: $data.showAboutModal
   }, $data.showAboutModal ? {
-    L: common_vendor.o(($event) => $data.showAboutModal = false),
-    M: common_assets._imports_0,
-    N: common_vendor.o(() => {
+    U: common_vendor.o(($event) => $data.showAboutModal = false),
+    V: common_assets._imports_0,
+    W: common_vendor.o(() => {
     }),
-    O: common_vendor.o(($event) => $data.showAboutModal = false)
+    X: common_vendor.o(($event) => $data.showAboutModal = false)
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-46031339"]]);

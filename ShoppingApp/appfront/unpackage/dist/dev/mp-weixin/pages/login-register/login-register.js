@@ -116,21 +116,13 @@ const _sfc_main = {
           contact: this.contactInfo
         },
         success: (res) => {
-          var _a;
           common_vendor.index.hideLoading();
-          if (res.data && (res.data.code === 200 || res.data.success)) {
-            common_vendor.index.showToast({
-              title: "申诉已提交，管理员会尽快处理",
-              icon: "success",
-              duration: 2e3
-            });
-            this.closeAppealModal();
-          } else {
-            common_vendor.index.showToast({
-              title: ((_a = res.data) == null ? void 0 : _a.message) || "提交失败",
-              icon: "none"
-            });
-          }
+          common_vendor.index.showToast({
+            title: "申诉已提交，管理员会尽快处理",
+            icon: "success",
+            duration: 2e3
+          });
+          this.closeAppealModal();
         },
         fail: () => {
           common_vendor.index.hideLoading();
@@ -180,52 +172,60 @@ const _sfc_main = {
             }
             if (this.userRole === "merchant") {
               const status = (userData.status || "NORMAL").toUpperCase();
+              common_vendor.index.setStorageSync("token", userData.token);
+              common_vendor.index.setStorageSync("loginUsername", this.username);
+              common_vendor.index.setStorageSync("userRole", userData.role);
+              common_vendor.index.setStorageSync("userInfo", {
+                id: userData.id,
+                name: this.username,
+                username: userData.username || this.username,
+                role: userData.role,
+                status: userData.status || "NORMAL",
+                shopName: userData.shopName || "",
+                phone: userData.phone || "",
+                email: userData.email || "",
+                avatar: userData.avatar || "",
+                bio: userData.bio || ""
+              });
               if (status === "PENDING") {
-                common_vendor.index.showModal({
-                  title: "账号待审核",
-                  content: "您的商家账号正在审核中，请等待管理员审核。如需联系管理员，请点击申诉。",
-                  confirmText: "申诉",
-                  cancelText: "知道了",
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      this.openAppealModal(userData.username, userData.shopName, "PENDING");
-                    }
-                  }
-                });
-                return;
-              } else if (status === "REJECTED") {
-                common_vendor.index.showModal({
-                  title: "审核未通过",
-                  content: "您的商家账号审核未通过。如需申诉或了解详情，请联系管理员。",
-                  confirmText: "申诉",
-                  cancelText: "知道了",
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      this.openAppealModal(userData.username, userData.shopName, "REJECTED");
-                    }
-                  }
-                });
-                return;
-              } else if (status === "BANNED") {
-                common_vendor.index.showModal({
-                  title: "账号已禁用",
-                  content: "您的商家账号已被禁用。如需申诉，请联系管理员。",
-                  confirmText: "申诉",
-                  cancelText: "知道了",
-                  success: (modalRes) => {
-                    if (modalRes.confirm) {
-                      this.openAppealModal(userData.username, userData.shopName, "BANNED");
-                    }
-                  }
-                });
-                return;
-              } else if (status !== "NORMAL") {
-                common_vendor.index.showToast({
-                  title: "账号状态异常(" + status + ")，请联系管理员",
-                  icon: "none"
-                });
+                common_vendor.index.showToast({ title: "登录成功", icon: "success" });
+                setTimeout(() => {
+                  common_vendor.index.redirectTo({
+                    url: "/pages/merchant/pending?username=" + encodeURIComponent(userData.username) + "&shopName=" + encodeURIComponent(userData.shopName || "")
+                  });
+                }, 500);
                 return;
               }
+              if (status === "REJECTED") {
+                common_vendor.index.showToast({ title: "登录成功", icon: "success" });
+                setTimeout(() => {
+                  common_vendor.index.redirectTo({
+                    url: "/pages/merchant/rejected?username=" + encodeURIComponent(userData.username) + "&shopName=" + encodeURIComponent(userData.shopName || "")
+                  });
+                }, 500);
+                return;
+              }
+              if (status === "BANNED") {
+                common_vendor.index.showToast({ title: "登录成功", icon: "success" });
+                setTimeout(() => {
+                  common_vendor.index.redirectTo({
+                    url: "/pages/merchant/banned?username=" + encodeURIComponent(userData.username) + "&shopName=" + encodeURIComponent(userData.shopName || "")
+                  });
+                }, 500);
+                return;
+              }
+              if (status === "NORMAL") {
+                common_vendor.index.showToast({ title: "登录成功", icon: "success" });
+                setTimeout(() => {
+                  common_vendor.index.reLaunch({ url: "/pages/merchant/home" });
+                }, 500);
+                return;
+              }
+              common_vendor.index.showToast({
+                title: "账号状态异常，请联系管理员",
+                icon: "none"
+              });
+              return;
             }
             common_vendor.index.setStorageSync("token", userData.token);
             common_vendor.index.setStorageSync("loginUsername", this.username);
@@ -233,12 +233,14 @@ const _sfc_main = {
             common_vendor.index.setStorageSync("userInfo", {
               id: userData.id,
               name: this.username,
+              username: userData.username || this.username,
               role: userData.role,
               status: userData.status || "NORMAL",
               shopName: userData.shopName || "",
               phone: userData.phone || "",
               email: userData.email || "",
-              avatar: userData.avatar || ""
+              avatar: userData.avatar || "",
+              bio: userData.bio || ""
             });
             common_vendor.index.showToast({
               title: "登录成功",

@@ -193,10 +193,11 @@ export default {
       if (!this.merchantId) return;
       
       console.log('开始加载商家会话列表, 商家ID:', this.merchantId);
+      // 优先从后端获取会话列表
       this.loadConversationsFromServer();
     },
     
-    // 从服务器加载会话列表
+    // 从服务器加载会话列表（使用后端的 /merchant/conversations 接口）
     loadConversationsFromServer() {
       uni.request({
         url: `http://localhost:8080/api/messages/merchant/conversations?merchantId=${this.merchantId}`,
@@ -208,10 +209,13 @@ export default {
             console.log('从服务器获取到会话数量:', conversations.length);
             
             if (conversations.length > 0) {
+              // 处理从服务器返回的会话数据
               this.conversations = conversations.map(conv => {
+                // 处理消息内容，移除换行符
                 const rawMessage = conv.lastMessage || '暂无消息';
                 const displayMessage = rawMessage.replace(/\n/g, ' ').replace(/\s+/g, ' ');
                 
+                // 从本地获取消息历史
                 const key = `chat_${this.merchantId}_${conv.userId}`;
                 const saved = uni.getStorageSync(key);
                 
@@ -233,9 +237,11 @@ export default {
               
               this.calcTotalUnread();
             } else {
+              // 没有会话，尝试从订单生成
               this.loadOrdersByMerchantDirect();
             }
           } else {
+            console.log('获取会话列表失败，尝试从订单生成');
             this.loadOrdersByMerchantDirect();
           }
         },
@@ -269,7 +275,7 @@ export default {
       });
     },
     
-    // 根据订单生成会话列表
+    // 根据订单生成会话列表（包含换行处理）
     generateConversationsFromOrders(orders) {
       console.log('=== 开始生成会话 ===');
       console.log('传入订单数量:', orders.length);
@@ -285,6 +291,7 @@ export default {
           const key = `chat_${this.merchantId}_${userId}`;
           const saved = uni.getStorageSync(key);
           
+          // 处理消息内容，移除换行符，保证单行显示
           const rawMessage = saved ? saved.lastMessage : `欢迎预订${hotelName}！`;
           const displayMessage = rawMessage ? rawMessage.replace(/\n/g, ' ').replace(/\s+/g, ' ') : '';
           
@@ -313,10 +320,11 @@ export default {
       this.conversations = Object.values(conversationsMap);
       console.log('最终生成的会话数量:', this.conversations.length);
       
+      // 从服务器获取每个会话的未读数
       this.fetchUnreadCountsFromServer();
     },
     
-    // 从服务器获取未读数
+    // 从服务器获取未读数（使用 URL 参数）
     fetchUnreadCountsFromServer() {
       this.conversations.forEach(conv => {
         uni.request({
@@ -327,6 +335,7 @@ export default {
               const serverUnread = res.data.data?.unreadCount || 0;
               conv.unreadCount = serverUnread;
               
+              // 同步到本地存储
               const key = `chat_${this.merchantId}_${conv.userId}`;
               const saved = uni.getStorageSync(key);
               if (saved) {
@@ -352,6 +361,7 @@ export default {
       Object.keys(savedMessages).forEach(key => {
         const data = savedMessages[key];
         if (data && data.name) {
+          // 处理消息内容，移除换行符
           const rawMessage = data.lastMessage || '您好';
           const displayMessage = rawMessage.replace(/\n/g, ' ').replace(/\s+/g, ' ');
           
@@ -381,7 +391,7 @@ export default {
       this.totalUnread = this.conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
     },
     
-    // 标记消息已读
+    // 标记消息已读（使用 URL 参数）
     markMessagesAsRead(username) {
       if (!username) {
         console.error('用户名不能为空');
@@ -414,19 +424,24 @@ export default {
       const deltaX = moveX - this.startX;
       const deltaY = moveY - this.startY;
       
+      // 水平滑动大于垂直滑动才认为是左滑
       if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX < -30) {
+        // 关闭其他打开的删除按钮
         this.conversations.forEach(item => {
           if (item.userId !== conv.userId && item.showDelete) {
             item.showDelete = false;
           }
         });
+        // 打开当前删除按钮
         conv.showDelete = true;
       } else if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 30) {
+        // 右滑关闭删除按钮
         conv.showDelete = false;
       }
     },
     
     handleTouchEnd(e, conv) {
+      // 重置当前会话
       this.currentConv = null;
     },
     
@@ -437,22 +452,27 @@ export default {
         content: `确定要删除与 ${conv.userName} 的聊天记录吗？`,
         success: (res) => {
           if (res.confirm) {
+            // 从列表中移除
             const index = this.conversations.findIndex(c => c.userId === conv.userId);
             if (index !== -1) {
               this.conversations.splice(index, 1);
             }
             
+            // 删除本地存储的聊天记录
             const key = `chat_${this.merchantId}_${conv.userId}`;
             uni.removeStorageSync(key);
             
+            // 更新全局商家消息存储
             const savedMessages = uni.getStorageSync('merchant_messages') || {};
             delete savedMessages[conv.userId];
             uni.setStorageSync('merchant_messages', savedMessages);
             
+            // 重新计算未读数
             this.calcTotalUnread();
             
             uni.showToast({ title: '删除成功', icon: 'success' });
           } else {
+            // 取消删除，关闭滑动状态
             conv.showDelete = false;
           }
         }
@@ -461,6 +481,7 @@ export default {
     
     // 一键已读
     clearAllUnread() {
+      // 先更新前端UI，清除所有红点
       this.conversations.forEach(conv => {
         conv.unreadCount = 0;
         const key = `chat_${this.merchantId}_${conv.userId}`;
@@ -472,6 +493,7 @@ export default {
       });
       this.calcTotalUnread();
       
+      // 调用后端标记所有已读
       uni.request({
         url: `http://localhost:8080/api/messages/merchant/read-all?merchantId=${this.merchantId}`,
         method: 'POST',
@@ -488,13 +510,16 @@ export default {
     
     // 打开聊天
     openChat(conv) {
+      // 关闭删除状态
       conv.showDelete = false;
       
       this.currentUser = conv;
       
+      // 立即清除当前会话的红点
       conv.unreadCount = 0;
       this.calcTotalUnread();
       
+      // 保存本地未读数清零
       const key = `chat_${this.merchantId}_${conv.userId}`;
       const saved = uni.getStorageSync(key);
       if (saved) {
@@ -502,6 +527,7 @@ export default {
         uni.setStorageSync(key, saved);
       }
       
+      // 调用后端接口标记已读
       this.markMessagesAsRead(conv.userId);
       
       this.loadChatHistory();
@@ -512,6 +538,7 @@ export default {
     loadChatHistory() {
       if (!this.currentUser) return;
       
+      // 优先从服务器加载
       uni.request({
         url: `http://localhost:8080/api/messages/chat?username=${this.currentUser.userId}&merchantId=${this.merchantId}`,
         method: 'GET',
@@ -526,6 +553,7 @@ export default {
               this.saveMessagesToLocal();
               this.scrollToBottom();
               
+              // 加载完消息后再确认一次已读状态
               this.markMessagesAsRead(this.currentUser.userId);
               return;
             }
@@ -555,11 +583,12 @@ export default {
       this.scrollToBottom();
     },
     
-    // 保存消息到本地
+    // ========== 保存消息到本地（包含换行处理） ==========
     saveMessagesToLocal() {
       const key = `chat_${this.merchantId}_${this.currentUser.userId}`;
       const lastMsg = this.currentMessages[this.currentMessages.length - 1];
       
+      // 处理消息内容，移除换行符，保证单行显示
       const rawLastMessage = lastMsg?.content || '';
       const displayLastMessage = rawLastMessage ? rawLastMessage.replace(/\n/g, ' ').replace(/\s+/g, ' ') : '';
       
@@ -571,6 +600,7 @@ export default {
         unreadCount: 0
       });
       
+      // 更新会话列表
       const index = this.conversations.findIndex(c => c.userId === this.currentUser.userId);
       if (index !== -1) {
         this.conversations[index].lastMessage = displayLastMessage;
@@ -595,26 +625,33 @@ export default {
       this.sendMessage();
     },
     
-    // 发送消息
+    // ========== 发送消息（包含换行处理） ==========
     sendMessage() {
       if (!this.inputMessage.trim()) return;
       
       const msgContent = this.inputMessage.trim();
       
+      // 添加到界面
       this.currentMessages.push({ role: 'merchant', content: msgContent });
       this.inputMessage = '';
       
+      // 滚动到底部
       this.scrollToBottom();
       
+      // 保存到本地
       this.saveMessagesToLocal();
       
+      // 更新会话列表
       if (this.currentUser) {
+        // 处理消息内容，移除换行符
         const displayMsg = msgContent.replace(/\n/g, ' ').replace(/\s+/g, ' ');
         this.currentUser.lastMessage = displayMsg;
         this.currentUser.lastSender = 'merchant';
         this.currentUser.lastTime = this.formatTime(new Date());
+        // 确保商家发送消息后，该会话的未读数为0（红点不显示）
         this.currentUser.unreadCount = 0;
         
+        // 更新本地存储的未读数
         const key = `chat_${this.merchantId}_${this.currentUser.userId}`;
         const saved = uni.getStorageSync(key);
         if (saved) {
@@ -626,6 +663,7 @@ export default {
         }
       }
       
+      // 发送到后端
       uni.request({
         url: 'http://localhost:8080/api/messages/send',
         method: 'POST',

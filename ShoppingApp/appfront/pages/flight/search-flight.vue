@@ -59,36 +59,6 @@
         </view>
       </view>
 
-      <view class="form-item">
-        <view class="icon-box">
-          <text class="icon">📅</text>
-        </view>
-        <view class="form-content">
-          <text class="label">出发日期</text>
-          <picker mode="date" :value="searchParams.fromDate" @change="onDateChange">
-            <view class="input-box">
-              <text :class="searchParams.fromDate ? 'selected' : 'placeholder'">{{ searchParams.fromDate || '请选择日期' }}</text>
-              <text class="arrow-right">›</text>
-            </view>
-          </picker>
-        </view>
-      </view>
-
-      <view class="form-item">
-        <view class="icon-box">
-          <text class="icon">👤</text>
-        </view>
-        <view class="form-content">
-          <text class="label">乘客人数</text>
-          <picker mode="selector" :range="adultCounts" @change="onAdultCountChange">
-            <view class="input-box">
-              <text>{{ searchParams.adultCount }}人</text>
-              <text class="arrow-right">›</text>
-            </view>
-          </picker>
-        </view>
-      </view>
-
       <button class="search-btn" @click="searchFlights" :disabled="isLoading">
         {{ isLoading ? '搜索中...' : '🔍 搜索机票' }}
       </button>
@@ -218,10 +188,8 @@ export default {
         fromCityName: '北京',
         toCity: 'SHA',
         toCityName: '上海',
-        fromDate: '',
-        adultCount: 1
+        fromDate: ''
       },
-      adultCounts: [1, 2, 3, 4, 5],
       isLoading: false,
       flightList: [],
       showCityPickerFlag: false,
@@ -234,33 +202,96 @@ export default {
         { name: '广州', code: 'CAN', pinyin: 'guangzhou' },
         { name: '深圳', code: 'SZX', pinyin: 'shenzhen' },
         { name: '成都', code: 'CTU', pinyin: 'chengdu' },
-        { name: '杭州', code: 'HGH', pinyin: 'hangzhou' }
+        { name: '杭州', code: 'HGH', pinyin: 'hangzhou' },
+        { name: '西安', code: 'XIY', pinyin: 'xian' },
+        { name: '重庆', code: 'CKG', pinyin: 'chongqing' },
+        { name: '武汉', code: 'WUH', pinyin: 'wuhan' },
+        { name: '厦门', code: 'XMN', pinyin: 'xiamen' },
+        { name: '南京', code: 'NKG', pinyin: 'nanjing' },
+        { name: '三亚', code: 'SYX', pinyin: 'sanya' }
       ],
       cityList: [
+        { name: '澳门', code: 'MFM', pinyin: 'aomen', firstLetter: 'A' },
         { name: '北京', code: 'PEK', pinyin: 'beijing', firstLetter: 'B' },
         { name: '北京大兴', code: 'PKX', pinyin: 'beijingdaxing', firstLetter: 'B' },
+        { name: '包头', code: 'BAV', pinyin: 'baotou', firstLetter: 'B' },
+        { name: '北海', code: 'BHY', pinyin: 'beihai', firstLetter: 'B' },
+        { name: '重庆', code: 'CKG', pinyin: 'chongqing', firstLetter: 'C' },
+        { name: '成都', code: 'CTU', pinyin: 'chengdu', firstLetter: 'C' },
+        { name: '成都天府', code: 'TFU', pinyin: 'chengdutianfu', firstLetter: 'C' },
+        { name: '长沙', code: 'CSX', pinyin: 'changsha', firstLetter: 'C' },
+        { name: '长春', code: 'CGQ', pinyin: 'changchun', firstLetter: 'C' },
+        { name: '常州', code: 'CZX', pinyin: 'changzhou', firstLetter: 'C' },
+        { name: '大连', code: 'DLC', pinyin: 'dalian', firstLetter: 'D' },
+        { name: '敦煌', code: 'DNH', pinyin: 'dunhuang', firstLetter: 'D' },
+        { name: '鄂尔多斯', code: 'DSN', pinyin: 'eerduosi', firstLetter: 'E' },
+        { name: '福州', code: 'FOC', pinyin: 'fuzhou', firstLetter: 'F' },
+        { name: '广州', code: 'CAN', pinyin: 'guangzhou', firstLetter: 'G' },
+        { name: '桂林', code: 'KWL', pinyin: 'guilin', firstLetter: 'G' },
+        { name: '贵阳', code: 'KWE', pinyin: 'guiyang', firstLetter: 'G' },
+        { name: '赣州', code: 'KOW', pinyin: 'ganzhou', firstLetter: 'G' },
+        { name: '杭州', code: 'HGH', pinyin: 'hangzhou', firstLetter: 'H' },
+        { name: '哈尔滨', code: 'HRB', pinyin: 'haerbin', firstLetter: 'H' },
+        { name: '海口', code: 'HAK', pinyin: 'haikou', firstLetter: 'H' },
+        { name: '合肥', code: 'HFE', pinyin: 'hefei', firstLetter: 'H' },
+        { name: '呼和浩特', code: 'HET', pinyin: 'huhehaote', firstLetter: 'H' },
+        { name: '黄山', code: 'TXN', pinyin: 'huangshan', firstLetter: 'H' },
+        { name: '香港', code: 'HKG', pinyin: 'xianggang', firstLetter: 'X' },
+        { name: '济南', code: 'TNA', pinyin: 'jinan', firstLetter: 'J' },
+        { name: '济宁', code: 'JNG', pinyin: 'jining', firstLetter: 'J' },
+        { name: '昆明', code: 'KMG', pinyin: 'kunming', firstLetter: 'K' },
+        { name: '喀什', code: 'KHG', pinyin: 'kashi', firstLetter: 'K' },
+        { name: '兰州', code: 'LHW', pinyin: 'lanzhou', firstLetter: 'L' },
+        { name: '丽江', code: 'LJG', pinyin: 'lijiang', firstLetter: 'L' },
+        { name: '拉萨', code: 'LXA', pinyin: 'lasa', firstLetter: 'L' },
+        { name: '临沂', code: 'LYI', pinyin: 'linyi', firstLetter: 'L' },
+        { name: '洛阳', code: 'LYA', pinyin: 'luoyang', firstLetter: 'L' },
+        { name: '绵阳', code: 'MIG', pinyin: 'mianyang', firstLetter: 'M' },
+        { name: '南京', code: 'NKG', pinyin: 'nanjing', firstLetter: 'N' },
+        { name: '南宁', code: 'NNG', pinyin: 'nanning', firstLetter: 'N' },
+        { name: '宁波', code: 'NGB', pinyin: 'ningbo', firstLetter: 'N' },
+        { name: '南昌', code: 'KHN', pinyin: 'nanchang', firstLetter: 'N' },
+        { name: '南通', code: 'NTG', pinyin: 'nantong', firstLetter: 'N' },
+        { name: '普洱', code: 'SYM', pinyin: 'puer', firstLetter: 'P' },
+        { name: '青岛', code: 'TAO', pinyin: 'qingdao', firstLetter: 'Q' },
+        { name: '秦皇岛', code: 'BPE', pinyin: 'qinhuangdao', firstLetter: 'Q' },
         { name: '上海', code: 'SHA', pinyin: 'shanghai', firstLetter: 'S' },
         { name: '上海浦东', code: 'PVG', pinyin: 'shanghaipudong', firstLetter: 'S' },
-        { name: '广州', code: 'CAN', pinyin: 'guangzhou', firstLetter: 'G' },
         { name: '深圳', code: 'SZX', pinyin: 'shenzhen', firstLetter: 'S' },
-        { name: '成都', code: 'CTU', pinyin: 'chengdu', firstLetter: 'C' },
-        { name: '重庆', code: 'CKG', pinyin: 'chongqing', firstLetter: 'C' },
-        { name: '杭州', code: 'HGH', pinyin: 'hangzhou', firstLetter: 'H' },
-        { name: '西安', code: 'XIY', pinyin: 'xian', firstLetter: 'X' },
-        { name: '武汉', code: 'WUH', pinyin: 'wuhan', firstLetter: 'W' },
-        { name: '厦门', code: 'XMN', pinyin: 'xiamen', firstLetter: 'X' },
-        { name: '南京', code: 'NKG', pinyin: 'nanjing', firstLetter: 'N' },
-        { name: '长沙', code: 'CSX', pinyin: 'changsha', firstLetter: 'C' },
-        { name: '昆明', code: 'KMG', pinyin: 'kunming', firstLetter: 'K' },
-        { name: '青岛', code: 'TAO', pinyin: 'qingdao', firstLetter: 'Q' },
-        { name: '天津', code: 'TSN', pinyin: 'tianjin', firstLetter: 'T' },
-        { name: '大连', code: 'DLC', pinyin: 'dalian', firstLetter: 'D' },
-        { name: '哈尔滨', code: 'HRB', pinyin: 'haerbin', firstLetter: 'H' },
         { name: '沈阳', code: 'SHE', pinyin: 'shenyang', firstLetter: 'S' },
-        { name: '郑州', code: 'CGO', pinyin: 'zhengzhou', firstLetter: 'Z' },
-        { name: '济南', code: 'TNA', pinyin: 'jinan', firstLetter: 'J' },
         { name: '三亚', code: 'SYX', pinyin: 'sanya', firstLetter: 'S' },
-        { name: '桂林', code: 'KWL', pinyin: 'guilin', firstLetter: 'G' }
+        { name: '苏州', code: 'SZV', pinyin: 'suzhou', firstLetter: 'S' },
+        { name: '石家庄', code: 'SJW', pinyin: 'shijiazhuang', firstLetter: 'S' },
+        { name: '汕头', code: 'SWA', pinyin: 'shantou', firstLetter: 'S' },
+        { name: '天津', code: 'TSN', pinyin: 'tianjin', firstLetter: 'T' },
+        { name: '太原', code: 'TYN', pinyin: 'taiyuan', firstLetter: 'T' },
+        { name: '台北', code: 'TPE', pinyin: 'taibei', firstLetter: 'T' },
+        { name: '台州', code: 'HYN', pinyin: 'taizhou', firstLetter: 'T' },
+        { name: '武汉', code: 'WUH', pinyin: 'wuhan', firstLetter: 'W' },
+        { name: '乌鲁木齐', code: 'URC', pinyin: 'wulumuqi', firstLetter: 'W' },
+        { name: '无锡', code: 'WUX', pinyin: 'wuxi', firstLetter: 'W' },
+        { name: '温州', code: 'WNZ', pinyin: 'wenzhou', firstLetter: 'W' },
+        { name: '威海', code: 'WEH', pinyin: 'weihai', firstLetter: 'W' },
+        { name: '潍坊', code: 'WEF', pinyin: 'weifang', firstLetter: 'W' },
+        { name: '西安', code: 'XIY', pinyin: 'xian', firstLetter: 'X' },
+        { name: '西宁', code: 'XNN', pinyin: 'xining', firstLetter: 'X' },
+        { name: '徐州', code: 'XUZ', pinyin: 'xuzhou', firstLetter: 'X' },
+        { name: '厦门', code: 'XMN', pinyin: 'xiamen', firstLetter: 'X' },
+        { name: '银川', code: 'INC', pinyin: 'yinchuan', firstLetter: 'Y' },
+        { name: '烟台', code: 'YNT', pinyin: 'yantai', firstLetter: 'Y' },
+        { name: '宜昌', code: 'YIH', pinyin: 'yichang', firstLetter: 'Y' },
+        { name: '义乌', code: 'YIW', pinyin: 'yiwu', firstLetter: 'Y' },
+        { name: '盐城', code: 'YNZ', pinyin: 'yancheng', firstLetter: 'Y' },
+        { name: '郑州', code: 'CGO', pinyin: 'zhengzhou', firstLetter: 'Z' },
+        { name: '珠海', code: 'ZUH', pinyin: 'zhuhai', firstLetter: 'Z' },
+        { name: '张家界', code: 'DYG', pinyin: 'zhangjiajie', firstLetter: 'Z' },
+        { name: '湛江', code: 'ZHA', pinyin: 'zhanjiang', firstLetter: 'Z' },
+        { name: '遵义', code: 'ZYI', pinyin: 'zunyi', firstLetter: 'Z' },
+        { name: '九寨沟', code: 'JZH', pinyin: 'jiuzhaigou', firstLetter: 'J' },
+        { name: '西双版纳', code: 'JHG', pinyin: 'xishuangbanna', firstLetter: 'X' },
+        { name: '腾冲', code: 'TCZ', pinyin: 'tengchong', firstLetter: 'T' },
+        { name: '林芝', code: 'LZY', pinyin: 'linzhi', firstLetter: 'L' },
+        { name: '香格里拉', code: 'DIG', pinyin: 'xianggelila', firstLetter: 'X' }
       ]
     };
   },
@@ -287,15 +318,43 @@ export default {
       return sorted;
     }
   },
-  
-  onLoad() {
-    const date = new Date();
-    date.setDate(date.getDate() + 7);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    this.searchParams.fromDate = `${year}-${month}-${day}`;
-  },
+ onLoad() {
+   // 1. 设置默认日期（7天后）
+   const date = new Date();
+   date.setDate(date.getDate() + 7);
+   const year = date.getFullYear();
+   const month = String(date.getMonth() + 1).padStart(2, '0');
+   const day = String(date.getDate()).padStart(2, '0');
+   this.searchParams.fromDate = `${year}-${month}-${day}`;
+ 
+   // 2. 从存储中读取外部传入的搜索参数
+   const externalParams = uni.getStorageSync('flight_search_params');
+   if (externalParams) {
+     if (externalParams.fromCity) {
+       const matched = this.cityList.find(c => 
+         c.name === externalParams.fromCity || c.code === externalParams.fromCity
+       );
+       if (matched) {
+         this.searchParams.fromCity = matched.code;
+         this.searchParams.fromCityName = matched.name;
+       }
+     }
+     if (externalParams.toCity) {
+       const matched = this.cityList.find(c => 
+         c.name === externalParams.toCity || c.code === externalParams.toCity
+       );
+       if (matched) {
+         this.searchParams.toCity = matched.code;
+         this.searchParams.toCityName = matched.name;
+       }
+     }
+     if (externalParams.fromDate) {
+       this.searchParams.fromDate = externalParams.fromDate;
+     }
+     // 使用后清除，避免重复使用
+     uni.removeStorageSync('flight_search_params');
+   }
+ },
   
   methods: {
     swapCities() {
@@ -334,8 +393,6 @@ export default {
     onDateChange(e) { 
       this.searchParams.fromDate = e.detail.value; 
     },
-    onAdultCountChange(e) { this.searchParams.adultCount = this.adultCounts[e.detail.value]; },
-    onAdultCountChange(e) { this.searchParams.adultCount = this.adultCounts[e.detail.value]; },
     
     formatTimeDisplay(dateTimeStr) {
       if (!dateTimeStr) return '--';
@@ -368,22 +425,37 @@ export default {
     },
     
     searchFlights() {
-      if (!this.searchParams.fromCity) { uni.showToast({ title: '请选择出发城市', icon: 'none' }); return; }
-      if (!this.searchParams.toCity) { uni.showToast({ title: '请选择到达城市', icon: 'none' }); return; }
-      if (this.searchParams.fromCity === this.searchParams.toCity) { uni.showToast({ title: '出发城市和到达城市不能相同', icon: 'none' }); return; }
-      if (!this.searchParams.fromDate) { uni.showToast({ title: '请选择出发日期', icon: 'none' }); return; }
+      if (!this.searchParams.fromCity) { 
+        uni.showToast({ title: '请选择出发城市', icon: 'none' }); 
+        return; 
+      }
+      if (!this.searchParams.toCity) { 
+        uni.showToast({ title: '请选择到达城市', icon: 'none' }); 
+        return; 
+      }
+      if (this.searchParams.fromCity === this.searchParams.toCity) { 
+        uni.showToast({ title: '出发城市和到达城市不能相同', icon: 'none' }); 
+        return; 
+      }
+      if (!this.searchParams.fromDate) { 
+        uni.showToast({ title: '请选择出发日期', icon: 'none' }); 
+        return; 
+      }
       
       this.isLoading = true;
       uni.request({
         url: 'http://localhost:8080/api/flights/search',
         method: 'GET',
-        data: { dep: this.searchParams.fromCity, arr: this.searchParams.toCity, date: this.searchParams.fromDate },
+        data: { 
+          dep: this.searchParams.fromCity, 
+          arr: this.searchParams.toCity, 
+          date: this.searchParams.fromDate 
+        },
         success: (res) => {
           console.log('航班查询返回：', res.data);
           
           let flights = [];
           
-          // 调试：打印原始数据
           if (res.data && res.data.success && typeof res.data.data === 'string') {
             console.log('原始数据前500字符：', res.data.data.substring(0, 500));
             flights = this.parseFlightsFromString(res.data.data);
@@ -397,7 +469,6 @@ export default {
             this.flightList = flights.slice(0, 20);
             console.log('解析出的航班数量：', this.flightList.length);
           } else {
-            // 使用模拟数据作为演示
             this.flightList = this.getMockFlights();
             uni.showToast({ title: '使用演示数据', icon: 'none' });
           }
@@ -405,12 +476,13 @@ export default {
         },
         fail: (err) => {
           console.error('请求失败：', err);
-          // 使用模拟数据
           this.flightList = this.getMockFlights();
           this.showResultFlag = true;
           uni.showToast({ title: '查询失败，使用演示数据', icon: 'none' });
         },
-        complete: () => { this.isLoading = false; }
+        complete: () => { 
+          this.isLoading = false; 
+        }
       });
     },
     
@@ -425,31 +497,88 @@ export default {
         '北京-广州': [1280, 1180, 1080, 1580, 1380],
         '广州-北京': [1280, 1180, 1080, 1580, 1380],
         '上海-深圳': [890, 820, 750, 1180, 950],
-        '深圳-上海': [890, 820, 750, 1180, 950]
+        '深圳-上海': [890, 820, 750, 1180, 950],
+        '北京-深圳': [1350, 1250, 1150, 1680, 1450],
+        '深圳-北京': [1350, 1250, 1150, 1680, 1450],
+        '上海-广州': [1120, 1020, 920, 1380, 1180],
+        '广州-上海': [1120, 1020, 920, 1380, 1180]
       };
       const routeKey = `${fromCity}-${toCity}`;
       const prices = priceMap[routeKey] || [680, 580, 520, 880, 750];
       
       return [
-        { flightNumber: 'CA1234', airline: '中国国航', departureAirport: fromCity + '首都机场', arrivalAirport: toCity + '虹桥机场', departureTime: selectedDate + ' 08:00', arrivalTime: selectedDate + ' 10:30', departureTimeDisplay: '08:00', arrivalTimeDisplay: '10:30', duration: '2小时30分', price: prices[0] },
-        { flightNumber: 'MU5678', airline: '东方航空', departureAirport: fromCity + '大兴机场', arrivalAirport: toCity + '浦东机场', departureTime: selectedDate + ' 14:00', arrivalTime: selectedDate + ' 16:20', departureTimeDisplay: '14:00', arrivalTimeDisplay: '16:20', duration: '2小时20分', price: prices[1] },
-        { flightNumber: 'CZ9012', airline: '南方航空', departureAirport: fromCity + '首都机场', arrivalAirport: toCity + '虹桥机场', departureTime: selectedDate + ' 18:30', arrivalTime: selectedDate + ' 21:00', departureTimeDisplay: '18:30', arrivalTimeDisplay: '21:00', duration: '2小时30分', price: prices[2] },
-        { flightNumber: 'HU7890', airline: '海南航空', departureAirport: fromCity + '首都机场', arrivalAirport: toCity + '浦东机场', departureTime: selectedDate + ' 09:15', arrivalTime: selectedDate + ' 11:45', departureTimeDisplay: '09:15', arrivalTimeDisplay: '11:45', duration: '2小时30分', price: prices[3] },
-        { flightNumber: '3U4567', airline: '四川航空', departureAirport: fromCity + '大兴机场', arrivalAirport: toCity + '虹桥机场', departureTime: selectedDate + ' 16:30', arrivalTime: selectedDate + ' 18:50', departureTimeDisplay: '16:30', arrivalTimeDisplay: '18:50', duration: '2小时20分', price: prices[4] }
+        { 
+          flightNumber: 'CA1234', 
+          airline: '中国国航', 
+          departureAirport: fromCity + '首都机场', 
+          arrivalAirport: toCity + '虹桥机场', 
+          departureTime: selectedDate + ' 08:00', 
+          arrivalTime: selectedDate + ' 10:30', 
+          departureTimeDisplay: '08:00', 
+          arrivalTimeDisplay: '10:30', 
+          duration: '2小时30分', 
+          price: prices[0] 
+        },
+        { 
+          flightNumber: 'MU5678', 
+          airline: '东方航空', 
+          departureAirport: fromCity + '大兴机场', 
+          arrivalAirport: toCity + '浦东机场', 
+          departureTime: selectedDate + ' 14:00', 
+          arrivalTime: selectedDate + ' 16:20', 
+          departureTimeDisplay: '14:00', 
+          arrivalTimeDisplay: '16:20', 
+          duration: '2小时20分', 
+          price: prices[1] 
+        },
+        { 
+          flightNumber: 'CZ9012', 
+          airline: '南方航空', 
+          departureAirport: fromCity + '首都机场', 
+          arrivalAirport: toCity + '虹桥机场', 
+          departureTime: selectedDate + ' 18:30', 
+          arrivalTime: selectedDate + ' 21:00', 
+          departureTimeDisplay: '18:30', 
+          arrivalTimeDisplay: '21:00', 
+          duration: '2小时30分', 
+          price: prices[2] 
+        },
+        { 
+          flightNumber: 'HU7890', 
+          airline: '海南航空', 
+          departureAirport: fromCity + '首都机场', 
+          arrivalAirport: toCity + '浦东机场', 
+          departureTime: selectedDate + ' 09:15', 
+          arrivalTime: selectedDate + ' 11:45', 
+          departureTimeDisplay: '09:15', 
+          arrivalTimeDisplay: '11:45', 
+          duration: '2小时30分', 
+          price: prices[3] 
+        },
+        { 
+          flightNumber: '3U4567', 
+          airline: '四川航空', 
+          departureAirport: fromCity + '大兴机场', 
+          arrivalAirport: toCity + '虹桥机场', 
+          departureTime: selectedDate + ' 16:30', 
+          arrivalTime: selectedDate + ' 18:50', 
+          departureTimeDisplay: '16:30', 
+          arrivalTimeDisplay: '18:50', 
+          duration: '2小时20分', 
+          price: prices[4] 
+        }
       ];
     },
     
     parseFlightsFromString(dataStr) {
       const flights = [];
       try {
-        // 方法1：直接查找所有航班对象
         const allFlights = dataStr.match(/\{\s*'fcategory':[^}]+\}/g);
         if (allFlights && allFlights.length > 0) {
           console.log('直接找到航班对象数量：', allFlights.length);
           return this.extractFlightsFromMatches(allFlights);
         }
         
-        // 方法2：尝试提取data数组
         let dataArrayMatch = dataStr.match(/data['"]?\s*:\s*\[(.*?)\]/s);
         if (!dataArrayMatch) {
           dataArrayMatch = dataStr.match(/'data':\s*\[(.*?)\]/s);
@@ -478,26 +607,17 @@ export default {
       
       for (const flightStr of flightMatches) {
         try {
-          // 提取航班号
           const flightNoMatch = flightStr.match(/FlightNo['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取航空公司
           const airlineMatch = flightStr.match(/FlightCompany['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取出发时间
           const depTimeMatch = flightStr.match(/FlightDeptimePlanDate['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取到达时间
           const arrTimeMatch = flightStr.match(/FlightArrtimePlanDate['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取出发机场
           const depAirportMatch = flightStr.match(/FlightDepAirport['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取到达机场
           const arrAirportMatch = flightStr.match(/FlightArrAirport['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取航班状态
           const stateMatch = flightStr.match(/FlightState['"]?\s*:\s*['"]([^'"]+)['"]/);
-          // 提取飞行时长
           const durationMatch = flightStr.match(/FlightDuration['"]?\s*:\s*['"]?([0-9]+)['"]?/);
           
           const flightState = stateMatch ? stateMatch[1] : '';
           
-          // 只显示"计划"状态的航班
           if (flightState === '计划' && flightNoMatch && depTimeMatch && arrTimeMatch) {
             const depTime = depTimeMatch[1].replace('T', ' ');
             const arrTime = arrTimeMatch[1].replace('T', ' ');
@@ -524,7 +644,9 @@ export default {
       return flights;
     },
     
-    closeResult() { this.showResultFlag = false; },
+    closeResult() { 
+      this.showResultFlag = false; 
+    },
     
     selectFlight(flight) {
       uni.setStorageSync('selectedFlight', flight);

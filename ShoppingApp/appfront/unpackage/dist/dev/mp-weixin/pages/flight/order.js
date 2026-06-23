@@ -107,14 +107,14 @@ const _sfc_main = {
         }
         return dateTimeStr;
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/flight/order.vue:238", "日期解析错误：", e);
+        common_vendor.index.__f__("error", "at pages/flight/order.vue:243", "日期解析错误：", e);
         return null;
       }
     },
     // 提交订单 - 为每个乘客单独创建订单
     async submitOrder() {
-      common_vendor.index.__f__("log", "at pages/flight/order.vue:245", "提交订单", this.orderData);
-      common_vendor.index.__f__("log", "at pages/flight/order.vue:246", "乘机人列表", this.passengerList);
+      common_vendor.index.__f__("log", "at pages/flight/order.vue:250", "提交订单", this.orderData);
+      common_vendor.index.__f__("log", "at pages/flight/order.vue:251", "乘机人列表", this.passengerList);
       if (!this.orderData.loginUsername) {
         common_vendor.index.showToast({ title: "请先登录", icon: "none" });
         setTimeout(() => {
@@ -168,13 +168,14 @@ const _sfc_main = {
           departTime: this.formatDateTimeForSubmit(this.flightInfo.departureTime),
           arriveTime: this.formatDateTimeForSubmit(this.flightInfo.arrivalTime),
           price,
+          // 单个乘客的票价
           username: this.orderData.loginUsername,
           passengerName: passenger.userName,
           passengerIdCard: passenger.idCard,
           contactPhone: passenger.userPhone,
           status: "待支付"
         };
-        common_vendor.index.__f__("log", "at pages/flight/order.vue:318", `提交第${passengerNum}个订单：`, submitData);
+        common_vendor.index.__f__("log", "at pages/flight/order.vue:328", `提交第${passengerNum}个订单：`, submitData);
         try {
           const result = await this.createOrder(submitData);
           if (result.success) {
@@ -183,7 +184,7 @@ const _sfc_main = {
             failCount++;
           }
         } catch (error) {
-          common_vendor.index.__f__("error", "at pages/flight/order.vue:328", `第${passengerNum}个订单提交失败：`, error);
+          common_vendor.index.__f__("error", "at pages/flight/order.vue:339", `第${passengerNum}个订单提交失败：`, error);
           failCount++;
         }
       }
@@ -223,6 +224,7 @@ const _sfc_main = {
       }
       this.isSubmitting = false;
     },
+    // 创建单个订单的异步方法
     createOrder(submitData) {
       return new Promise((resolve, reject) => {
         common_vendor.index.request({
@@ -233,7 +235,7 @@ const _sfc_main = {
           },
           data: submitData,
           success: (res) => {
-            common_vendor.index.__f__("log", "at pages/flight/order.vue:384", "单个订单提交结果：", res);
+            common_vendor.index.__f__("log", "at pages/flight/order.vue:402", "单个订单提交结果：", res);
             if (res.statusCode === 200 && res.data.code === 200) {
               resolve({ success: true, data: res.data });
             } else {
@@ -241,7 +243,7 @@ const _sfc_main = {
             }
           },
           fail: (err) => {
-            common_vendor.index.__f__("error", "at pages/flight/order.vue:392", "订单提交失败：", err);
+            common_vendor.index.__f__("error", "at pages/flight/order.vue:410", "订单提交失败：", err);
             reject(err);
           }
         });

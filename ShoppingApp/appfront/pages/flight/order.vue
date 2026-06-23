@@ -200,6 +200,7 @@ export default {
       // 动态调整乘机人列表
       const currentCount = this.passengerList.length;
       if (newCount > currentCount) {
+        // 增加乘机人
         for (let i = currentCount; i < newCount; i++) {
           this.passengerList.push({
             userName: '',
@@ -208,6 +209,7 @@ export default {
           });
         }
       } else if (newCount < currentCount) {
+        // 减少乘机人
         this.passengerList = this.passengerList.slice(0, newCount);
       }
     },
@@ -215,6 +217,7 @@ export default {
     // 格式化显示日期时间（用于页面展示）
     formatDisplayDateTime(dateTimeStr) {
       if (!dateTimeStr) return '--';
+      // 如果是 "2026-06-15 08:00" 格式，直接返回
       if (dateTimeStr.includes(' ')) {
         return dateTimeStr;
       }
@@ -225,11 +228,13 @@ export default {
     formatDateTimeForSubmit(dateTimeStr) {
       if (!dateTimeStr) return null;
       try {
+        // 如果是 "2026-06-15 08:00" 格式，转换为 "2026-06-15T08:00:00"
         if (dateTimeStr.includes(' ') && !dateTimeStr.includes('T')) {
           const [date, time] = dateTimeStr.split(' ');
           const timeWithSeconds = time.split(':').length === 2 ? time + ':00' : time;
           return `${date}T${timeWithSeconds}`;
         }
+        // 如果已经是 ISO 格式
         if (dateTimeStr.includes('T')) {
           return dateTimeStr;
         }
@@ -261,6 +266,7 @@ export default {
         const passenger = this.passengerList[i];
         const passengerNum = i + 1;
         
+        // 校验姓名
         if (!passenger.userName || passenger.userName.trim() === '') {
           uni.showToast({ title: `请输入乘机人${passengerNum}的姓名`, icon: 'none' });
           return;
@@ -270,6 +276,7 @@ export default {
           return;
         }
         
+        // 校验身份证号
         if (!passenger.idCard || passenger.idCard.trim() === '') {
           uni.showToast({ title: `请输入乘机人${passengerNum}的身份证号`, icon: 'none' });
           return;
@@ -280,6 +287,7 @@ export default {
           return;
         }
         
+        // 校验手机号
         if (!passenger.userPhone) {
           uni.showToast({ title: `请输入乘机人${passengerNum}的联系电话`, icon: 'none' });
           return;
@@ -293,6 +301,7 @@ export default {
       this.isSubmitting = true;
       uni.showLoading({ title: '正在提交订单...', mask: true });
       
+      // 为每个乘客单独创建订单
       const price = parseFloat(this.flightInfo.price) || 0;
       let successCount = 0;
       let failCount = 0;
@@ -301,13 +310,14 @@ export default {
         const passenger = this.passengerList[i];
         const passengerNum = i + 1;
         
+        // 构建单个订单数据
         const submitData = {
           flightNumber: this.flightInfo.flightNumber,
           departCity: this.departureCity,
           arriveCity: this.arrivalCity,
           departTime: this.formatDateTimeForSubmit(this.flightInfo.departureTime),
           arriveTime: this.formatDateTimeForSubmit(this.flightInfo.arrivalTime),
-          price: price,
+          price: price, // 单个乘客的票价
           username: this.orderData.loginUsername,
           passengerName: passenger.userName,
           passengerIdCard: passenger.idCard,
@@ -317,6 +327,7 @@ export default {
         
         console.log(`提交第${passengerNum}个订单：`, submitData);
         
+        // 调用后端接口创建订单
         try {
           const result = await this.createOrder(submitData);
           if (result.success) {
@@ -332,20 +343,25 @@ export default {
       
       uni.hideLoading();
       
+      // 显示提交结果
       if (successCount === this.passengerList.length) {
+        // 全部成功
         uni.showToast({ 
           title: `成功预订${successCount}个订单！`, 
           icon: 'success' 
         });
         
+        // 清除选中的航班缓存
         uni.removeStorageSync('selectedFlight');
         
+        // 跳转到订单页面
         setTimeout(() => {
           uni.switchTab({
             url: '/pages/profile/profile'
           });
         }, 1500);
       } else if (successCount > 0) {
+        // 部分成功
         uni.showModal({
           title: '提交结果',
           content: `成功提交${successCount}个订单，失败${failCount}个，请检查后重试`,
@@ -362,6 +378,7 @@ export default {
           }
         });
       } else {
+        // 全部失败
         uni.showToast({ 
           title: '订单提交失败，请重试', 
           icon: 'none' 
@@ -371,6 +388,7 @@ export default {
       this.isSubmitting = false;
     },
     
+    // 创建单个订单的异步方法
     createOrder(submitData) {
       return new Promise((resolve, reject) => {
         uni.request({

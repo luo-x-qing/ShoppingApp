@@ -231,6 +231,7 @@ export default {
           
           if (res.data && res.data.code === 200) {
             let orders = res.data.data || [];
+            // 🔥 在加载订单后自动检查过期订单
             this.checkAndCancelExpiredOrders(orders);
             this.processOrders(orders);
           } else {
@@ -270,22 +271,31 @@ export default {
       });
     },
     
-    // 检查并自动取消过期订单
+    // ========== 🔥 核心方法：检查并自动取消过期订单 ==========
+    /**
+     * 检查所有待确认和已支付的订单，如果入住日期已过且商家未确认，自动取消
+     */
     checkAndCancelExpiredOrders(orders) {
       if (!orders || orders.length === 0) return;
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
+      // 需要自动取消的状态：待确认、已支付
       const autoCancelStatuses = ['待确认', '已支付'];
       
+      // 找出需要取消的订单
       const expiredOrders = orders.filter(order => {
+        // 只处理待确认和已支付的订单
         if (!autoCancelStatuses.includes(order.status)) return false;
+        
+        // 检查入住日期
         if (!order.checkIn) return false;
         
         const checkIn = new Date(order.checkIn);
         checkIn.setHours(0, 0, 0, 0);
         
+        // 如果入住日期 <= 今天，说明已经过了入住时间
         return checkIn <= today;
       });
       
@@ -293,16 +303,22 @@ export default {
       
       console.log(`发现 ${expiredOrders.length} 个订单已过入住日期未确认，自动取消`);
       
+      // 逐个取消过期订单
       expiredOrders.forEach(order => {
         this.cancelExpiredOrder(order);
       });
     },
     
+    /**
+     * 取消过期的订单（调用后端接口）
+     */
     cancelExpiredOrder(order) {
       console.log(`自动取消订单 ${order.id}，入住日期：${order.checkIn}，状态：${order.status}`);
       
+      // 构建取消原因
       const cancelReason = `商家未在入住日期(${order.checkIn})前确认订单，系统自动取消`;
       
+      // 调用取消接口（这里需要根据您的后端API调整）
       uni.request({
         url: `http://localhost:8080/api/hotel-orders/${order.id}/auto-cancel`,
         method: 'POST',
@@ -310,15 +326,24 @@ export default {
           reason: cancelReason
         },
         success: (res) => {
-          console.log(`订单 ${order.id} 自动取消结果`, res.data);
+          console.log(`订单 ${order.id} 自动取消失败`, res.data);
+          
+          // 如果专用接口不存在，尝试使用取消申请接口（需要后端支持商家直接取消）
+          // 或者使用更新状态接口
+          this.updateOrderStatus(order.id, '已取消', cancelReason);
         },
         fail: (err) => {
           console.error(`订单 ${order.id} 自动取消失败`, err);
+          // 尝试备用方案
           this.updateOrderStatus(order.id, '已取消', cancelReason);
         }
       });
     },
     
+    /**
+     * 备用方案：直接更新订单状态
+     * 如果后端没有专用接口，直接调用更新接口
+     */
     updateOrderStatus(orderId, status, reason) {
       uni.request({
         url: `http://localhost:8080/api/hotel-orders/${orderId}`,
@@ -375,6 +400,11 @@ export default {
     },
     
     // ========== 入住时间校验 ==========
+    /**
+     * 检查是否可以确认入住
+     * @param {string} checkInDate - 入住日期 (格式: YYYY-MM-DD)
+     * @returns {boolean} - 是否可以入住
+     */
     canCheckIn(checkInDate) {
       if (!checkInDate) return false;
       
@@ -384,9 +414,15 @@ export default {
       const checkIn = new Date(checkInDate);
       checkIn.setHours(0, 0, 0, 0);
       
+      // 入住日期 <= 今天 才能办理入住
       return checkIn <= today;
     },
     
+    /**
+     * 获取入住校验失败的原因
+     * @param {string} checkInDate - 入住日期
+     * @returns {string} - 失败原因
+     */
     getCheckInFailReason(checkInDate) {
       if (!checkInDate) return '订单缺少入住日期信息';
       
@@ -405,13 +441,16 @@ export default {
       return '未知原因';
     },
     
+    // 处理确认入住（带校验）
     handleCheckIn(order) {
+      // 校验入住时间
       if (!this.canCheckIn(order.checkIn)) {
         this.warningMessage = this.getCheckInFailReason(order.checkIn);
         this.showDateWarning = true;
         return;
       }
       
+      // 校验通过，弹出确认框
       uni.showModal({
         title: '确认入住',
         content: `确认订单 ${order.id} 的客人已入住吗？`,
@@ -423,7 +462,7 @@ export default {
       });
     },
     
-    // 确认订单
+    // ========== 确认订单 ==========
     confirmOrder(order) {
       uni.showModal({
         title: '确认订单',
@@ -440,8 +479,10 @@ export default {
                 if (res.data && res.data.code === 200) {
                   uni.showToast({ title: '确认成功', icon: 'success' });
                   
+                  // 确认订单成功后，发送确认消息给客户
                   this.sendConfirmedMessage(order);
                   
+                  // 刷新订单列表
                   this.loadOrdersByMerchant();
                 } else {
                   uni.showToast({ title: res.data.message || '确认失败', icon: 'none' });
@@ -458,6 +499,9 @@ export default {
       });
     },
     
+    /**
+     * 发送确认消息给客户
+     */
     sendConfirmedMessage(order) {
       const hotelId = order.hotelId || order.id;
       const hotelName = order.name || order.hotelName || `酒店${hotelId}`;
@@ -474,8 +518,10 @@ export default {
       
       console.log(`发送确认消息，订单ID: ${orderId}, 用户: ${customerUsername}`);
       
+      // 1. 保存到本地存储
       this.saveConfirmedMessageToLocal(order, hotelId, hotelName, confirmedMessage);
       
+      // 2. 发送到服务器
       uni.request({
         url: 'http://localhost:8080/api/messages/send',
         method: 'POST',
@@ -497,6 +543,9 @@ export default {
       });
     },
     
+    /**
+     * 保存确认消息到本地存储
+     */
     saveConfirmedMessageToLocal(order, hotelId, hotelName, message) {
       const userId = order.username;
       if (!userId) return;

@@ -63,17 +63,17 @@ const _sfc_main = {
       let data = common_vendor.index.getStorageSync(key) || [];
       this.hotelList = data.filter((i) => i && i.price !== void 0 && i.price !== null);
       this.spotList = data.filter((i) => i && (i.price === void 0 || i.price === null));
-      common_vendor.index.__f__("log", "at pages/collection/collection.vue:192", "加载收藏完成 - 酒店:", this.hotelList.length, "景点:", this.spotList.length);
+      common_vendor.index.__f__("log", "at pages/collection/collection.vue:191", "加载收藏完成 - 酒店:", this.hotelList.length, "景点:", this.spotList.length);
     },
     deleteHotel(idx) {
       if (idx < 0 || idx >= this.hotelList.length) {
-        common_vendor.index.__f__("error", "at pages/collection/collection.vue:197", "无效的酒店索引:", idx);
+        common_vendor.index.__f__("error", "at pages/collection/collection.vue:196", "无效的酒店索引:", idx);
         common_vendor.index.showToast({ title: "删除失败", icon: "none" });
         return;
       }
       const target = this.hotelList[idx];
       if (!target || !target.id) {
-        common_vendor.index.__f__("error", "at pages/collection/collection.vue:204", "酒店数据无效:", target);
+        common_vendor.index.__f__("error", "at pages/collection/collection.vue:203", "酒店数据无效:", target);
         common_vendor.index.showToast({ title: "数据错误", icon: "none" });
         return;
       }
@@ -94,13 +94,13 @@ const _sfc_main = {
     },
     deleteSpot(idx) {
       if (idx < 0 || idx >= this.spotList.length) {
-        common_vendor.index.__f__("error", "at pages/collection/collection.vue:227", "无效的景点索引:", idx);
+        common_vendor.index.__f__("error", "at pages/collection/collection.vue:226", "无效的景点索引:", idx);
         common_vendor.index.showToast({ title: "删除失败", icon: "none" });
         return;
       }
       const target = this.spotList[idx];
       if (!target || !target.id) {
-        common_vendor.index.__f__("error", "at pages/collection/collection.vue:234", "景点数据无效:", target);
+        common_vendor.index.__f__("error", "at pages/collection/collection.vue:233", "景点数据无效:", target);
         common_vendor.index.showToast({ title: "数据错误", icon: "none" });
         return;
       }
@@ -120,7 +120,7 @@ const _sfc_main = {
       });
     },
     viewHotelDetail(item) {
-      common_vendor.index.__f__("log", "at pages/collection/collection.vue:256", "跳转酒店详情，ID:", item == null ? void 0 : item.id, "名称:", item == null ? void 0 : item.name);
+      common_vendor.index.__f__("log", "at pages/collection/collection.vue:255", "跳转酒店详情，ID:", item == null ? void 0 : item.id, "名称:", item == null ? void 0 : item.name);
       if (!item || !item.id) {
         common_vendor.index.showToast({ title: "酒店信息错误", icon: "none" });
         return;
@@ -128,10 +128,10 @@ const _sfc_main = {
       common_vendor.index.navigateTo({
         url: `/pages/hotelDetail/hotelDetail?id=${item.id}`,
         success: () => {
-          common_vendor.index.__f__("log", "at pages/collection/collection.vue:266", "跳转酒店详情成功");
+          common_vendor.index.__f__("log", "at pages/collection/collection.vue:265", "跳转酒店详情成功");
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/collection/collection.vue:269", "跳转酒店详情失败:", err);
+          common_vendor.index.__f__("error", "at pages/collection/collection.vue:268", "跳转酒店详情失败:", err);
           common_vendor.index.showToast({
             title: "页面跳转失败，请检查路径",
             icon: "none",
@@ -141,7 +141,7 @@ const _sfc_main = {
       });
     },
     viewSpotDetail(item) {
-      common_vendor.index.__f__("log", "at pages/collection/collection.vue:280", "跳转景点详情，ID:", item == null ? void 0 : item.id, "名称:", item == null ? void 0 : item.name);
+      common_vendor.index.__f__("log", "at pages/collection/collection.vue:279", "跳转景点详情，ID:", item == null ? void 0 : item.id, "名称:", item == null ? void 0 : item.name);
       if (!item || !item.id) {
         common_vendor.index.showToast({ title: "景点信息错误", icon: "none" });
         return;
@@ -149,10 +149,10 @@ const _sfc_main = {
       common_vendor.index.navigateTo({
         url: `/pages/detail/detail?id=${item.id}`,
         success: () => {
-          common_vendor.index.__f__("log", "at pages/collection/collection.vue:290", "跳转景点详情成功");
+          common_vendor.index.__f__("log", "at pages/collection/collection.vue:289", "跳转景点详情成功");
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/collection/collection.vue:293", "跳转景点详情失败:", err);
+          common_vendor.index.__f__("error", "at pages/collection/collection.vue:292", "跳转景点详情失败:", err);
           common_vendor.index.showToast({
             title: "页面跳转失败，请检查路径",
             icon: "none",
@@ -161,11 +161,13 @@ const _sfc_main = {
         }
       });
     },
+    // 酒店去探索 - 跳转到酒店页面
     goExploreHotel() {
       common_vendor.index.switchTab({
         url: "/pages/category/category"
       });
     },
+    // 景点去探索 - 跳转到景点页面
     goExploreSpot() {
       common_vendor.index.switchTab({
         url: "/pages/home/home"
@@ -181,10 +183,6 @@ const _sfc_main = {
     }
   }
 };
-if (!Array) {
-  const _component_RouteFloat = common_vendor.resolveComponent("RouteFloat");
-  _component_RouteFloat();
-}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.hotelList.length
