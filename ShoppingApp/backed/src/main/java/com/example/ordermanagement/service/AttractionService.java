@@ -303,6 +303,7 @@ public class AttractionService {
         return updated;
     }
 
+    @Transactional
     public Map<String, Double> geocodeAttraction(Long id) {
         Attraction a = getAttractionById(id);
         if (a == null) return null;
@@ -321,6 +322,11 @@ public class AttractionService {
                 coord.put("lng", Double.parseDouble(parts[0]));
                 coord.put("lat", Double.parseDouble(parts[1]));
             }
+        }
+        if (coord != null) {
+            a.setLatitude(coord.get("lat"));
+            a.setLongitude(coord.get("lng"));
+            attractionRepository.save(a);
         }
         return coord;
     }
