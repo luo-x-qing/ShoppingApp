@@ -3,6 +3,7 @@ package com.example.ordermanagement.controller;
 import com.example.ordermanagement.model.Attraction;
 import com.example.ordermanagement.service.AmapService;
 import com.example.ordermanagement.service.AttractionService;
+import com.example.ordermanagement.service.DbBackupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,9 @@ public class AttractionController {
 
     @Autowired
     private AmapService amapService;
+
+    @Autowired
+    private DbBackupService dbBackupService;
 
     // 查询附近景点（基于坐标计算距离）
     @GetMapping("/{id}/nearby")
@@ -99,7 +103,7 @@ public class AttractionController {
         return attractionService.searchByProvinceAndName(province, name);
     }
 
-    // 👇 新增：更新景区评分（前端自动调用）
+    // 更新景区评分（前端自动调用）
     @PutMapping("/{id}/score")
     public ResponseEntity<Attraction> updateScore(
             @PathVariable Long id,
@@ -165,7 +169,6 @@ public class AttractionController {
     }
 
     // 重新对所有景点进行地理编码（带省份城市）
-    // 单景点地理编码（前端 fallback 使用 Place API）
     @GetMapping("/{id}/geocode")
     public ResponseEntity<Map<String, Object>> geocodeAttraction(@PathVariable Long id) {
         Map<String, Double> coord = attractionService.geocodeAttraction(id);
@@ -187,14 +190,23 @@ public class AttractionController {
         return ResponseEntity.ok(result);
     }
 
-    // 精确重编码：在所有结果中优先选择 level 为"景点""风景区"等的坐标
-    // 访问地址: http://localhost:8080/api/attractions/re-geocode-precise
+    // 精确重编码
     @GetMapping("/re-geocode-precise")
     public ResponseEntity<Map<String, Object>> reGeocodePrecise() {
         int updated = attractionService.reGeocodePrecise();
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("updated", updated);
         result.put("message", "精确重编码完成，更新 " + updated + " 个景点");
+        return ResponseEntity.ok(result);
+    }
+
+    // 手动触发备份（访问地址: POST http://localhost:8080/api/attractions/backup）
+    @PostMapping("/backup")
+    public ResponseEntity<Map<String, Object>> backup() {
+        boolean ok = dbBackupService.backupNow();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", ok);
+        result.put("message", ok ? "备份成功" : "备份失败");
         return ResponseEntity.ok(result);
     }
 }
