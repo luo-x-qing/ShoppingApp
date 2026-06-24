@@ -17,10 +17,9 @@ import java.nio.file.Paths;
 @RequestMapping("/file")
 public class ImageController {
 
-    // 你的图片存储路径，和配置里的一致
     private static final String UPLOAD_DIR = "D:/luo-x-qing/ShoppingApp/ShoppingApp/upload/";
 
-    @GetMapping("/{fileName}")
+    @GetMapping("/{fileName:.+}")
     public ResponseEntity<byte[]> getImage(@PathVariable String fileName) {
         try {
             Path path = Paths.get(UPLOAD_DIR + fileName);
@@ -29,7 +28,16 @@ public class ImageController {
             }
             byte[] imageBytes = Files.readAllBytes(path);
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_JPEG);
+            String lower = fileName.toLowerCase();
+            if (lower.endsWith(".png")) {
+                headers.setContentType(MediaType.IMAGE_PNG);
+            } else if (lower.endsWith(".gif")) {
+                headers.setContentType(MediaType.IMAGE_GIF);
+            } else if (lower.endsWith(".webp")) {
+                headers.setContentType(MediaType.valueOf("image/webp"));
+            } else {
+                headers.setContentType(MediaType.IMAGE_JPEG);
+            }
             return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
