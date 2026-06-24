@@ -34,9 +34,10 @@ public class FlightOrder {
     @PrePersist
     public void prePersist() {
         this.createTime = LocalDateTime.now();
-        if (this.status == null) this.status = "待支付";
+        if (this.status == null) this.status = "待支付";  // 改为待支付，不是已出票
     }
 
+    // Getters and Setters...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getFlightId() { return flightId; }

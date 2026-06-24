@@ -7,12 +7,17 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration
-@EnableScheduling
+@EnableScheduling  // 启用定时任务
 public class ScheduledTasks {
 
     @Autowired
     private UserService userService;
 
+    /**
+     * 每小时执行一次，检查并自动解禁过期的用户
+     * cron表达式：秒 分 时 日 月 周
+     * 0 0 * * * ? 表示每小时的第0分钟第0秒执行
+     */
     @Scheduled(cron = "0 0 * * * ?")
     public void autoUnbanUsers() {
         try {

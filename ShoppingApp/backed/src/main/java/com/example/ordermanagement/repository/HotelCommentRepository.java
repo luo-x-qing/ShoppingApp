@@ -9,16 +9,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface HotelCommentRepository extends JpaRepository<HotelComment, Long> {
+
     List<HotelComment> findByHotelId(Long hotelId);
+
     boolean existsByOrderId(Long orderId);
+
     List<HotelComment> findByStatus(String status);
 
+    // ========== 新增：评分计算方法 ==========
     @Query("SELECT AVG(c.score) FROM HotelComment c WHERE c.hotelId = :hotelId")
     Double getAvgScoreByHotelId(@Param("hotelId") Long hotelId);
 
     @Query("SELECT COUNT(c) FROM HotelComment c WHERE c.hotelId = :hotelId")
     Integer getCommentCountByHotelId(@Param("hotelId") Long hotelId);
 
+    // ========== 商家查询方法 ==========
     @Query("SELECT c FROM HotelComment c WHERE c.hotelId IN :hotelIds")
     List<HotelComment> findByHotelIds(@Param("hotelIds") List<Long> hotelIds);
 

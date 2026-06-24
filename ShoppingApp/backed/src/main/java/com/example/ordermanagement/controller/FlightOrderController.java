@@ -14,15 +14,16 @@ import java.util.List;
 @RequestMapping("/api/flight-orders")
 @CrossOrigin(origins = "*")
 public class FlightOrderController {
-
+    
     private static final Logger log = LoggerFactory.getLogger(FlightOrderController.class);
-
+    
     @Autowired
     private FlightOrderService flightOrderService;
-
+    
     @PostMapping
     public Result<FlightOrder> createOrder(@RequestBody FlightOrder order) {
         log.info("收到创建订单请求：{}", order);
+        
         try {
             if (order.getUsername() == null || order.getUsername().isEmpty()) {
                 return Result.error("用户未登录");
@@ -36,19 +37,22 @@ public class FlightOrderController {
             if (order.getFlightNumber() == null || order.getFlightNumber().isEmpty()) {
                 return Result.error("航班信息不完整");
             }
+            
             order.setStatus("待支付");
             FlightOrder savedOrder = flightOrderService.createOrder(order);
             log.info("订单创建成功，ID：{}", savedOrder.getId());
+            
             return Result.success(savedOrder);
         } catch (Exception e) {
             log.error("创建订单失败", e);
             return Result.error("创建订单失败：" + e.getMessage());
         }
     }
-
+    
     @GetMapping
     public Result<List<FlightOrder>> getOrdersByUsername(@RequestParam(required = false) String username) {
         log.info("查询订单，用户名：{}", username);
+        
         try {
             List<FlightOrder> orders;
             if (username != null && !username.isEmpty()) {
@@ -62,10 +66,11 @@ public class FlightOrderController {
             return Result.error("查询订单失败：" + e.getMessage());
         }
     }
-
+    
     @GetMapping("/{id}")
     public Result<FlightOrder> getOrderById(@PathVariable Long id) {
         log.info("查询订单详情，ID：{}", id);
+        
         try {
             return flightOrderService.getOrderById(id)
                 .map(Result::success)
@@ -75,10 +80,14 @@ public class FlightOrderController {
             return Result.error("查询订单失败：" + e.getMessage());
         }
     }
-
+    
+    /**
+     * 支付订单
+     */
     @PutMapping("/{id}/pay")
     public Result<FlightOrder> payOrder(@PathVariable Long id) {
         log.info("支付订单，ID：{}", id);
+        
         try {
             FlightOrder order = flightOrderService.updateOrderStatus(id, "已支付");
             if (order != null) {
@@ -92,10 +101,14 @@ public class FlightOrderController {
             return Result.error("支付失败：" + e.getMessage());
         }
     }
-
+    
+    /**
+     * 取消订单（只有待支付状态才能取消）
+     */
     @PutMapping("/{id}/cancel")
     public Result<FlightOrder> cancelOrder(@PathVariable Long id) {
         log.info("取消订单，ID：{}", id);
+        
         try {
             FlightOrder order = flightOrderService.cancelOrder(id);
             if (order != null) {
@@ -108,10 +121,11 @@ public class FlightOrderController {
             return Result.error("取消失败：" + e.getMessage());
         }
     }
-
+    
     @PutMapping("/{id}/status")
     public Result<FlightOrder> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
         log.info("更新订单状态，ID：{}，状态：{}", id, status);
+        
         try {
             FlightOrder order = flightOrderService.updateOrderStatus(id, status);
             if (order != null) {
@@ -124,10 +138,11 @@ public class FlightOrderController {
             return Result.error("更新失败：" + e.getMessage());
         }
     }
-
+    
     @DeleteMapping("/{id}")
     public Result<String> deleteOrder(@PathVariable Long id) {
         log.info("删除订单，ID：{}", id);
+        
         try {
             boolean deleted = flightOrderService.deleteOrder(id);
             if (deleted) {

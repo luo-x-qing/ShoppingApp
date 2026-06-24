@@ -29,14 +29,21 @@ public class HotelService {
     private BaiduMapService baiduMapService;
 
     @Autowired
-    private HotelCommentRepository hotelCommentRepository;
+    private HotelCommentRepository hotelCommentRepository;  // 新增：注入评价仓库
 
+    // 修改：获取所有酒店并计算平均评分
     public List<Hotel> getAllHotels() {
         List<Hotel> hotels = hotelRepository.findAll();
 
+        // 为每个酒店计算平均评分和评价数量
         for (Hotel hotel : hotels) {
+            // 计算平均评分
             Double avgRating = hotelCommentRepository.getAvgScoreByHotelId(hotel.getId());
             hotel.setAvgRating(avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
+
+            // 可选：也可以设置评价数量（如果需要）
+            // Integer commentCount = hotelCommentRepository.getCommentCountByHotelId(hotel.getId());
+            // hotel.setReviewCount(commentCount != null ? commentCount : 0);
         }
 
         return hotels;
@@ -45,6 +52,7 @@ public class HotelService {
     public Hotel getHotelById(Long id) {
         Hotel hotel = hotelRepository.findById(id).orElse(null);
         if (hotel != null) {
+            // 获取平均评分
             Double avgRating = hotelCommentRepository.getAvgScoreByHotelId(hotel.getId());
             hotel.setAvgRating(avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
         }
@@ -68,6 +76,7 @@ public class HotelService {
     public List<Hotel> getHotelsByCategory(String category) {
         List<Hotel> hotels = hotelRepository.findByCategory(category);
 
+        // 为每个酒店计算平均评分
         for (Hotel hotel : hotels) {
             Double avgRating = hotelCommentRepository.getAvgScoreByHotelId(hotel.getId());
             hotel.setAvgRating(avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
@@ -76,9 +85,11 @@ public class HotelService {
         return hotels;
     }
 
+    // ========== 商家端方法 ==========
     public List<Hotel> getHotelsByMerchant(Long merchantId) {
         List<Hotel> hotels = hotelRepository.findByMerchantId(merchantId);
 
+        // 为每个酒店计算平均评分
         for (Hotel hotel : hotels) {
             Double avgRating = hotelCommentRepository.getAvgScoreByHotelId(hotel.getId());
             hotel.setAvgRating(avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
@@ -87,6 +98,7 @@ public class HotelService {
         return hotels;
     }
 
+    // ========== 排序方法 ==========
     public List<Hotel> getHotelsOrderByPrice() {
         List<Hotel> hotels = hotelRepository.findAllOrderByPriceAsc();
 
@@ -120,6 +132,7 @@ public class HotelService {
         return hotels;
     }
 
+    // ========== 个性化推荐 ==========
     public List<Hotel> getPersonalizedRecommendations(String username) {
         List<HotelOrder> userOrders = hotelOrderRepository.findByUsernameOrderByIdDesc(username);
 
@@ -150,6 +163,7 @@ public class HotelService {
         return hotels;
     }
 
+    // ========== 房间类型管理 ==========
     public RoomType addRoomType(RoomType roomType) {
         return roomTypeRepository.save(roomType);
     }
@@ -211,9 +225,13 @@ public class HotelService {
         return baiduMapService.searchNearbyPoi(query, location);
     }
 
+    /**
+     * 模糊搜索酒店
+     */
     public List<Hotel> searchHotels(String keyword, String category) {
         List<Hotel> hotels = hotelRepository.searchByKeyword(keyword, category);
 
+        // 为每个酒店计算平均评分
         for (Hotel hotel : hotels) {
             Double avgRating = hotelCommentRepository.getAvgScoreByHotelId(hotel.getId());
             hotel.setAvgRating(avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
@@ -222,10 +240,19 @@ public class HotelService {
         return hotels;
     }
 
+    // ========== 🔥 新增：统计方法（供 AdminStatisticsController 调用） ==========
+
+    /**
+     * 统计所有酒店数量
+     */
     public long countAll() {
         return hotelRepository.count();
     }
 
+    /**
+     * 按状态统计酒店数量
+     * @param status 状态：pending(待审核), approved(已通过), violation(违规)
+     */
     public long countByStatus(String status) {
         List<Hotel> hotels = hotelRepository.findAll();
         return hotels.stream()

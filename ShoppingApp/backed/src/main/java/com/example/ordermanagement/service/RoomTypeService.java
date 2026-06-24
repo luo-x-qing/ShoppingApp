@@ -13,28 +13,28 @@ public class RoomTypeService {
     
     @Autowired
     private RoomTypeRepository roomTypeRepository;
-
+    
     /**
      * 获取酒店的所有房型
      */
     public List<RoomType> findByHotelId(Long hotelId) {
         return roomTypeRepository.findByHotelId(hotelId);
     }
-
+    
     /**
      * 获取所有房型
      */
     public List<RoomType> findAll() {
         return roomTypeRepository.findAll();
     }
-
+    
     /**
      * 根据ID获取房型
      */
     public RoomType findById(Long id) {
         return roomTypeRepository.findById(id).orElse(null);
     }
-
+    
     /**
      * 保存房型
      */
@@ -42,7 +42,7 @@ public class RoomTypeService {
     public RoomType save(RoomType roomType) {
         return roomTypeRepository.save(roomType);
     }
-
+    
     /**
      * 更新房型
      */
@@ -53,7 +53,7 @@ public class RoomTypeService {
         }
         return roomTypeRepository.save(roomType);
     }
-
+    
     /**
      * 删除房型
      */
@@ -65,7 +65,7 @@ public class RoomTypeService {
         }
         return false;
     }
-
+    
     /**
      * 扣减库存
      */
@@ -73,7 +73,7 @@ public class RoomTypeService {
     public int decreaseAvailableCount(Long id, Integer count) {
         return roomTypeRepository.decreaseAvailableCount(id, count);
     }
-
+    
     /**
      * 恢复库存
      */

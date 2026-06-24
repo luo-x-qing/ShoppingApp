@@ -40,6 +40,7 @@ public class HotelController {
         try {
             Hotel hotel = hotelService.getHotelById(id);
             if (hotel != null) {
+                System.out.println("返回酒店信息 - ID: " + id + ", merchantId: " + hotel.getMerchantId());
                 return Result.success(hotel);
             } else {
                 return Result.error("酒店不存在");
@@ -169,6 +170,10 @@ public class HotelController {
         }
     }
 
+    /**
+     * 模糊搜索酒店
+     * 支持按酒店名称、地址、分类模糊查询
+     */
     @GetMapping("/search")
     public Result<List<Hotel>> searchHotels(@RequestParam(required = false) String keyword,
                                             @RequestParam(required = false) String category) {
@@ -284,6 +289,7 @@ public class HotelController {
                             hotel.setLongitude(lng);
                             hotelService.saveHotel(hotel);
                             successCount++;
+                            System.out.println("成功更新酒店: " + hotel.getName() + " -> " + lat + ", " + lng);
                         } else {
                             String message = geoResult.has("message") ? geoResult.get("message").asText() : "解析失败";
                             System.out.println("更新酒店失败: " + hotel.getName() + " -> " + message);

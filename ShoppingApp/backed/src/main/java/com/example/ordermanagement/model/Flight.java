@@ -9,23 +9,24 @@ public class Flight {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String flightNumber;
-    private String airline;
-    private String departCity;
-    private String arriveCity;
-    private LocalDateTime departTime;
-    private LocalDateTime arriveTime;
-    private Double price;
-    private Integer remainingSeats;
-    private String status;
-
+    
+    private String flightNumber;      // 航班号，如 CA1234
+    private String airline;           // 航空公司
+    private String departCity;        // 出发城市
+    private String arriveCity;        // 到达城市
+    private LocalDateTime departTime; // 出发时间
+    private LocalDateTime arriveTime; // 到达时间
+    private Double price;             // 价格
+    private Integer remainingSeats;   // 剩余座位数
+    private String status;            // 有效/已失效
+    
     @PrePersist
     public void prePersist() {
         if (status == null) status = "有效";
         if (remainingSeats == null) remainingSeats = 100;
     }
-
+    
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getFlightNumber() { return flightNumber; }

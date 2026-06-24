@@ -16,9 +16,11 @@ public class MerchantController {
     @Autowired
     private HotelService hotelService;
 
+    // 获取商家的酒店列表
     @GetMapping("/hotels")
     public Result<List<Hotel>> getMerchantHotels(@RequestParam Long merchantId) {
         try {
+            // 修正：方法名应该是 getHotelsByMerchant
             List<Hotel> hotels = hotelService.getHotelsByMerchant(merchantId);
             return Result.success(hotels);
         } catch (Exception e) {

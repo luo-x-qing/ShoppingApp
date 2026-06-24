@@ -27,6 +27,7 @@ public class HotelCommentController {
     @GetMapping("/hotel/{hotelId}")
     public Result<List<HotelComment>> getByHotel(@PathVariable Long hotelId) {
         try {
+            // 只返回状态为"正常"的评价
             List<HotelComment> comments = hotelCommentService.getByHotelId(hotelId)
                     .stream()
                     .filter(c -> !"违规".equals(c.getStatus()))
@@ -63,39 +64,34 @@ public class HotelCommentController {
         }
     }
 
-    @GetMapping("/{id}")
-    public Result<HotelComment> getById(@PathVariable Long id) {
-        try {
-            HotelComment comment = hotelCommentService.getById(id);
-            if (comment != null) {
-                return Result.success(comment);
-            } else {
-                return Result.error("评价不存在");
-            }
-        } catch (Exception e) {
-            return Result.error("查询失败：" + e.getMessage());
-        }
-    }
 
     // ========== 商家评价管理接口 ==========
 
+    /**
+     * 商家获取评价列表
+     * @param merchantId 商家ID
+     * @param hotelId 酒店ID（可选）
+     * @param rating 评分筛选（可选）
+     */
     @GetMapping("/merchant")
     public Result<List<HotelComment>> getMerchantComments(
             @RequestParam Long merchantId,
             @RequestParam(required = false) Long hotelId,
             @RequestParam(required = false) Integer rating) {
         try {
-            List<Hotel> hotels = hotelService.getHotelsByMerchant(merchantId);
+            // 获取商家的酒店列表
+            List<com.example.ordermanagement.model.Hotel> hotels = hotelService.getHotelsByMerchant(merchantId);
             if (hotels.isEmpty()) {
                 return Result.success(java.util.Collections.emptyList());
             }
 
+            // 筛选酒店ID
             List<Long> hotelIds;
             if (hotelId != null && hotelId > 0) {
                 hotelIds = java.util.Arrays.asList(hotelId);
             } else {
                 hotelIds = hotels.stream()
-                        .map(Hotel::getId)
+                        .map(com.example.ordermanagement.model.Hotel::getId)
                         .collect(java.util.stream.Collectors.toList());
             }
 
@@ -107,6 +103,9 @@ public class HotelCommentController {
         }
     }
 
+    /**
+     * 商家回复评价
+     */
     @PostMapping("/{commentId}/reply")
     public Result<Map<String, Object>> replyComment(@PathVariable Long commentId, @RequestBody Map<String, String> params) {
         try {
@@ -126,6 +125,9 @@ public class HotelCommentController {
         }
     }
 
+    /**
+     * 商家修改回复
+     */
     @PutMapping("/{commentId}/reply")
     public Result<Map<String, Object>> updateReply(@PathVariable Long commentId, @RequestBody Map<String, String> params) {
         try {
@@ -143,20 +145,6 @@ public class HotelCommentController {
         } catch (Exception e) {
             return Result.error("修改失败：" + e.getMessage());
         }
-    }
-
-    @PostMapping("/{id}/hide")
-    public Result<Map<String, Object>> hideComment(@PathVariable Long id) {
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", hotelCommentService.updateStatus(id, "隐藏"));
-        return Result.success(result);
-    }
-
-    @PostMapping("/{id}/show")
-    public Result<Map<String, Object>> showComment(@PathVariable Long id) {
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", hotelCommentService.updateStatus(id, "正常"));
-        return Result.success(result);
     }
 
     // ========== 管理员：获取违规评价 ==========

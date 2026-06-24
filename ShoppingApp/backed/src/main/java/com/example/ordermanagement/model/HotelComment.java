@@ -13,19 +13,20 @@ public class HotelComment {
 
     private Long hotelId;
     private Long orderId;
-    private String username;
+    private String username;          // 评价人用户名
     private String content;
-    private Integer score;
+    private Integer score;            // 1-5分
 
     @Column(columnDefinition = "TEXT")
-    private String images;
+    private String images;            // 图片URL列表，JSON格式存储 ["url1","url2"]
 
-    private String status;
+    private String status;            // 正常/违规（敏感词过滤）
     private LocalDateTime createTime;
 
+    // ========== 新增字段 ==========
     @Column(columnDefinition = "TEXT")
-    private String reply;
-    private LocalDateTime replyTime;
+    private String reply;             // 商家回复内容
+    private LocalDateTime replyTime;  // 回复时间
 
     @PrePersist
     public void prePersist() {
@@ -33,6 +34,7 @@ public class HotelComment {
         if (status == null) status = "正常";
     }
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getHotelId() { return hotelId; }

@@ -21,29 +21,38 @@ public class UserService {
     @Autowired
     private NotificationService notificationService;
 
+    // ========== 基础查询方法 ==========
+
+    // 按用户名查找
     public User findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
+    // 根据token获取用户
     public User getUserByToken(String token) {
         return userRepository.findByToken(token);
     }
 
+    // 获取所有用户
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
+    // 获取所有商家
     public List<User> getAllMerchants() {
         return userRepository.findByRole("MERCHANT");
     }
 
+    // 获取所有普通用户
     public List<User> getAllNormalUsers() {
         return userRepository.findByRole("USER");
     }
 
+    // 根据ID获取用户（基础信息，隐藏密码和token）- 返回副本，不修改原始实体
     public User getUserById(Long id) {
         User user = userRepository.findById(id).orElse(null);
         if (user != null) {
+            // 创建副本返回，不修改原始实体对象
             User safeUser = new User();
             safeUser.setId(user.getId());
             safeUser.setUsername(user.getUsername());
@@ -59,24 +68,31 @@ public class UserService {
             safeUser.setUpdateTime(user.getUpdateTime());
             safeUser.setBanReason(user.getBanReason());
             safeUser.setBanExpireTime(user.getBanExpireTime());
+            // 不设置 password 和 token
             return safeUser;
         }
         return null;
     }
 
+    // 获取用户实体用于内部更新操作（不清空任何字段）
+    // 注意：这个方法返回的是持久化实体，修改后会自动同步到数据库
     public User getUserEntity(Long id) {
         return userRepository.findById(id).orElse(null);
     }
 
+    // ✅ 新增：获取用户完整信息（管理员用，保留所有字段用于显示）
     public User getUserFullInfo(Long id) {
         User user = userRepository.findById(id).orElse(null);
         if (user != null) {
-            user.setToken(null);
-            user.setPassword(null);
+            user.setToken(null); // 只隐藏token
+            user.setPassword(null); // 隐藏密码
         }
         return user;
     }
 
+    // ========== 注册方法 ==========
+
+    // 普通用户注册
     public User registerUser(String username, String password) {
         User user = new User();
         user.setUsername(username);
@@ -87,6 +103,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // ✅ 新增：带完整信息的用户注册
     public User registerUser(String username, String password, String phone, String email) {
         User user = new User();
         user.setUsername(username);
@@ -99,6 +116,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // 商家注册（初始状态为待审核）
     public User registerMerchant(String username, String password, String shopName, String phone) {
         User user = new User();
         user.setUsername(username);
@@ -111,6 +129,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // ✅ 新增：带完整信息的商家注册
     public User registerMerchant(String username, String password, String shopName, String phone,
                                  String email, String shopAddress, String shopDescription) {
         User user = new User();
@@ -127,6 +146,9 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // ========== 登录方法 ==========
+
+    // 登录
     public User login(String username, String password) {
         User user = userRepository.findByUsername(username);
         if (user == null) return null;
@@ -139,6 +161,9 @@ public class UserService {
         return user;
     }
 
+    // ========== 更新用户信息 ==========
+
+    // 更新用户信息（保留token不变）
     public User updateUser(Long id, User newUser) {
         User oldUser = userRepository.findById(id).orElse(null);
         if (oldUser == null) return null;
@@ -180,10 +205,14 @@ public class UserService {
         return userRepository.save(oldUser);
     }
 
+    // 删除用户
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
 
+    // ========== 禁言功能 ==========
+
+    // ✅ 禁言用户（支持时长）- 保存禁言原因
     public boolean banUser(Long userId, String reason, int durationDays) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return false;
@@ -199,11 +228,13 @@ public class UserService {
         user.setUpdateTime(LocalDateTime.now());
         userRepository.save(user);
 
+        // 发送通知
         notificationService.sendUserBannedNotification(userId, user.getUsername(), reason, durationDays);
 
         return true;
     }
 
+    // ✅ 解禁用户 - 清除禁言原因
     public boolean unbanUser(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return false;
@@ -214,6 +245,7 @@ public class UserService {
         user.setUpdateTime(LocalDateTime.now());
         userRepository.save(user);
 
+        // 发送通知
         notificationService.sendUserUnbannedNotification(userId, user.getUsername());
 
         return true;
@@ -225,6 +257,7 @@ public class UserService {
         return "BANNED".equals(user.getStatus());
     }
 
+    // 自动解禁过期的用户
     @Transactional
     public int autoUnbanExpiredUsers() {
         List<User> expiredUsers = userRepository.findByStatusAndBanExpireTimeBefore("BANNED", LocalDateTime.now());
@@ -240,6 +273,8 @@ public class UserService {
         }
         return count;
     }
+
+    // ========== 商家专用方法 ==========
 
     public User updateMerchantInfo(Long merchantId, User newInfo) {
         User merchant = userRepository.findById(merchantId).orElse(null);
@@ -270,6 +305,8 @@ public class UserService {
         return userRepository.save(merchant);
     }
 
+    // ========== 管理员操作商家状态 ==========
+
     public boolean approveMerchant(Long merchantId) {
         User merchant = userRepository.findById(merchantId).orElse(null);
         if (merchant == null || !"MERCHANT".equals(merchant.getRole())) {
@@ -297,9 +334,19 @@ public class UserService {
         if (merchant == null || !"MERCHANT".equals(merchant.getRole())) {
             return false;
         }
+
+        // 添加调试日志
+        System.out.println("========== 禁用商家 ==========");
+        System.out.println("商家ID: " + merchantId);
+        System.out.println("商家名: " + merchant.getUsername());
+        System.out.println("当前密码: " + (merchant.getPassword() != null ? "存在(长度=" + merchant.getPassword().length() + ")" : "null"));
+
         merchant.setStatus("BANNED");
         merchant.setUpdateTime(LocalDateTime.now());
-        userRepository.save(merchant);
+        User saved = userRepository.save(merchant);
+
+        System.out.println("保存后密码: " + (saved.getPassword() != null ? "存在(长度=" + saved.getPassword().length() + ")" : "null"));
+
         return true;
     }
 
@@ -314,6 +361,7 @@ public class UserService {
         return true;
     }
 
+    // 获取商家基本信息（用于通知，不修改实体）
     public Map<String, String> getMerchantBasicInfo(Long merchantId) {
         User merchant = userRepository.findById(merchantId).orElse(null);
         if (merchant == null) {
@@ -327,14 +375,19 @@ public class UserService {
         return info;
     }
 
+    // ========== ✅ 新增：统计方法（用于管理员页面显示统计卡片） ==========
+
+    // 获取普通用户总数
     public long getNormalUserTotalCount() {
         return userRepository.countByRoleAndStatus("USER", null);
     }
 
+    // 获取正常状态的普通用户数量
     public long getNormalUserCount() {
         return userRepository.countByRoleAndStatus("USER", "NORMAL");
     }
 
+    // 获取已禁言的普通用户数量
     public long getBannedUserCount() {
         return userRepository.countByRoleAndStatus("USER", "BANNED");
     }

@@ -188,6 +188,7 @@ public class AttractionController {
     }
 
     // 精确重编码：在所有结果中优先选择 level 为"景点""风景区"等的坐标
+    // 访问地址: http://localhost:8080/api/attractions/re-geocode-precise
     @GetMapping("/re-geocode-precise")
     public ResponseEntity<Map<String, Object>> reGeocodePrecise() {
         int updated = attractionService.reGeocodePrecise();

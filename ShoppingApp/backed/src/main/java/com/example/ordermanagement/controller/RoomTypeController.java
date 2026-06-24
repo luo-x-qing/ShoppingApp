@@ -24,10 +24,12 @@ public class RoomTypeController {
 
     @GetMapping("/hotel/{hotelId}")
     public Result<List<RoomType>> getByHotelId(@PathVariable Long hotelId) {
+        log.info("获取酒店房型，酒店ID：{}", hotelId);
         try {
             List<RoomType> roomTypes = roomTypeService.findByHotelId(hotelId);
             return Result.success(roomTypes);
         } catch (Exception e) {
+            log.error("获取房型失败", e);
             return Result.error("获取失败：" + e.getMessage());
         }
     }
@@ -56,9 +58,14 @@ public class RoomTypeController {
         }
     }
 
+    /**
+     * 添加房型 - 使用 Map 接收参数
+     */
     @PostMapping
     public Result<RoomType> create(@RequestBody Map<String, Object> params) {
+        log.info("添加房型参数：{}", params);
         try {
+            // 提取参数
             String typeName = (String) params.get("typeName");
             Double price = Double.valueOf(params.get("price").toString());
             Integer totalCount = Integer.valueOf(params.get("totalCount").toString());
@@ -68,13 +75,21 @@ public class RoomTypeController {
             String windowStatus = (String) params.get("windowStatus");
             String breakfast = (String) params.get("breakfast");
 
+            // 参数校验
             if (typeName == null || typeName.isEmpty()) {
                 return Result.error("房型名称不能为空");
             }
             if (price == null || price <= 0) {
                 return Result.error("价格必须大于0");
             }
+            if (totalCount == null || totalCount <= 0) {
+                return Result.error("总数量必须大于0");
+            }
+            if (availableCount == null || availableCount <= 0) {
+                return Result.error("可预订数量必须大于0");
+            }
 
+            // 处理酒店信息
             Object hotelObj = params.get("hotel");
             Long hotelId = null;
             if (hotelObj instanceof Map) {
@@ -86,9 +101,11 @@ public class RoomTypeController {
             }
 
             if (hotelId == null) {
+                log.error("酒店ID为空，参数：{}", params);
                 return Result.error("请指定所属酒店");
             }
 
+            // 构建 RoomType 对象
             RoomType roomType = new RoomType();
             roomType.setTypeName(typeName);
             roomType.setPrice(price);
@@ -104,21 +121,28 @@ public class RoomTypeController {
             roomType.setHotel(hotel);
 
             RoomType saved = roomTypeService.save(roomType);
+            log.info("房型添加成功，ID：{}", saved.getId());
             return Result.success(saved);
 
         } catch (Exception e) {
+            log.error("添加房型失败", e);
             return Result.error("添加失败：" + e.getMessage());
         }
     }
 
+    /**
+     * 更新房型
+     */
     @PutMapping("/{id}")
     public Result<RoomType> update(@PathVariable Long id, @RequestBody Map<String, Object> params) {
+        log.info("更新房型，ID：{}，参数：{}", id, params);
         try {
             RoomType existing = roomTypeService.findById(id);
             if (existing == null) {
                 return Result.error("房型不存在");
             }
 
+            // 更新字段
             if (params.containsKey("typeName")) {
                 existing.setTypeName((String) params.get("typeName"));
             }
@@ -148,6 +172,7 @@ public class RoomTypeController {
             return Result.success(updated);
 
         } catch (Exception e) {
+            log.error("更新房型失败", e);
             return Result.error("更新失败：" + e.getMessage());
         }
     }

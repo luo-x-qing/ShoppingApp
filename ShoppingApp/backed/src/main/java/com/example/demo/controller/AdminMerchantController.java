@@ -28,6 +28,9 @@ public class AdminMerchantController {
     @Autowired
     private HotelService hotelService;
 
+    /**
+     * 获取商家列表（分页+筛选）
+     */
     @GetMapping
     public Result<Map<String, Object>> getMerchants(
             @RequestParam(defaultValue = "1") int page,
@@ -35,8 +38,10 @@ public class AdminMerchantController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status) {
         try {
+            // 获取所有商家（role = MERCHANT）
             List<User> allMerchants = userService.getAllMerchants();
 
+            // 筛选
             List<User> filtered = allMerchants;
             if (keyword != null && !keyword.isEmpty()) {
                 filtered = filtered.stream()
@@ -46,12 +51,14 @@ public class AdminMerchantController {
                         .collect(Collectors.toList());
             }
 
+            // 状态筛选
             if (status != null && !status.isEmpty() && !"all".equals(status)) {
                 filtered = filtered.stream()
                         .filter(m -> status.equals(convertStatusForFilter(m.getStatus())))
                         .collect(Collectors.toList());
             }
 
+            // 统计
             long total = filtered.size();
             long pendingCount = allMerchants.stream()
                     .filter(m -> "PENDING".equals(m.getStatus()) || m.getStatus() == null).count();
@@ -60,10 +67,12 @@ public class AdminMerchantController {
             long disabledCount = allMerchants.stream()
                     .filter(m -> "BANNED".equals(m.getStatus())).count();
 
+            // 分页
             int start = (page - 1) * size;
             int end = Math.min(start + size, (int) total);
             List<User> pagedList = filtered.subList(start, end);
 
+            // 清除敏感信息（创建副本）
             List<User> safeList = pagedList.stream().map(m -> {
                 User safe = new User();
                 safe.setId(m.getId());
@@ -95,11 +104,15 @@ public class AdminMerchantController {
         }
     }
 
+    /**
+     * 获取商家详情
+     */
     @GetMapping("/{id}")
     public Result<User> getMerchant(@PathVariable Long id) {
         try {
             User merchant = userService.getUserById(id);
             if (merchant != null && "MERCHANT".equals(merchant.getRole())) {
+                // getUserById 已经返回了没有密码和token的副本
                 return Result.success(merchant);
             } else {
                 return Result.error("商家不存在");
@@ -109,11 +122,15 @@ public class AdminMerchantController {
         }
     }
 
+    /**
+     * 审核商家（待审核 -> 正常 / 拒绝）
+     */
     @PostMapping("/{id}/review")
     public Result<Map<String, Object>> reviewMerchant(@PathVariable Long id, @RequestBody Map<String, Object> request) {
         try {
             Boolean approved = (Boolean) request.get("approved");
 
+            // 只验证商家是否存在，使用 getUserEntity 避免清空密码
             User merchant = userService.getUserEntity(id);
             if (merchant == null || !"MERCHANT".equals(merchant.getRole())) {
                 return Result.error("商家不存在");
@@ -139,26 +156,33 @@ public class AdminMerchantController {
         }
     }
 
+    /**
+     * 禁用商家（状态改为 BANNED）并发送通知，同时将该商家旗下所有酒店改为停业状态
+     */
     @PutMapping("/{id}/disable")
     public Result<Map<String, Object>> disableMerchant(@PathVariable Long id,
                                                        @RequestBody(required = false) Map<String, String> request) {
         try {
             String reason = request != null ? request.get("reason") : "违规经营";
 
+            // 在禁用前获取商家基本信息（用于通知），使用 getUserEntity 获取原始实体
             User merchant = userService.getUserEntity(id);
             if (merchant == null || !"MERCHANT".equals(merchant.getRole())) {
                 return Result.error("商家不存在");
             }
 
+            // 保存商家信息用于通知（在禁用操作之前）
             Long merchantId = merchant.getId();
             String merchantName = merchant.getShopName() != null ? merchant.getShopName() : merchant.getUsername();
             String merchantUsername = merchant.getUsername();
 
+            // 1. 禁用商家
             boolean success = userService.disableMerchant(id);
             if (!success) {
                 return Result.error("禁用失败");
             }
 
+            // 2. 将该商家旗下的所有酒店状态改为"已停业"
             int updatedHotelCount = 0;
             try {
                 List<Hotel> merchantHotels = hotelService.getHotelsByMerchant(id);
@@ -172,8 +196,10 @@ public class AdminMerchantController {
                 System.out.println("已将商家 " + merchantUsername + " 旗下的 " + updatedHotelCount + " 家酒店设为停业状态");
             } catch (Exception e) {
                 System.err.println("更新酒店状态失败：" + e.getMessage());
+                // 继续执行，不影响商家禁用操作
             }
 
+            // 3. 发送通知给商家
             notificationService.sendMerchantBannedNotification(
                     merchantId,
                     merchantName,
@@ -190,23 +216,30 @@ public class AdminMerchantController {
         }
     }
 
+    /**
+     * 启用商家（状态改为 NORMAL）并发送通知，同时将该商家旗下所有酒店改为营业中状态
+     */
     @PutMapping("/{id}/enable")
     public Result<Map<String, Object>> enableMerchant(@PathVariable Long id) {
         try {
+            // 在启用前获取商家基本信息（用于通知），使用 getUserEntity 获取原始实体
             User merchant = userService.getUserEntity(id);
             if (merchant == null || !"MERCHANT".equals(merchant.getRole())) {
                 return Result.error("商家不存在");
             }
 
+            // 保存商家信息用于通知（在启用操作之前）
             Long merchantId = merchant.getId();
             String merchantName = merchant.getShopName() != null ? merchant.getShopName() : merchant.getUsername();
             String merchantUsername = merchant.getUsername();
 
+            // 1. 启用商家
             boolean success = userService.enableMerchant(id);
             if (!success) {
                 return Result.error("启用失败");
             }
 
+            // 2. 将该商家旗下的所有酒店状态改为"营业中"
             int updatedHotelCount = 0;
             try {
                 List<Hotel> merchantHotels = hotelService.getHotelsByMerchant(id);
@@ -220,8 +253,10 @@ public class AdminMerchantController {
                 System.out.println("已将商家 " + merchantUsername + " 旗下的 " + updatedHotelCount + " 家酒店恢复营业");
             } catch (Exception e) {
                 System.err.println("更新酒店状态失败：" + e.getMessage());
+                // 继续执行，不影响商家启用操作
             }
 
+            // 3. 发送通知给商家
             notificationService.sendMerchantUnbannedNotification(
                     merchantId,
                     merchantName
@@ -237,6 +272,9 @@ public class AdminMerchantController {
         }
     }
 
+    /**
+     * 删除商家
+     */
     @DeleteMapping("/{id}")
     public Result<Map<String, Object>> deleteMerchant(@PathVariable Long id) {
         try {
@@ -249,6 +287,9 @@ public class AdminMerchantController {
         }
     }
 
+    /**
+     * 转换状态用于筛选
+     */
     private String convertStatusForFilter(String dbStatus) {
         if ("NORMAL".equals(dbStatus)) return "approved";
         if ("BANNED".equals(dbStatus)) return "disabled";

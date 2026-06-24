@@ -31,6 +31,7 @@ public class HotelOrderController {
     @PostMapping
     public Result<HotelOrder> create(@RequestBody HotelOrder order) {
         try {
+            // 参数校验
             if (order.getUsername() == null || order.getUsername().isEmpty()) {
                 return Result.error("用户未登录");
             }
@@ -67,6 +68,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 支付相关 ==========
     @PostMapping("/{orderId}/pay")
     public Result<Map<String, Object>> payOrder(@PathVariable Long orderId) {
         try {
@@ -83,6 +85,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 商家确认订单 ==========
     @PostMapping("/{orderId}/confirm")
     public Result<Map<String, Object>> confirmOrder(@PathVariable Long orderId) {
         try {
@@ -99,6 +102,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 商家确认入住 ==========
     @PostMapping("/{orderId}/checkin")
     public Result<Map<String, Object>> confirmCheckIn(@PathVariable Long orderId) {
         try {
@@ -115,27 +119,11 @@ public class HotelOrderController {
         }
     }
 
-    @PostMapping("/{orderId}/cancel")
-    public Result<Map<String, Object>> cancelOrder(@PathVariable Long orderId) {
-        try {
-            boolean success = hotelOrderService.cancelOrder(orderId);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", success);
-            if (success) {
-                return Result.success(result);
-            } else {
-                return Result.error("取消失败，订单状态不正确");
-            }
-        } catch (Exception e) {
-            return Result.error("取消失败：" + e.getMessage());
-        }
-    }
-
     // ========== 用户申请取消 ==========
     @PostMapping("/{orderId}/cancel-request")
     public Result<Map<String, Object>> cancelRequest(@PathVariable Long orderId,
-                                                      @RequestParam String username,
-                                                      @RequestParam String reason) {
+                                                     @RequestParam String username,
+                                                     @RequestParam String reason) {
         try {
             boolean success = hotelOrderService.cancelOrderRequest(orderId, reason, username);
             Map<String, Object> result = new HashMap<>();
@@ -150,6 +138,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 商家同意取消 ==========
     @PostMapping("/{orderId}/cancel-approve")
     public Result<Map<String, Object>> approveCancel(@PathVariable Long orderId) {
         try {
@@ -166,6 +155,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 商家拒绝取消 ==========
     @PostMapping("/{orderId}/cancel-reject")
     public Result<Map<String, Object>> rejectCancel(@PathVariable Long orderId, @RequestParam String reason) {
         try {
@@ -182,6 +172,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 商家查询订单（通过酒店ID列表）==========
     @GetMapping("/merchant")
     public Result<List<HotelOrder>> getOrdersByMerchant(@RequestParam List<Long> hotelIds) {
         try {
@@ -192,6 +183,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 新增：商家查询订单（通过商家ID）==========
     @GetMapping("/merchant/orders")
     public Result<List<HotelOrder>> getOrdersByMerchantId(@RequestParam Long merchantId) {
         try {
@@ -204,20 +196,11 @@ public class HotelOrderController {
         }
     }
 
-    @GetMapping("/hotel-ids")
-    public Result<List<HotelOrder>> getOrdersByHotelIds(@RequestParam List<Long> hotelIds) {
-        try {
-            List<HotelOrder> orders = hotelOrderService.getOrdersByMerchant(hotelIds);
-            return Result.success(orders);
-        } catch (Exception e) {
-            return Result.error("查询失败：" + e.getMessage());
-        }
-    }
-
+    // ========== 提交评价 ==========
     @PostMapping("/comment/{id}")
     public Result<HotelOrder> comment(@PathVariable Long id,
-                                       @RequestParam String comment,
-                                       @RequestParam Integer rating) {
+                                      @RequestParam String comment,
+                                      @RequestParam Integer rating) {
         try {
             HotelOrder order = hotelOrderService.addComment(id, comment, rating);
             if (order != null) {
@@ -230,6 +213,7 @@ public class HotelOrderController {
         }
     }
 
+    // ========== 商家确认退房（完成订单） ==========
     @PostMapping("/{orderId}/checkout")
     public Result<Map<String, Object>> confirmCheckOut(@PathVariable Long orderId) {
         try {

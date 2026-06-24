@@ -21,17 +21,24 @@ public class HotelOrder {
     @Column(name = "username")
     private String username;
 
-    private Long roomTypeId;
-    private String roomTypeName;
-    private Integer roomCount;
-    private String contactPhone;
-    private String status;
-    private String cancelReason;
-    private String rejectReason;
-    private Integer rating;
-    private Long merchantId;
-    private LocalDateTime confirmTime;
-    private LocalDateTime cancelTime;
+    // ========== 新增字段 ==========
+    private Long roomTypeId;          // 房间类型ID
+    private String roomTypeName;      // 房间类型名称
+    private Integer roomCount;        // 房间数量
+    private String contactPhone;      // 联系电话
+    private String status;            // 待支付/待确认/已确认/已入住/已完成/已取消/取消申请中/取消拒绝
+    private String cancelReason;      // 取消原因
+    private String rejectReason;      // 拒绝原因（新增）
+    private Integer rating;           // 评分（入住后评价）
+    private Long merchantId;  // 商家ID
+
+    // ========== 时间字段（Repository 中用到）==========
+    private LocalDateTime confirmTime;  // 确认时间
+    private LocalDateTime cancelTime;   // 取消时间
+
+
+
+
 
     @PrePersist
     public void prePersist() {
@@ -39,6 +46,9 @@ public class HotelOrder {
         if (this.status == null) this.status = "待支付";
     }
 
+    // Getters and Setters
+    public Long getMerchantId() { return merchantId; }
+    public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getHotelId() { return hotelId; }
@@ -73,8 +83,6 @@ public class HotelOrder {
     public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
     public Integer getRating() { return rating; }
     public void setRating(Integer rating) { this.rating = rating; }
-    public Long getMerchantId() { return merchantId; }
-    public void setMerchantId(Long merchantId) { this.merchantId = merchantId; }
     public LocalDateTime getConfirmTime() { return confirmTime; }
     public void setConfirmTime(LocalDateTime confirmTime) { this.confirmTime = confirmTime; }
     public LocalDateTime getCancelTime() { return cancelTime; }

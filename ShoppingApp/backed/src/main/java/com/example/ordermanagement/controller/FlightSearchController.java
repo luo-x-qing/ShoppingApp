@@ -20,7 +20,7 @@ public class FlightSearchController {
             @RequestParam String dep,
             @RequestParam String arr,
             @RequestParam String date) {
-
+        
         Map<String, Object> result = new HashMap<>();
         try {
             String data = mcpProxyService.searchFlights(dep, arr, date);

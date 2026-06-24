@@ -318,43 +318,15 @@ export default {
       return sorted;
     }
   },
- onLoad() {
-   // 1. 设置默认日期（7天后）
-   const date = new Date();
-   date.setDate(date.getDate() + 7);
-   const year = date.getFullYear();
-   const month = String(date.getMonth() + 1).padStart(2, '0');
-   const day = String(date.getDate()).padStart(2, '0');
-   this.searchParams.fromDate = `${year}-${month}-${day}`;
- 
-   // 2. 从存储中读取外部传入的搜索参数
-   const externalParams = uni.getStorageSync('flight_search_params');
-   if (externalParams) {
-     if (externalParams.fromCity) {
-       const matched = this.cityList.find(c => 
-         c.name === externalParams.fromCity || c.code === externalParams.fromCity
-       );
-       if (matched) {
-         this.searchParams.fromCity = matched.code;
-         this.searchParams.fromCityName = matched.name;
-       }
-     }
-     if (externalParams.toCity) {
-       const matched = this.cityList.find(c => 
-         c.name === externalParams.toCity || c.code === externalParams.toCity
-       );
-       if (matched) {
-         this.searchParams.toCity = matched.code;
-         this.searchParams.toCityName = matched.name;
-       }
-     }
-     if (externalParams.fromDate) {
-       this.searchParams.fromDate = externalParams.fromDate;
-     }
-     // 使用后清除，避免重复使用
-     uni.removeStorageSync('flight_search_params');
-   }
- },
+  
+  onLoad() {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    this.searchParams.fromDate = `${year}-${month}-${day}`;
+  },
   
   methods: {
     swapCities() {

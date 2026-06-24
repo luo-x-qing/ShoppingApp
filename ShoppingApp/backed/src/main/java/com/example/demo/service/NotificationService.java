@@ -15,6 +15,9 @@ public class NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    /**
+     * 创建通知
+     */
     @Transactional
     public Notification createNotification(Long merchantId, String merchantName, 
                                            String type, String title, String content,
@@ -32,29 +35,47 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
+    /**
+     * 获取商家的所有通知
+     */
     public List<Notification> getMerchantNotifications(Long merchantId) {
         return notificationRepository.findByMerchantIdOrderByCreateTimeDesc(merchantId);
     }
 
+    /**
+     * 获取商家未读通知数量
+     */
     public long getUnreadCount(Long merchantId) {
         return notificationRepository.countByMerchantIdAndStatus(merchantId, "UNREAD");
     }
 
+    /**
+     * 标记单条通知为已读
+     */
     @Transactional
     public void markAsRead(Long merchantId, Long notificationId) {
         notificationRepository.markAsRead(merchantId, notificationId);
     }
 
+    /**
+     * 标记所有通知为已读
+     */
     @Transactional
     public void markAllAsRead(Long merchantId) {
         notificationRepository.markAllAsRead(merchantId);
     }
 
+    /**
+     * 删除通知
+     */
     @Transactional
     public void deleteNotification(Long id) {
         notificationRepository.deleteById(id);
     }
 
+    /**
+     * 商家被禁用时发送通知
+     */
     public void sendMerchantBannedNotification(Long merchantId, String merchantName, String reason) {
         createNotification(
             merchantId, merchantName,
@@ -65,6 +86,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 商家被解禁时发送通知
+     */
     public void sendMerchantUnbannedNotification(Long merchantId, String merchantName) {
         createNotification(
             merchantId, merchantName,
@@ -75,6 +99,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 酒店被禁用时发送通知
+     */
     public void sendHotelBannedNotification(Long merchantId, String merchantName, 
                                             Long hotelId, String hotelName, String reason) {
         createNotification(
@@ -86,6 +113,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 酒店被解禁时发送通知
+     */
     public void sendHotelUnbannedNotification(Long merchantId, String merchantName, 
                                               Long hotelId, String hotelName) {
         createNotification(
@@ -97,6 +127,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 申诉通过时发送通知
+     */
     public void sendAppealApprovedNotification(Long merchantId, String merchantName, String appealContent) {
         createNotification(
                 merchantId, merchantName,
@@ -107,6 +140,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 申诉拒绝时发送通知
+     */
     public void sendAppealRejectedNotification(Long merchantId, String merchantName, String rejectReason) {
         createNotification(
                 merchantId, merchantName,
@@ -117,6 +153,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 申诉回复通知（包含管理员回复内容）
+     */
     public void sendAppealReplyNotification(Long merchantId, String merchantName,
                                             String title, String content, String reply) {
         Notification notification = new Notification();
@@ -125,7 +164,7 @@ public class NotificationService {
         notification.setType("APPEAL_REPLY");
         notification.setTitle(title);
         notification.setContent(content);
-        notification.setReply(reply);
+        notification.setReply(reply);  // 保存管理员回复
         notification.setRelatedId(String.valueOf(merchantId));
         notification.setRelatedName(merchantName);
         notification.setCreateTime(LocalDateTime.now());
@@ -133,6 +172,9 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    /**
+     * 用户被禁言时发送通知
+     */
     public void sendUserBannedNotification(Long userId, String username, String reason) {
         createUserNotification(
                 userId, username,
@@ -143,6 +185,9 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 用户被解禁时发送通知
+     */
     public void sendUserUnbannedNotification(Long userId, String username) {
         createUserNotification(
                 userId, username,
@@ -153,11 +198,14 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 创建用户通知
+     */
     public void createUserNotification(Long userId, String username,
                                        String type, String title, String content,
                                        String relatedId, String relatedName) {
         Notification notification = new Notification();
-        notification.setMerchantId(userId);
+        notification.setMerchantId(userId);  // 复用字段，存储用户ID
         notification.setMerchantName(username);
         notification.setType(type);
         notification.setTitle(title);
@@ -169,22 +217,27 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    // 获取用户的通知
     public List<Notification> getUserNotifications(Long userId) {
         return notificationRepository.findByMerchantIdOrderByCreateTimeDesc(userId);
     }
 
+    // 获取用户未读数量
     public long getUserUnreadCount(Long userId) {
         return notificationRepository.countByMerchantIdAndStatus(userId, "UNREAD");
     }
 
+    // 标记用户通知为已读
     public void markUserNotificationAsRead(Long userId, Long notificationId) {
         notificationRepository.markAsRead(userId, notificationId);
     }
 
+    // 标记所有用户通知为已读
     public void markAllUserNotificationsAsRead(Long userId) {
         notificationRepository.markAllAsRead(userId);
     }
 
+    // 用户被禁言通知（包含时长）
     public void sendUserBannedNotification(Long userId, String username, String reason, int durationDays) {
         String durationText = durationDays > 0 ? durationDays + "天" : "永久";
         createUserNotification(

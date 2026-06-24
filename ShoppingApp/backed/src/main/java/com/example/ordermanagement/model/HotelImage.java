@@ -18,8 +18,10 @@ public class HotelImage {
     @JsonIgnore // 序列化时忽略，避免循环引用
     private Hotel hotel;
 
+    // 添加一个无参构造函数（JPA 需要）
     public HotelImage() {}
 
+    // 添加一个带参数的构造函数（方便创建对象）
     public HotelImage(String imageUrl) {
         this.imageUrl = imageUrl;
     }
