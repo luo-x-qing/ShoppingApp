@@ -7,7 +7,7 @@ const _sfc_main = {
       username: "",
       // AI
       aiUnreadCount: 0,
-      aiLastMessage: "AI智能助手即将上线，敬请期待！",
+      aiLastMessage: "我是AI旅游规划助手，点击开始规划你的行程 ✈️",
       aiLastMessageTime: this.formatTime(/* @__PURE__ */ new Date()),
       // 分类通知数据
       hotelOrdersList: [],
