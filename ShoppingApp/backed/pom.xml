@@ -7,6 +7,15 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <!--
+        运行所有单元测试: mvn test
+        生成 HTML 测试报告: mvn surefire-report:report
+        打开报告: target/surefire-report.html（或 target/reports/surefire.html）
+        
+        后端测试 (76个): ScenicService(21) + ScenicController(8) + TourRouteService(6)
+                     + TourRouteController(8) + TravelController(20) + AdminAttractionPage(16)
+        前端测试 (17个): scenic.test.js(10) + tourRoute.test.js(7)
+    -->
     <name>demo</name>
     <description>Demo project for Spring Boot</description>
 
