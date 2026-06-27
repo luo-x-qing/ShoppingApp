@@ -36,17 +36,17 @@ public class DbBackupService {
         try {
             String url = dbUrl.substring(5);
             int slash = url.indexOf("//");
+            int slashAfterHost = url.indexOf("/", slash + 2);
             int colon = url.indexOf(":", slash + 2);
-            int question = url.indexOf("?", colon + 1);
-            host = url.substring(slash + 2, colon);
-            int nextColon = url.indexOf(":", colon + 1);
-            int slash2 = url.indexOf("/", colon + 1);
-            if (nextColon > 0 && nextColon < slash2) {
-                port = url.substring(colon + 1, nextColon);
-                dbName = url.substring(nextColon + 1, question > 0 ? question : url.length());
+            int question = url.indexOf("?");
+            if (colon > 0 && colon < slashAfterHost) {
+                host = url.substring(slash + 2, colon);
+                port = url.substring(colon + 1, slashAfterHost);
+                dbName = url.substring(slashAfterHost + 1, question > 0 ? question : url.length());
             } else {
+                host = url.substring(slash + 2, slashAfterHost);
                 port = "3306";
-                dbName = url.substring(colon + 1, question > 0 ? question : url.length());
+                dbName = url.substring(slashAfterHost + 1, question > 0 ? question : url.length());
             }
             log.info("DB Backup config: host={}, port={}, db={}, user={}", host, port, dbName, dbUser);
         } catch (Exception e) {

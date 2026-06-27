@@ -48,10 +48,16 @@ public class HotelCommentController {
             return Result.error("已评价");
         }
 
-        hotelCommentService.save(comment);
-        result.put("success", true);
-        result.put("message", "评价成功");
-        return Result.success(result);
+        try {
+            hotelCommentService.save(comment);
+            result.put("success", true);
+            result.put("message", "评价成功");
+            return Result.success(result);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "评价失败：" + e.getMessage());
+            return Result.error("评价失败：" + e.getMessage());
+        }
     }
 
     @GetMapping("/all")

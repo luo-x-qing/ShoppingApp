@@ -506,15 +506,40 @@ export default {
       }
       return null;
     },
-    
     extractCityFromText(text) {
-      const match = text.match(/([^\n]{2,4})(?:市|省)?/);
+      if (!text) return null;
+      
+      // 方法1：匹配 "去X" 或 "到X" 格式，确保后面不是中文字符
+      // (?![\\u4e00-\\u9fa5]) 表示后面不能是中文字符
+      let match = text.match(/(?:去|到|飞到)([\u4e00-\u9fa5]{2,4})(?![\\u4e00-\\u9fa5])/);
       if (match) {
-        const city = match[1];
-        if (!city.includes('推荐') && !city.includes('酒店') && !city.includes('特点')) {
-          return city;
-        }
+        return match[1];
       }
+      
+      // 方法2：匹配 "从X到Y" 格式中的 Y（目的地）
+      match = text.match(/从[\u4e00-\u9fa5]{2,4}到([\u4e00-\u9fa5]{2,4})(?![\\u4e00-\\u9fa5])/);
+      if (match) {
+        return match[1];
+      }
+      
+      // 方法3：匹配 "从X去Y" 格式中的 Y（目的地）
+      match = text.match(/从[\u4e00-\u9fa5]{2,4}去([\u4e00-\u9fa5]{2,4})(?![\\u4e00-\\u9fa5])/);
+      if (match) {
+        return match[1];
+      }
+      
+      // 方法4：匹配以城市名开头的字符串（如 "厦门三日游"）
+      match = text.match(/^([\u4e00-\u9fa5]{2,4})(?![\\u4e00-\\u9fa5])/);
+      if (match) {
+        return match[1];
+      }
+      
+      // 方法5：匹配 "X游" 或 "X日游" 格式中的 X
+      match = text.match(/^([\u4e00-\u9fa5]{2,4})(?:日游|游|旅游|游玩|玩)/);
+      if (match) {
+        return match[1];
+      }
+      
       return null;
     },
     
