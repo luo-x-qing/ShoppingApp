@@ -8,7 +8,9 @@ upload/
 file/ 
 .vscode/ 
 unpackage/ 
-dist/ 
+dist/
+playwright-report/
+test-results/ 
 .sass-cache/ 
 *.suo 
 *.ntvs* 
