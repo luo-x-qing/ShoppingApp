@@ -849,7 +849,7 @@ export default {
         const lowerMsg = userMsg.toLowerCase();
 
         if (lowerMsg.includes('优惠') || lowerMsg.includes('折扣')) {
-          autoReply = `感谢您对${merchantName}的关注！我们目前有暑期特惠活动，部分房型低至8折。`;
+          autoReply = `感谢您对${merchantName}的关注！我们目前有暑期优惠活动，部分房型低至8折。`;
         } else if (lowerMsg.includes('改期') || lowerMsg.includes('修改')) {
           autoReply = `${merchantName}支持改期，请至少提前3天联系我们。请问您想改到哪一天？`;
         } else if (lowerMsg.includes('取消') || lowerMsg.includes('退订')) {

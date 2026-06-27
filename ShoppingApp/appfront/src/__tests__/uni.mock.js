@@ -47,6 +47,19 @@ export function createUniMock() {
       }
     }),
     
+    // --- Tab Bar ---
+    setTabBarBadge: vi.fn(),
+    removeTabBarBadge: vi.fn(),
+
+    // --- Selector Query ---
+    createSelectorQuery: vi.fn(() => ({
+      select: vi.fn(() => ({
+        boundingClientRect: vi.fn(() => ({
+          exec: vi.fn()
+        }))
+      }))
+    })),
+
     // --- System Info ---
     getSystemInfoSync: vi.fn(() => ({
       windowWidth: 375,
