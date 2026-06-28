@@ -43,6 +43,8 @@ public class SiliconService {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", model);
+        requestBody.put("temperature", 0.5);
+        requestBody.put("max_tokens", 4096);
 
         Map<String, String> message = new HashMap<>();
         message.put("role", "user");

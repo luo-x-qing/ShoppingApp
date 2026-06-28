@@ -145,6 +145,26 @@ const _sfc_main = {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     this.searchParams.fromDate = `${year}-${month}-${day}`;
+    const params = common_vendor.index.getStorageSync("flight_search_params");
+    if (params && params.fromCity && params.toCity) {
+      const fromCity = this.findCityByChineseName(params.fromCity);
+      const toCity = this.findCityByChineseName(params.toCity);
+      if (fromCity) {
+        this.searchParams.fromCity = fromCity.code;
+        this.searchParams.fromCityName = fromCity.name;
+      }
+      if (toCity) {
+        this.searchParams.toCity = toCity.code;
+        this.searchParams.toCityName = toCity.name;
+      }
+      if (params.fromDate) {
+        this.searchParams.fromDate = params.fromDate;
+      }
+      common_vendor.index.removeStorageSync("flight_search_params");
+      this.$nextTick(() => {
+        this.searchFlights();
+      });
+    }
   },
   methods: {
     swapCities() {
@@ -165,6 +185,9 @@ const _sfc_main = {
       this.citySearchKeyword = "";
     },
     filterCities() {
+    },
+    findCityByChineseName(name) {
+      return this.cityList.find((c) => c.name === name) || null;
     },
     selectCity(city) {
       if (this.cityPickerType === "from") {
@@ -237,10 +260,10 @@ const _sfc_main = {
           date: this.searchParams.fromDate
         },
         success: (res) => {
-          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:427", "航班查询返回：", res.data);
+          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:452", "航班查询返回：", res.data);
           let flights = [];
           if (res.data && res.data.success && typeof res.data.data === "string") {
-            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:432", "原始数据前500字符：", res.data.data.substring(0, 500));
+            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:457", "原始数据前500字符：", res.data.data.substring(0, 500));
             flights = this.parseFlightsFromString(res.data.data);
           } else if (res.data && res.data.code === 200 && res.data.data && Array.isArray(res.data.data)) {
             flights = res.data.data;
@@ -249,7 +272,7 @@ const _sfc_main = {
           }
           if (flights.length > 0) {
             this.flightList = flights.slice(0, 20);
-            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:442", "解析出的航班数量：", this.flightList.length);
+            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:467", "解析出的航班数量：", this.flightList.length);
           } else {
             this.flightList = this.getMockFlights();
             common_vendor.index.showToast({ title: "使用演示数据", icon: "none" });
@@ -257,7 +280,7 @@ const _sfc_main = {
           this.showResultFlag = true;
         },
         fail: (err) => {
-          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:450", "请求失败：", err);
+          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:475", "请求失败：", err);
           this.flightList = this.getMockFlights();
           this.showResultFlag = true;
           common_vendor.index.showToast({ title: "查询失败，使用演示数据", icon: "none" });
@@ -352,7 +375,7 @@ const _sfc_main = {
       try {
         const allFlights = dataStr.match(/\{\s*'fcategory':[^}]+\}/g);
         if (allFlights && allFlights.length > 0) {
-          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:550", "直接找到航班对象数量：", allFlights.length);
+          common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:575", "直接找到航班对象数量：", allFlights.length);
           return this.extractFlightsFromMatches(allFlights);
         }
         let dataArrayMatch = dataStr.match(/data['"]?\s*:\s*\[(.*?)\]/s);
@@ -363,14 +386,14 @@ const _sfc_main = {
           const flightsStr = dataArrayMatch[1];
           const flightMatches = flightsStr.match(/\{\s*'fcategory':[^}]+\}/g);
           if (flightMatches && flightMatches.length > 0) {
-            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:563", "从data数组找到航班数量：", flightMatches.length);
+            common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:588", "从data数组找到航班数量：", flightMatches.length);
             return this.extractFlightsFromMatches(flightMatches);
           }
         }
-        common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:568", "未找到任何航班数据");
+        common_vendor.index.__f__("log", "at pages/flight/search-flight.vue:593", "未找到任何航班数据");
         return [];
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:572", "解析航班数据失败：", e);
+        common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:597", "解析航班数据失败：", e);
         return [];
       }
     },
@@ -405,7 +428,7 @@ const _sfc_main = {
             });
           }
         } catch (e) {
-          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:612", "提取航班失败：", e);
+          common_vendor.index.__f__("error", "at pages/flight/search-flight.vue:637", "提取航班失败：", e);
         }
       }
       return flights;

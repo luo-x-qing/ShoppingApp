@@ -247,6 +247,13 @@ public class TravelController {
                 json = json.replaceAll("(?s)```(?:json)?\\s*", "").trim();
             }
 
+            // 提取第一个 { 到最后一个 } 之间的内容
+            int startBrace = json.indexOf("{");
+            int endBrace = json.lastIndexOf("}");
+            if (startBrace >= 0 && endBrace > startBrace) {
+                json = json.substring(startBrace, endBrace + 1);
+            }
+
             Map<String, Object> parsed = objectMapper.readValue(json, Map.class);
 
             List<Map<String, Object>> daysList = (List<Map<String, Object>>) parsed.get("days");
@@ -316,6 +323,11 @@ public class TravelController {
 
             return result;
         } catch (Exception e) {
+            System.err.println("===== AI回复JSON解析失败 =====");
+            System.err.println("原始AI回复内容(" + aiReply.length() + "字符):");
+            System.err.println(aiReply);
+            System.err.println("解析异常: " + e.getMessage());
+            System.err.println("===============================");
             e.printStackTrace();
             return null;
         }

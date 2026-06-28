@@ -326,6 +326,27 @@ export default {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     this.searchParams.fromDate = `${year}-${month}-${day}`;
+
+    const params = uni.getStorageSync('flight_search_params');
+    if (params && params.fromCity && params.toCity) {
+      const fromCity = this.findCityByChineseName(params.fromCity);
+      const toCity = this.findCityByChineseName(params.toCity);
+      if (fromCity) {
+        this.searchParams.fromCity = fromCity.code;
+        this.searchParams.fromCityName = fromCity.name;
+      }
+      if (toCity) {
+        this.searchParams.toCity = toCity.code;
+        this.searchParams.toCityName = toCity.name;
+      }
+      if (params.fromDate) {
+        this.searchParams.fromDate = params.fromDate;
+      }
+      uni.removeStorageSync('flight_search_params');
+      this.$nextTick(() => {
+        this.searchFlights();
+      });
+    }
   },
   
   methods: {
@@ -350,6 +371,10 @@ export default {
     },
     
     filterCities() {},
+    
+    findCityByChineseName(name) {
+      return this.cityList.find(c => c.name === name) || null;
+    },
     
     selectCity(city) {
       if (this.cityPickerType === 'from') {
